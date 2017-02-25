@@ -1,6 +1,10 @@
 # evs-pg-cluster
 Postgres database 9.6 on Centos 7.3 with phoenix database with support for replication. This image will contain a ssh server and systemd (because we'll need multiple service running in the container)
 
+The docker-compose file should be used to set all env variables and start the master and the slave container
+
+** this is WIP: the end result will be 1 master, 2 slaves (with repmgr) and 2 pgpool **
+
 ## build
 
 see the script build.sh
