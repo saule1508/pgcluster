@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source /opt/evs-pg-utils/lib/evs_pg_utils_lib.sh
+source /opt/cl-pg-utils/lib/cl_pg_utils_lib.sh
 
 echo This host: `hostname`
 echo Role: `get_db_role`

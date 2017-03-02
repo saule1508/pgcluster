@@ -1,5 +1,5 @@
 FROM centos:7
-MAINTAINER p.timmermans@evs.com
+MAINTAINER pierre@critiqueslibres.com
 ENV MAJORVER=9.6
 ENV MINORVER=2
 ENV PGVER=96
@@ -74,12 +74,12 @@ RUN echo "alias pool_nodes='psql --username=repmgr -h ##IPFAILOVER## -p 9999 rep
 #
 RUN localedef -i en_US -f UTF-8 en_US.UTF-8
 # scripts in /opt/evs-pg-utils should be installed by a rpm (TODO)
-RUN mkdir /opt/evs-pg-utils
-ADD ./scripts /opt/evs-pg-utils/scripts
-ADD ./pgconfig /opt/evs-pg-utils/pgconfig
+RUN mkdir /opt/cl-pg-utils
+ADD ./scripts /opt/cl-pg-utils/scripts
+ADD ./pgconfig /opt/cl-pg-utils/pgconfig
 ADD ./bin/entrypoint.sh /
-ADD ./pgpool /opt/evs-pg-utils/pgpool
-RUN chown -R postgres:postgres /opt/evs-pg-utils && chmod 750 /opt/evs-pg-utils
+#ADD ./pgpool /opt/cl-pg-utils/pgpool
+RUN chown -R postgres:postgres /opt/cl-pg-utils && chmod 750 /opt/cl-pg-utils
 RUN mkdir /etc/systemd/system/postgresql-9.6.service.d
 RUN echo "[Service]" > /etc/systemd/system/postgresql-9.6.service.d/override.conf && \
     echo "Environment=">> /etc/systemd/system/postgresql-9.6.service.d/override.conf && \

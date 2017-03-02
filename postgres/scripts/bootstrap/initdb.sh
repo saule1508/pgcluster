@@ -1,9 +1,9 @@
 #!/bin/bash
 
-LOGFILE=/opt/evs-pg-utils/logs/initdb.log
-if [ ! -d /opt/evs-pg-utils/logs ] ; then
- sudo mkdir /opt/evs-pg-utils/logs
- sudo chown postgres:postgres /opt/evs-pg-utils/logs
+LOGFILE=/opt/cl-pg-utils/logs/initdb.log
+if [ ! -d /opt/cl-pg-utils/logs ] ; then
+ sudo mkdir /opt/cl-pg-utils/logs
+ sudo chown postgres:postgres /opt/cl-pg-utils/logs
 fi
 
 log_info(){
@@ -97,7 +97,7 @@ if [ ! -f ${PGDATA}/postgresql.conf ] ; then
     log_info "This node is the master, initdb"
     pg_ctl initdb -D ${PGDATA} -o "--encoding='UTF8' --locale='en_US.UTF8'"
     log_info "Adding include_dir in $PGDATA/postgresql.conf"
-    echo "include_dir = '/opt/evs-pg-utils/pgconfig'" >> $PGDATA/postgresql.conf
+    echo "include_dir = '/opt/cl-pg-utils/pgconfig'" >> $PGDATA/postgresql.conf
     cat <<-EOF >> $PGDATA/pg_hba.conf
 # replication manager
 local  replication   repmgr                      trust

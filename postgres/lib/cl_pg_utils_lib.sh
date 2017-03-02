@@ -1,17 +1,17 @@
 #!/bin/bash
 
-# Some utilities for operating postgres in EVS
+# Some utilities for operating postgres
 # Author: PTI
 # Date : 28-Feb-2017
 
-source /opt/evs-pg-utils/lib/evs-pg-utils.env
+source /opt/cl-pg-utils/lib/cl_pg_utils.env
 
-if [ ! -d /var/log/evs-pg-utils ] ; then
- sudo mkdir /var/log/evs-pg-utils
- sudo chown postgres:postgres /var/log/evs-pg-utils
+if [ ! -d /var/log/cl-pg-utils ] ; then
+ sudo mkdir /var/log/cl-pg-utils
+ sudo chown postgres:postgres /var/log/cl-pg-utils
 fi
 
-LOGFILE=/var/log/evs-pg-utils/evs_pg_utils.log
+LOGFILE=/var/log/cl-pg-utils/cl_pg_utils.log
 
 log_info(){
  str="INFO - $1 - `date +\"%Y-%m-%d %H:%M\"` - $2"

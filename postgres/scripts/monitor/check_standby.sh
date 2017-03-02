@@ -4,13 +4,13 @@
 
 # WIP
 
-source /opt/evs-pg-utils/lib/evs_pg_utils_lib.sh
+source /opt/cl-pg-utils/lib/cl_pg_utils_lib.sh
 NODE_LIST=`get_node_list`
 echo List of nodes: $NODE_LIST
 
 NBRNODES=`echo $NODE_LIST | awk 'BEGIN {FS=","}{print NF}'`
 if [[ $NBRNODES -le 1 ]]; then
- echo "No replication set-up or wrong config in /opt/evs-pg-utils/lib/evs_pg_utils.env"
+ echo "No replication set-up or wrong config in /opt/cl-pg-utils/lib/cl_pg_utils.env"
  exit 1
 fi
 THISNODE=`hostname | tr [A-Z] [a-z]`
