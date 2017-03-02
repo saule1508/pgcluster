@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# Some utilities for operating postgres in EVS
+# Author: PTI
+# Date : 28-Feb-2017
+
+source /opt/evs-pg-utils/lib/evs-pg-utils.env
+
+if [ ! -d /var/log/evs-pg-utils ] ; then
+ sudo mkdir /var/log/evs-pg-utils
+ sudo chown postgres:postgres /var/log/evs-pg-utils
+fi
+
+LOGFILE=/var/log/evs-pg-utils/evs_pg_utils.log
+
+log_info(){
+ str="INFO - $1 - `date +\"%Y-%m-%d %H:%M\"` - $2"
+ echo $str | tee -a $LOGFILE
+}
+
+log_warning(){
+ str="WARN - $1 - `date +\"%Y-%m-%d %H:%M\"` - $2"
+ echo $str | tee -a $LOGFILE
+ WITHWARNING=1
+}
+
+log_error(){
+ str="ERROR - $1 - `date +\"%Y-%m-%d %H:%M\"` - $2"
+ echo $str | tee -a $LOGFILE
+ WITHERROR=1
+}
+
+log_debug(){
+ if [ ! -z $DEBUG ] ; then
+  str="DEBUG - $1 - `date +\"%Y-%m-%d %H:%M\"` - $2"
+  echo $str | tee -a $LOGFILE
+ fi
+}
+
+
+is_primary(){
+  str=`psql -q postgres <<EOF | grep -v "^$" | sed -e "s/ //g"
+\t
+select pg_is_in_recovery();
+EOF`
+  if [[ $str == "t" ]] ; then
+   return 0;
+  else
+   return 1;
+  fi
+}
+
+get_db_role(){
+ is_primary
+ if [ $? -eq 1 ] ; then
+   echo "PRIMARY"
+ else
+   echo "STANDBY"
+ fi
+}

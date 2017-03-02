@@ -1,8 +1,9 @@
 #!/bin/bash
 
-LOGFILE=/opt/evs-infra-pg-utils/logs/initdb.log
-if [ ! -d /opt/evs-infra-pg-utils/logs ] ; then
- mkdir /opt/evs-infra-pg-utils/logs
+LOGFILE=/opt/evs-pg-utils/logs/initdb.log
+if [ ! -d /opt/evs-pg-utils/logs ] ; then
+ sudo mkdir /opt/evs-pg-utils/logs
+ sudo chown postgres:postgres /opt/evs-pg-utils/logs
 fi
 
 log_info(){
@@ -32,6 +33,28 @@ EOF
 EOF
 }
 
+wait_for_master(){
+ SLEEP_TIME=5
+ HOST=pg01
+ PORT=5432
+ MAX_TRIES=10
+
+ psql --username=repmgr -h ${HOST} -p ${PORT} repmgr -c "select 1;" > /dev/null
+ ret=$?
+ if [ $ret -eq 0 ] ; then
+  echo "server ready"
+  return 0
+ fi
+ until [[ $ret -eq 0 ]] || [[ "$MAX_TRIES" == "0" ]]; do
+  echo "$(date) - waiting for postgres..."
+  sleep $SLEEP_TIME
+  MAX_TRIES=`expr "$MAX_TRIES" - 1`
+  psql --username=repmgr -h ${HOST} -p ${PORT} repmgr -c "select 1;" > /dev/null
+  ret=$?
+ done
+ psql --username=repmgr -h ${HOST} -p ${PORT} repmgr -c "select 1;" > /dev/null
+ return $?
+}
 
 > $LOGFILE
 log_info "Start initdb on host `hostname`"
@@ -61,7 +84,7 @@ create_microservices(){
       USERPWD=${MSERVICES[$i]}"_user"
     fi
     log_info "creating postgres users for microservice: ${MSERVICES[$i]} with password ${OWNERPWD} and ${USERPWD}"
-    create_user  ${MSERVICES[$i]} ${OWNERPWD} ${USERPWD
+    create_user  ${MSERVICES[$i]} ${OWNERPWD} ${USERPWD}
  done
 }
 
@@ -73,16 +96,46 @@ if [ ! -f ${PGDATA}/postgresql.conf ] ; then
   if [ "a$INITIAL_NODE_TYPE" = "amaster" ] ; then
     log_info "This node is the master, initdb"
     pg_ctl initdb -D ${PGDATA} -o "--encoding='UTF8' --locale='en_US.UTF8'"
+    log_info "Adding include_dir in $PGDATA/postgresql.conf"
+    echo "include_dir = '/opt/evs-pg-utils/pgconfig'" >> $PGDATA/postgresql.conf
+    cat <<-EOF >> $PGDATA/pg_hba.conf
+# replication manager
+local  replication   repmgr                      trust
+host   replication   repmgr      127.0.0.1/32    trust
+host   replication   repmgr      172.18.0.0/16   trust
+local   repmgr        repmgr                     trust
+host    repmgr        repmgr      127.0.0.1/32   trust
+host    repmgr        repmgr      172.18.0.0/16  trust
+EOF
+    echo "host all all all md5" >> $PGDATA/pg_hba.conf
     pg_ctl -D ${PGDATA} start -w 
     psql --command "create database phoenix ENCODING='UTF8' LC_COLLATE='en_US.UTF8';"
     create_microservices
+    log_info "Creating repmgr database and user"
+    createuser -s repmgr
+    createdb repmgr -O repmgr
+    psql --username=repmgr -d repmgr -c "ALTER USER repmgr SET search_path TO repmgr_phoenix, \"\$user\", public;"
+    log_info "Register master in repmgr"
+    repmgr -f /etc/repmgr.conf -v master register
+    log_info "Stopping database"
     pg_ctl -D ${PGDATA} stop -w
   else
-    echo "This node is a slave"
+    log_info "This node is a slave, fix repmgr.conf"
+    sudo sed -i -e "s/pg01/pg02/" -e "/^node=/s/1/2/" /etc/repmgr.conf
+    log_info "Wait that master is up and running"
+    wait_for_master
+    if [ $? -eq 0 ] ; then
+     log_info "Master is ready, sleep 10 seconds before cloning slave"
+     sleep 10
+     sudo rm -rf ${PGDATA}/*
+     repmgr -h pg01 -U repmgr -d repmgr -D ${PGDATA} -f /etc/repmgr.conf standby clone
+     pg_ctl -D ${PGDATA} start -w
+     repmgr -f /etc/repmgr/9.6/repmgr.conf standby register
+     pg_ctl stop -w 
+    else
+     log_info "Master is not ready, standby will not be initialized"
+    fi
   fi
-  log_info "Adding include_dir in $PGDATA/postgresql.conf"
-  echo "include_dir = '/opt/evs-infra-pg-utils/pgconfig'" >> $PGDATA/postgresql.conf
-  echo "host all all all md5" >> $PGDATA/pg_hba.conf
 else
   log_info "File ${PGDATA}/postgresql.conf already exist"
 fi

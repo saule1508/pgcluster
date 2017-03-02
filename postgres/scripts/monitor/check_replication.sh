@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source /opt/evs-infra-pg-utils/lib/utils.sh
+source /opt/evs-pg-utils/lib/evs_pg_utils_lib.sh
 
 echo This host: `hostname`
 echo Role: `get_db_role`
@@ -22,18 +22,11 @@ do
   else
     ssh -n postgres@${host} "ps -ef | grep repmgrd | grep -v grep"
   fi 
-  echo "pg_stat_replication (will be empty if not master)"
-  psql -h ${host} -c "select * from pg_stat_replication;"
 done
 echo "*** Cluster show from repmgr ****"
 repmgr -f /etc/repmgr/9.6/repmgr.conf cluster show
 #psql --username=repmgr repmgr -c "select * from repl_monitor order by last_monitor_time desc limit 1;"
 echo "*** pgpool show pool_nodes ***"
-psql --username=repmgr -h 172.23.14.70 -p 9999 repmgr -c "show pool_nodes;"
+psql --username=repmgr -h evs-d-pg02 -p 9999 repmgr -c "show pool_nodes;"
 echo "*** repmgr monitoring ***"
 psql --username=repmgr repmgr -c "select * from repl_monitor order by last_monitor_time desc limit 1";
-echo "*** check ip failover ***"
-ip addr | grep ens192:0
-if [ $? -ne 0 ] ; then
- echo "No IP failover on ens192:0"
-fi

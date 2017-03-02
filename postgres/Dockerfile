@@ -5,7 +5,7 @@ ENV MINORVER=2
 ENV PGVER=96
 ENV container docker
 RUN yum update -y ; yum clean all
-RUN yum install -y libxslt systemd-sysv sudo openssh-server passwd; yum clean all
+RUN yum install -y libxslt systemd-sysv sudo openssh-server openssh-clients passwd; yum clean all
 RUN mkdir /var/run/sshd
 RUN ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N ''
 RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == \
@@ -39,7 +39,7 @@ RUN echo "#replication manager" >> $PGDATA/pg_hba.conf && \
     echo "local    repmgr        repmgr                  trust" >> $PGDATA/pg_hba.conf && \
     echo "host     repmgr   repmgr       127.0.0.1/32    trust" >> $PGDATA/pg_hba.conf && \
     echo "host     repmgr   repmgr       172.18.0.0/16    trust" >> $PGDATA/pg_hba.conf 
-ADD repmgr.conf /etc/repmgr/9.6/
+ADD ./repmgr.conf /etc/repmgr/9.6/
 RUN chown postgres:postgres /etc/repmgr/9.6/repmgr.conf && ln -s /etc/repmgr/9.6/repmgr.conf /etc/repmgr.conf
 RUN chown postgres:postgres /var/log/repmgr
 RUN mkdir /etc/systemd/system/repmgr96.service.d
@@ -73,16 +73,19 @@ RUN echo "alias pool_nodes='psql --username=repmgr -h ##IPFAILOVER## -p 9999 rep
 # this localedef command is needed because of bug in centos docker image?
 #
 RUN localedef -i en_US -f UTF-8 en_US.UTF-8
-# scripts in /opt/evs-infra-pg-utils should be installed by a rpm (TODO)
-ADD ./evs-infra-pg-utils /opt/evs-infra-pg-utils
-RUN chown -R postgres:postgres /opt/evs-infra-pg-utils && chmod 750 /opt/evs-infra-pg-utils
-ADD bin/entrypoint.sh /
+# scripts in /opt/evs-pg-utils should be installed by a rpm (TODO)
+RUN mkdir /opt/evs-pg-utils
+ADD ./scripts /opt/evs-pg-utils/scripts
+ADD ./pgconfig /opt/evs-pg-utils/pgconfig
+ADD ./bin/entrypoint.sh /
+ADD ./pgpool /opt/evs-pg-utils/pgpool
+RUN chown -R postgres:postgres /opt/evs-pg-utils && chmod 750 /opt/evs-pg-utils
 RUN mkdir /etc/systemd/system/postgresql-9.6.service.d
 RUN echo "[Service]" > /etc/systemd/system/postgresql-9.6.service.d/override.conf && \
     echo "Environment=">> /etc/systemd/system/postgresql-9.6.service.d/override.conf && \
-    echo "Environment=PGDATA=/u01/pg96/data" >> /etc/systemd/system/postgresql-9.6.service.d/override.conf && \
-    echo ExecStartPre= >> /etc/systemd/system/postgresql-9.6.service.d/override.conf && \
-    echo ExecStartPre=/opt/evs-infra-pg-utils/scripts/initdb.sh >> /etc/systemd/system/postgresql-9.6.service.d/override.conf
+    echo "Environment=PGDATA=/u01/pg96/data" >> /etc/systemd/system/postgresql-9.6.service.d/override.conf 
+#    echo ExecStartPre= >> /etc/systemd/system/postgresql-9.6.service.d/override.conf && \
+#    echo ExecStartPre=/opt/evs-infra-pg-utils/scripts/initdb.sh >> /etc/systemd/system/postgresql-9.6.service.d/override.conf
 #    echo Requires=initdb.service >> /etc/systemd/system/postgresql-9.6.service.d/override.conf && \
 #   echo After=initdb.service >> /etc/systemd/system/postgresql-9.6.service.d/override.conf &&
 RUN systemctl enable postgresql-9.6.service
@@ -91,6 +94,6 @@ ENV PATH=$PATH:/usr/pgsql-${MAJORVER}/bin
 #  and db users (two per microservice)
 EXPOSE 5432
 EXPOSE 22
-VOLUME ["/u01/pg${PGVER}/data","/u02/archive"]
+VOLUME ["/u01/pg${PGVER}/data","/u02/archive","/u02/backup"]
 CMD ["/entrypoint.sh"]
 VOLUME [ "/sys/fs/cgroup" ]
