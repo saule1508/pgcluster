@@ -1,7 +1,7 @@
 #!/bin/bash
 
-echo "Calling script /opt/cl-pg-utils/script/initdb.sh"
-su postgres /opt/cl-pg-utils/scripts/initdb.sh
+echo "Calling script /opt/cl-pg-utils/scripts/bootstrap/initdb.sh"
+su postgres /opt/cl-pg-utils/scripts/bootstrap/initdb.sh
 if [ $? -ne 0 ] ; then
  echo initdb.sh FAILURE
  exit 1

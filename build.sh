@@ -1,5 +1,5 @@
 VER=`cat version.txt`
-docker volume ls | grep pgcluster | awk '{print $2}' | xargs docker volume rm
+sudo docker volume ls | grep pgcluster | awk '{print $2}' | xargs sudo docker volume rm
 sudo docker-compose build
 exit 0
 if [ $? -eq 0 ] ; then

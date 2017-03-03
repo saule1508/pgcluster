@@ -73,7 +73,7 @@ RUN echo "alias pool_nodes='psql --username=repmgr -h ##IPFAILOVER## -p 9999 rep
 # this localedef command is needed because of bug in centos docker image?
 #
 RUN localedef -i en_US -f UTF-8 en_US.UTF-8
-# scripts in /opt/evs-pg-utils should be installed by a rpm (TODO)
+# scripts in /opt/cl-pg-utils should be installed by a rpm (TODO)
 RUN mkdir /opt/cl-pg-utils
 ADD ./scripts /opt/cl-pg-utils/scripts
 ADD ./pgconfig /opt/cl-pg-utils/pgconfig
@@ -88,6 +88,10 @@ RUN echo "[Service]" > /etc/systemd/system/postgresql-9.6.service.d/override.con
 #    echo ExecStartPre=/opt/evs-infra-pg-utils/scripts/initdb.sh >> /etc/systemd/system/postgresql-9.6.service.d/override.conf
 #    echo Requires=initdb.service >> /etc/systemd/system/postgresql-9.6.service.d/override.conf && \
 #   echo After=initdb.service >> /etc/systemd/system/postgresql-9.6.service.d/override.conf &&
+# Make ssh connection easier
+RUN echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config && \
+    echo "UserKnownHostsFile /dev/null" >> /etc/ssh/ssh_config && \
+    echo "LogLevel QUIET" >> /etc/ssh/ssh_config 
 RUN systemctl enable postgresql-9.6.service
 ENV PATH=$PATH:/usr/pgsql-${MAJORVER}/bin
 # if the file $PGDATA/postgres.conf does not exist initdb will initialize the cluster and create db phoenix
