@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Some utilities for operating postgres
+# Some utilities for operating postgres 
 # Author: PTI
 # Date : 28-Feb-2017
 

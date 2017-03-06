@@ -5,7 +5,7 @@ ENV MINORVER=2
 ENV PGVER=96
 ENV container docker
 RUN yum update -y ; yum clean all
-RUN yum install -y libxslt systemd-sysv sudo openssh-server openssh-clients passwd; yum clean all
+RUN yum install -y libxslt systemd-sysv sudo openssh-server openssh-clients passwd rsync; yum clean all
 RUN mkdir /var/run/sshd
 RUN ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N ''
 RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == \
@@ -51,7 +51,7 @@ RUN mkdir -p /u01/pg${PGVER}/data /u02/backup /u02/archive && chown -R postgres:
 ENV PGDATA /u01/pg${PGVER}/data
 ENV PATH=$PATH:/usr/pgsql-${MAJORVER}/bin
 ENV LANG=en_US.UTF-8
-RUN usermod -G wheel -a postgres && echo "postgres" | passwd --stdin postgres
+RUN usermod -G wheel -a postgres 
 RUN echo "Defaults:postgres !requiretty" > /etc/sudoers.d/postgres && \
     echo "postgres ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/postgres
 RUN sed -i -e "s/^%wheel/#%wheel/" -e "/^#.*%wheel.*NOPASSWD/s/^#.*%wheel/%wheel/" /etc/sudoers
@@ -77,6 +77,7 @@ RUN localedef -i en_US -f UTF-8 en_US.UTF-8
 RUN mkdir /opt/cl-pg-utils
 ADD ./scripts /opt/cl-pg-utils/scripts
 ADD ./pgconfig /opt/cl-pg-utils/pgconfig
+ADD ./lib /opt/cl-pg-utils/lib
 ADD ./bin/entrypoint.sh /
 #ADD ./pgpool /opt/cl-pg-utils/pgpool
 RUN chown -R postgres:postgres /opt/cl-pg-utils && chmod 750 /opt/cl-pg-utils
