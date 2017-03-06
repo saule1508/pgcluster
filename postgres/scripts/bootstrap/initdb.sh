@@ -114,21 +114,22 @@ EOF
     log_info "Creating repmgr database and user"
     createuser -s repmgr
     createdb repmgr -O repmgr
+    psql --username=repmgr -d repmgr -c "alter user repmgr login password 'repmgrpwd';"
     psql --username=repmgr -d repmgr -c "ALTER USER repmgr SET search_path TO repmgr_phoenix, \"\$user\", public;"
     log_info "Register master in repmgr"
-    repmgr -f /etc/repmgr.conf -v master register
+    repmgr -f /etc/repmgr/9.6/repmgr.conf -v master register
     log_info "Stopping database"
     pg_ctl -D ${PGDATA} stop -w
   else
     log_info "This node is a slave, fix repmgr.conf"
-    sudo sed -i -e "s/pg01/pg02/" -e "/^node=/s/1/2/" /etc/repmgr.conf
+    sudo sed -i -e "s/pg01/pg02/" -e "/^node=/s/1/2/" /etc/repmgr/9.6/repmgr.conf
     log_info "Wait that master is up and running"
     wait_for_master
     if [ $? -eq 0 ] ; then
      log_info "Master is ready, sleep 10 seconds before cloning slave"
      sleep 10
      sudo rm -rf ${PGDATA}/*
-     repmgr -h pg01 -U repmgr -d repmgr -D ${PGDATA} -f /etc/repmgr.conf standby clone
+     repmgr -h pg01 -U repmgr -d repmgr -D ${PGDATA} -f /etc/repmgr/9.6/repmgr.conf standby clone
      pg_ctl -D ${PGDATA} start -w
      repmgr -f /etc/repmgr/9.6/repmgr.conf standby register
      pg_ctl stop -w 

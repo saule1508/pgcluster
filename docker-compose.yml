@@ -39,6 +39,12 @@ services:
     privileged: true
     depends_on:
       - pg01
+  pgpool01:
+    build: ./pgpool
+    ports:
+      - 9999:9999
+    depends_on:
+      - pg01
 volumes:
   pg01db:
   pg02db:

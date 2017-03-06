@@ -40,14 +40,15 @@ RUN echo "#replication manager" >> $PGDATA/pg_hba.conf && \
     echo "host     repmgr   repmgr       127.0.0.1/32    trust" >> $PGDATA/pg_hba.conf && \
     echo "host     repmgr   repmgr       172.18.0.0/16    trust" >> $PGDATA/pg_hba.conf 
 ADD ./repmgr.conf /etc/repmgr/9.6/
-RUN chown postgres:postgres /etc/repmgr/9.6/repmgr.conf && ln -s /etc/repmgr/9.6/repmgr.conf /etc/repmgr.conf
+RUN chown postgres:postgres /etc/repmgr/9.6/repmgr.conf 
 RUN chown postgres:postgres /var/log/repmgr
 RUN mkdir /etc/systemd/system/repmgr96.service.d
 RUN echo "[Service]" > /etc/systemd/system/repmgr96.service.d/override.conf && \
     echo "ExecStart=" >> /etc/systemd/system/repmgr96.service.d/override.conf && \
     echo "ExecStart=/usr/pgsql-9.6/bin/repmgrd -f \${REPMGRDCONF} -p \${PIDFILE} -d --verbose --monitoring-history" >> /etc/systemd/system/repmgr96.service.d/override.conf 
 RUN systemctl enable repmgr96
-RUN mkdir -p /u01/pg${PGVER}/data /u02/backup /u02/archive && chown -R postgres:postgres /u01/pg${PGVER} /u02/backup /u02/archive && chmod 700 /u01/pg${PGVER}/data /u02/archive
+RUN mkdir -p /u01/pg${PGVER}/data /u02/backup /u02/archive && chown -R postgres:postgres /u01/pg${PGVER} /u02/backup /u02/archive && \
+    chmod 700 /u01/pg${PGVER}/data /u02/archive
 ENV PGDATA /u01/pg${PGVER}/data
 ENV PATH=$PATH:/usr/pgsql-${MAJORVER}/bin
 ENV LANG=en_US.UTF-8
@@ -57,6 +58,8 @@ RUN echo "Defaults:postgres !requiretty" > /etc/sudoers.d/postgres && \
 RUN sed -i -e "s/^%wheel/#%wheel/" -e "/^#.*%wheel.*NOPASSWD/s/^#.*%wheel/%wheel/" /etc/sudoers
 RUN echo postgres:postgres | chpasswd
 RUN echo root:postgres | chpasswd
+ADD ssh_keys /home/postgres/.ssh
+RUN chown -R postgres:postgres /home/postgres/.ssh && chmod 700 /home/postgres/.ssh && chmod 644 /home/postgres/.ssh/* && chmod 600 /home/postgres/.ssh/id_rsa
 #selinux inside the container is not possible, commands below only make sense on a host
 #RUN semanage fcontext --add --type postgresql_exec_t "/usr/pgsql-9.6/bin/(initdb|postgres|pg_ctl)" && \
 #    restorecon -rv /usr/pgsql-9.6/bin/* && \
@@ -93,6 +96,8 @@ RUN echo "[Service]" > /etc/systemd/system/postgresql-9.6.service.d/override.con
 RUN echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config && \
     echo "UserKnownHostsFile /dev/null" >> /etc/ssh/ssh_config && \
     echo "LogLevel QUIET" >> /etc/ssh/ssh_config 
+#pgpass
+RUN echo "*:*:repmgr:repmgr:repmgrpwd" > /home/postgres/.pgpass && chmod 600 /home/postgres/.pgpass && chown postgres:postgres /home/postgres/.pgpass
 RUN systemctl enable postgresql-9.6.service
 ENV PATH=$PATH:/usr/pgsql-${MAJORVER}/bin
 # if the file $PGDATA/postgres.conf does not exist initdb will initialize the cluster and create db phoenix

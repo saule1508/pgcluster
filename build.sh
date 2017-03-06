@@ -1,6 +1,6 @@
 VER=`cat version.txt`
-sudo docker volume ls | grep pgcluster | awk '{print $2}' | xargs sudo docker volume rm
-sudo docker-compose build
+docker volume ls | grep pgcluster | awk '{print $2}' | xargs docker volume rm
+docker-compose build
 exit 0
 if [ $? -eq 0 ] ; then
  echo pushing to evs-r-docker.bebr.evs.tv private registry

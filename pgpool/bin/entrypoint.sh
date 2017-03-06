@@ -16,10 +16,10 @@ wait_for_master(){
   echo "$(date) - waiting for postgres..."
   sleep $SLEEP_TIME
   MAX_TRIES=`expr "$MAX_TRIES" - 1`
-  psql --username=repmgr -h ${HOST} -p ${PORT} repmgr -c "select 1;" > /dev/null
+  ssh pg01 psql --username=repmgr -h ${HOST} -p ${PORT} repmgr -c \"select 1;\"" > /dev/null
   ret=$?
  done
- psql --username=repmgr -h ${HOST} -p ${PORT} repmgr -c "select 1;" > /dev/null
+ ssh pg01 psql --username=repmgr -h ${HOST} -p ${PORT} repmgr -c \"select 1;\"" > /dev/null
  return $?
 }
 
