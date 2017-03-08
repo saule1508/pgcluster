@@ -6,7 +6,7 @@ ENV PGVER=96
 ENV container docker
 RUN yum update -y ; yum clean all
 RUN yum install -y http://www.pgpool.net/yum/rpms/3.6/redhat/rhel-7-x86_64/pgpool-II-release-3.6-1.noarch.rpm; yum clean all
-RUN yum install -y pgpool-II-pg96 pgpool-II-pg96-extensions pgpool-II-pg96-debuginfo sudo vi openssh openssh-clients; yum clean all
+RUN yum install -y pgpool-II-pg96 pgpool-II-pg96-extensions pgpool-II-pg96-debuginfo sudo vi openssh openssh-clients iproute; yum clean all
 RUN groupadd -g 50010 postgres && useradd -u 50010 -g postgres postgres 
 RUN usermod -G wheel -a postgres && echo "postgres" | passwd --stdin postgres
 RUN echo "Defaults:postgres !requiretty" > /etc/sudoers.d/postgres && \
@@ -24,8 +24,15 @@ RUN chown postgres:postgres /var/run/pgpool
 ADD pgpool.conf /etc/pgpool-II/
 ADD pool_hba.conf /etc/pgpool-II/
 RUN echo "postgres:c40a332fdc07de0ff41f8460824c3756" >> /etc/pgpool-II/pcp.conf
-RUN echo "*:*:postgres:evs123" > /home/postgres/.pcppass && chmod 600 /home/postgres/.pcppass
+RUN echo "*:*:postgres:evs123" > /home/postgres/.pcppass && chown postgres:postgres /home/postgres/.pcppass && chmod 600 /home/postgres/.pcppass
 RUN chown -R postgres:postgres /etc/pgpool-II 
+# scripts in /opt/evs-pg-utils should be installed by a rpm (TODO)
+RUN mkdir /opt/evs-pg-utils
+#ADD ./scripts /opt/evs-pg-utils/scripts
+#ADD ./pgconfig /opt/evs-pg-utils/pgconfig
+ADD ./lib /opt/evs-pg-utils/lib
+ADD ./pgpool /opt/evs-pg-utils/pgpool
+RUN chown -R postgres:postgres /opt/evs-pg-utils && chmod 750 /opt/evs-pg-utils && find /opt/evs-pg-utils -name "*.sh" -exec chmod +x {} \;
 ADD bin/entrypoint.sh /
 RUN chown postgres:postgres /entrypoint.sh && chmod +x /entrypoint.sh
 EXPOSE 9999
