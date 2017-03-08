@@ -1,7 +1,9 @@
 version: '2'
 services:
   pg01:
-    build: ./postgres
+    build: 
+      context: ./postgres
+      dockerfile: Dockerfile.supervisor
     environment:
       INITIAL_NODE_TYPE: master
       NODE_ID: 1

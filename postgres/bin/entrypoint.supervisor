@@ -9,4 +9,4 @@ else
  echo initdb OK, starting init
 fi
 echo "Starting supervisord"
-/usr/bin/supervisord
+/usr/bin/supervisord --configuration=/etc/supervisor/supervisord.conf

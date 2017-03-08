@@ -6,7 +6,7 @@ ENV PGVER=96
 ENV container docker
 RUN yum update -y ; yum clean all
 RUN yum install -y epel-release libxslt sudo openssh-server openssh-clients jq passwd rsync && \
-    yum install -y iproute python-setuptools hostname inotify-tools yum-utils which rsync && \
+    yum install -y systemd-sysv iproute python-setuptools hostname inotify-tools yum-utils which rsync && \
     yum clean all
 RUN easy_install supervisor
 RUN mkdir /var/run/sshd
@@ -69,7 +69,7 @@ ADD ./scripts /opt/cl-pg-utils/scripts
 ADD ./pgconfig /opt/cl-pg-utils/pgconfig
 ADD ./lib /opt/cl-pg-utils/lib
 ADD ./bin/entrypoint.supervisor /entrypoint.sh
-ADD supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+ADD supervisord.conf /etc/supervisor/supervisord.conf
 #ADD ./pgpool /opt/cl-pg-utils/pgpool
 RUN chown -R postgres:postgres /opt/cl-pg-utils && chmod 750 /opt/cl-pg-utils
 # Make ssh connection easier
