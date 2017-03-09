@@ -102,10 +102,10 @@ if [ ! -f ${PGDATA}/postgresql.conf ] ; then
 # replication manager
 local  replication   repmgr                      trust
 host   replication   repmgr      127.0.0.1/32    trust
-host   replication   repmgr      172.18.0.0/16   trust
+host   replication   repmgr      172.18.0.0/16   md5
 local   repmgr        repmgr                     trust
 host    repmgr        repmgr      127.0.0.1/32   trust
-host    repmgr        repmgr      172.18.0.0/16  trust
+host    repmgr        repmgr      172.18.0.0/16  md5
 EOF
     echo "host all all all md5" >> $PGDATA/pg_hba.conf
     pg_ctl -D ${PGDATA} start -w 
@@ -115,13 +115,23 @@ EOF
     createuser -s repmgr
     createdb repmgr -O repmgr
     psql --username=repmgr -d repmgr -c "alter user repmgr login password 'repmgrpwd';"
-    psql --username=repmgr -d repmgr -c "ALTER USER repmgr SET search_path TO repmgr_phoenix, \"\$user\", public;"
+    psql --username=repmgr -d repmgr -c "ALTER USER repmgr SET search_path TO repmgr_critlib, \"\$user\", public;"
+    cat <<EOF >> /home/postgres/.pgpass 
+*:*:repmgr:repmgr:repmgrpwd
+*:*:replication:repmgr:repmgrpwd
+EOF
+    chmod 600 /home/postgres/.pgpass
     log_info "Register master in repmgr"
     repmgr -f /etc/repmgr/9.6/repmgr.conf -v master register
     log_info "Stopping database"
     pg_ctl -D ${PGDATA} stop -w
   else
     log_info "This node is a slave, fix repmgr.conf"
+    cat <<EOF >> /home/postgres/.pgpass 
+*:*:repmgr:repmgr:repmgrpwd
+*:*:replication:repmgr:repmgrpwd
+EOF
+    chmod 600 /home/postgres/.pgpass
     sudo sed -i -e "s/pg01/pg02/" -e "/^node=/s/1/2/" /etc/repmgr/9.6/repmgr.conf
     log_info "Wait that master is up and running"
     wait_for_master

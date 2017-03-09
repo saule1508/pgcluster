@@ -82,7 +82,7 @@ ADD ./scripts /opt/cl-pg-utils/scripts
 ADD ./pgconfig /opt/cl-pg-utils/pgconfig
 ADD ./lib /opt/cl-pg-utils/lib
 ADD ./bin/entrypoint.sh /
-#ADD ./pgpool /opt/cl-pg-utils/pgpool
+ADD ./pgpool /opt/cl-pg-utils/pgpool
 RUN chown -R postgres:postgres /opt/cl-pg-utils && chmod 750 /opt/cl-pg-utils
 RUN mkdir /etc/systemd/system/postgresql-9.6.service.d
 RUN echo "[Service]" > /etc/systemd/system/postgresql-9.6.service.d/override.conf && \

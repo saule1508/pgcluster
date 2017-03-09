@@ -26,13 +26,13 @@ ADD pool_hba.conf /etc/pgpool-II/
 RUN echo "postgres:c40a332fdc07de0ff41f8460824c3756" >> /etc/pgpool-II/pcp.conf
 RUN echo "*:*:postgres:evs123" > /home/postgres/.pcppass && chown postgres:postgres /home/postgres/.pcppass && chmod 600 /home/postgres/.pcppass
 RUN chown -R postgres:postgres /etc/pgpool-II 
-# scripts in /opt/evs-pg-utils should be installed by a rpm (TODO)
-RUN mkdir /opt/evs-pg-utils
-#ADD ./scripts /opt/evs-pg-utils/scripts
-#ADD ./pgconfig /opt/evs-pg-utils/pgconfig
-ADD ./lib /opt/evs-pg-utils/lib
-ADD ./pgpool /opt/evs-pg-utils/pgpool
-RUN chown -R postgres:postgres /opt/evs-pg-utils && chmod 750 /opt/evs-pg-utils && find /opt/evs-pg-utils -name "*.sh" -exec chmod +x {} \;
+# scripts in /opt/cl-pg-utils should be installed by a rpm (TODO)
+RUN mkdir /opt/cl-pg-utils
+#ADD ./scripts /opt/cl-pg-utils/scripts
+#ADD ./pgconfig /opt/cl-pg-utils/pgconfig
+ADD ./lib /opt/cl-pg-utils/lib
+ADD ./pgpool /opt/cl-pg-utils/pgpool
+RUN chown -R postgres:postgres /opt/cl-pg-utils && chmod 750 /opt/cl-pg-utils && find /opt/cl-pg-utils -name "*.sh" -exec chmod +x {} \;
 ADD bin/entrypoint.sh /
 RUN chown postgres:postgres /entrypoint.sh && chmod +x /entrypoint.sh
 EXPOSE 9999

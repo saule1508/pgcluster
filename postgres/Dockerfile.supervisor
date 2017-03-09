@@ -70,8 +70,9 @@ ADD ./pgconfig /opt/cl-pg-utils/pgconfig
 ADD ./lib /opt/cl-pg-utils/lib
 ADD ./bin/entrypoint.supervisor /entrypoint.sh
 ADD supervisord.conf /etc/supervisor/supervisord.conf
-#ADD ./pgpool /opt/cl-pg-utils/pgpool
+ADD ./pgpool /opt/cl-pg-utils/pgpool
 RUN chown -R postgres:postgres /opt/cl-pg-utils && chmod 750 /opt/cl-pg-utils
+RUN find /opt/cl-pg-utils -name "*.sh" -exec chmod +x {} \;
 # Make ssh connection easier
 RUN echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config && \
     echo "UserKnownHostsFile /dev/null" >> /etc/ssh/ssh_config && \
@@ -79,10 +80,9 @@ RUN echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config && \
 #pgpass
 RUN echo "*:*:repmgr:repmgr:repmgrpwd" > /home/postgres/.pgpass && chmod 600 /home/postgres/.pgpass && chown postgres:postgres /home/postgres/.pgpass
 ENV PATH=$PATH:/usr/pgsql-${MAJORVER}/bin
-# if the file $PGDATA/postgres.conf does not exist initdb will initialize the cluster and create db phoenix
-#  and db users (two per microservice)
 EXPOSE 5432
 EXPOSE 22
 VOLUME ["/u01/pg${PGVER}/data","/u02/archive","/u02/backup"]
+# if the file $PGDATA/postgres.conf does not exist initdb will initialize the cluster and create db phoenix
+#  and db users (two per microservice)
 CMD ["/entrypoint.sh"]
-VOLUME [ "/sys/fs/cgroup" ]

@@ -22,7 +22,9 @@ services:
       - pg01arc:/u02/archive
     privileged: true
   pg02:
-    build: ./postgres
+    build: 
+      context: ./postgres
+      dockerfile: Dockerfile.supervisor
     environment:
       INITIAL_NODE_TYPE: slave
       NODE_ID: 2
