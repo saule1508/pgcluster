@@ -63,7 +63,9 @@ log_info "MSOWNERPWDLIST: ${MSOWNERPWDLIST}"
 log_info "MSUSERPWDLIST: ${MSUSERPWDLIST}" 
 log_info "PGDATA: ${PGDATA}" 
 log_info "INITIAL_NODE_TYPE: ${INITIAL_NODE_TYPE}" 
-INITIAL_NODE_TYPE=${INITIAL_NODE_TYPE:-master} 
+INITIAL_NODE_TYPE=${INITIAL_NODE_TYPE:-single} 
+NOARCHIVELOG=${NOARCHIVELOG:-0}
+log_info "NOARCHIVELOG: ${NOARCHIVELOG}" 
 export PATH=$PATH:/usr/pgsql-9.6/bin
 MSLIST=${MSLIST-"asset,ingest,playout"}
 
@@ -89,49 +91,55 @@ create_microservices(){
 }
 
 
-if [ ! -f ${PGDATA}/postgresql.conf ] ; then
-  log_info "$PGDATA/postgresql.conf does not exist"
-  #echo First fix ownership of $PGDATA
-  #sudo chown postgres:postgres $PGDATA
-  if [ "a$INITIAL_NODE_TYPE" = "amaster" ] ; then
-    log_info "This node is the master, initdb"
-    pg_ctl initdb -D ${PGDATA} -o "--encoding='UTF8' --locale='en_US.UTF8'"
-    log_info "Adding include_dir in $PGDATA/postgresql.conf"
-    echo "include_dir = '/opt/cl-pg-utils/pgconfig'" >> $PGDATA/postgresql.conf
-    cat <<-EOF >> $PGDATA/pg_hba.conf
-# replication manager
-local  replication   repmgr                      trust
-host   replication   repmgr      127.0.0.1/32    trust
-host   replication   repmgr      172.18.0.0/16   md5
-local   repmgr        repmgr                     trust
-host    repmgr        repmgr      127.0.0.1/32   trust
-host    repmgr        repmgr      172.18.0.0/16  md5
-EOF
-    echo "host all all all md5" >> $PGDATA/pg_hba.conf
-    pg_ctl -D ${PGDATA} start -w 
-    psql --command "create database phoenix ENCODING='UTF8' LC_COLLATE='en_US.UTF8';"
-    create_microservices
-    log_info "Creating repmgr database and user"
-    createuser -s repmgr
-    createdb repmgr -O repmgr
-    psql --username=repmgr -d repmgr -c "alter user repmgr login password 'repmgrpwd';"
-    psql --username=repmgr -d repmgr -c "ALTER USER repmgr SET search_path TO repmgr_critlib, \"\$user\", public;"
-    cat <<EOF >> /home/postgres/.pgpass 
+master_slave_mode = on
+if [[ $INITIAL_NODE_TYPE = "single" ]] ; then
+  log_info "Single node set-up, disable repmgr in supervisord.conf"
+  awk '/program:repmgr/ {l=5}; (l-- > 0) {$0="# "$0} 1' /etc/supervisor/supervisord.conf > /tmp/supervisor.patched
+  sudo cp /tmp/supervisor.patched /etc/supervisor/supervisord.conf
+  rm /tmp/supervisor.patched
+else
+  cat <<EOF >> /home/postgres/.pgpass 
 *:*:repmgr:repmgr:repmgrpwd
 *:*:replication:repmgr:repmgrpwd
 EOF
-    chmod 600 /home/postgres/.pgpass
-    log_info "Register master in repmgr"
-    repmgr -f /etc/repmgr/9.6/repmgr.conf -v master register
+  chmod 600 /home/postgres/.pgpass
+fi
+
+if [ ! -f ${PGDATA}/postgresql.conf ] ; then
+  log_info "$PGDATA/postgresql.conf does not exist"
+  if [[ "a$INITIAL_NODE_TYPE" = "amaster" || "a$INITIAL_NODE_TYPE" = "asingle" ]] ; then
+    log_info "This node is the master or it is a single DB setup, initdb"
+    pg_ctl initdb -D ${PGDATA} -o "--encoding='UTF8' --locale='en_US.UTF8'"
+    log_info "Adding include_dir in $PGDATA/postgresql.conf"
+    echo "include_dir = '/opt/cl-pg-utils/pgconfig'" >> $PGDATA/postgresql.conf
+    if [ $INITIAL_NODE_TYPE = "master" ] ; then
+      cat <<-EOF >> $PGDATA/pg_hba.conf
+# replication manager
+local  replication   repmgr                      trust
+host   replication   repmgr       127.0.0.1/32    trust
+host   replication   repmgr       0.0.0.0/0   md5
+local   repmgr        repmgr                     trust
+host    repmgr        repmgr      127.0.0.1/32   trust
+host    repmgr        repmgr      0.0.0.0/0  md5
+EOF
+    fi
+    echo "host all all 0.0.0.0/0 md5" >> $PGDATA/pg_hba.conf
+    pg_ctl -D ${PGDATA} start -w 
+    psql --command "create database phoenix ENCODING='UTF8' LC_COLLATE='en_US.UTF8';"
+    create_microservices
+    if [ $INITIAL_NODE_TYPE = "master" ] ; then
+      log_info "Creating repmgr database and user"
+      createuser -s repmgr
+      createdb repmgr -O repmgr
+      psql --username=repmgr -d repmgr -c "alter user repmgr login password 'repmgrpwd';"
+      psql --username=repmgr -d repmgr -c "ALTER USER repmgr SET search_path TO repmgr_critlib, \"\$user\", public;"
+      log_info "Register master in repmgr"
+      repmgr -f /etc/repmgr/9.6/repmgr.conf -v master register
+    fi
     log_info "Stopping database"
     pg_ctl -D ${PGDATA} stop -w
   else
     log_info "This node is a slave, fix repmgr.conf"
-    cat <<EOF >> /home/postgres/.pgpass 
-*:*:repmgr:repmgr:repmgrpwd
-*:*:replication:repmgr:repmgrpwd
-EOF
-    chmod 600 /home/postgres/.pgpass
     sudo sed -i -e "s/pg01/pg02/" -e "/^node=/s/1/2/" /etc/repmgr/9.6/repmgr.conf
     log_info "Wait that master is up and running"
     wait_for_master

@@ -32,13 +32,6 @@ RUN rpm -i /tmp/postgresql${PGVER}-${MAJORVER}.${MINORVER}-1PGDG.rhel7.x86_64.rp
 # install repmgr
 ADD https://yum.postgresql.org/9.6/redhat/rhel-7-x86_64/repmgr96-3.3-1.rhel7.x86_64.rpm /tmp
 RUN rpm -i /tmp/repmgr96-3.3-1.rhel7.x86_64.rpm ;  rm /tmp/repmgr96-3.3-1.rhel7.x86_64.rpm 
-RUN echo "#replication manager" >> $PGDATA/pg_hba.conf && \
-    echo "local    replication   repmgr                  trust" >> $PGDATA/pg_hba.conf && \
-    echo "host     replication   repmgr  127.0.0.1/32    trust" >> $PGDATA/pg_hba.conf && \
-    echo "host     replication   repmgr  172.18.0.0/16   trust" >> $PGDATA/pg_hba.conf && \
-    echo "local    repmgr        repmgr                  trust" >> $PGDATA/pg_hba.conf && \
-    echo "host     repmgr   repmgr       127.0.0.1/32    trust" >> $PGDATA/pg_hba.conf && \
-    echo "host     repmgr   repmgr       172.18.0.0/16    trust" >> $PGDATA/pg_hba.conf 
 ADD ./repmgr.conf /etc/repmgr/9.6/
 RUN chown postgres:postgres /etc/repmgr/9.6/repmgr.conf 
 RUN chown postgres:postgres /var/log/repmgr
@@ -88,10 +81,6 @@ RUN mkdir /etc/systemd/system/postgresql-9.6.service.d
 RUN echo "[Service]" > /etc/systemd/system/postgresql-9.6.service.d/override.conf && \
     echo "Environment=">> /etc/systemd/system/postgresql-9.6.service.d/override.conf && \
     echo "Environment=PGDATA=/u01/pg96/data" >> /etc/systemd/system/postgresql-9.6.service.d/override.conf 
-#    echo ExecStartPre= >> /etc/systemd/system/postgresql-9.6.service.d/override.conf && \
-#    echo ExecStartPre=/opt/evs-infra-pg-utils/scripts/initdb.sh >> /etc/systemd/system/postgresql-9.6.service.d/override.conf
-#    echo Requires=initdb.service >> /etc/systemd/system/postgresql-9.6.service.d/override.conf && \
-#   echo After=initdb.service >> /etc/systemd/system/postgresql-9.6.service.d/override.conf &&
 # Make ssh connection easier
 RUN echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config && \
     echo "UserKnownHostsFile /dev/null" >> /etc/ssh/ssh_config && \

@@ -1,0 +1,32 @@
+version: '2'
+services:
+  pg01:
+    build: 
+      context: ./postgres
+      dockerfile: Dockerfile.supervisor
+    image: pg
+    environment:
+      INITIAL_NODE_TYPE: single
+      MSLIST: "asset,ingest,playout" 
+              # for each micro-service two db users are created, for ex. asset_owner and asset_user, etc.
+      MSOWNERPWDLIST: "asset_owner,ingest_owner,playout_owner"
+      MSUSERPWDLIST: "asset_user,ingest_user,playout_user"
+    ports:
+      - 5432:5432 # postgres port
+    volumes:
+      - pg01db:/u01/pg96/data
+      - pg01arc:/u02/archive
+  pgpool01:
+    build: ./pgpool
+    image: pgpool
+    environment:
+      STREAMING_REPLICATION: 0
+    ports:
+      - 9999:9999
+    depends_on:
+      - pg01
+volumes:
+  pg01db:
+  pg02db:
+  pg01arc:
+  pg02arc:

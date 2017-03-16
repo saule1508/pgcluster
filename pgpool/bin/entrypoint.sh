@@ -6,7 +6,7 @@ wait_for_master(){
  PORT=5432
  MAX_TRIES=10
 
- ssh pg01 "psql --username=repmgr -h ${HOST} -p ${PORT} repmgr -c \"select 1;\"" > /dev/null
+ ssh pg01 "psql -c \"select 1;\"" > /dev/null
  ret=$?
  if [ $ret -eq 0 ] ; then
   echo "server ready"
@@ -16,10 +16,10 @@ wait_for_master(){
   echo "$(date) - waiting for postgres..."
   sleep $SLEEP_TIME
   MAX_TRIES=`expr "$MAX_TRIES" - 1`
-  ssh pg01 "psql --username=repmgr -h ${HOST} -p ${PORT} repmgr -c \"select 1;\"" > /dev/null
+  ssh pg01 "psql -c \"select 1;\"" > /dev/null
   ret=$?
  done
- ssh pg01 "psql --username=repmgr -h ${HOST} -p ${PORT} repmgr -c \"select 1;\"" > /dev/null
+ ssh pg01 "psql -c \"select 1;\"" > /dev/null
  return $?
 }
 
@@ -47,6 +47,12 @@ else
  echo "delegate IP is not set, turn off watch dog"
  sed -i -e "/^use_watchdog/s/on/off/" /etc/pgpool-II/pgpool.conf
 fi
+STREAMING_REPLICATION=${STREAMING_REPLICATION:-1}
+if [ $STREAMING_REPLICATION -eq 0 ] ; then
+  echo "No streaming replication"
+  sed -i -e "/^master_slave_mode/s/on/off/" /etc/pgpool-II/pgpool.conf
+fi
+
 NODE_NAME=${NODE_NAME:-pgpool01}
 echo "Node name is $NODE_NAME"
 if [ $NODE_NAME != "pgpool01" ] ; then

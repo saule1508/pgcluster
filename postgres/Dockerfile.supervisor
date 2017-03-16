@@ -3,7 +3,6 @@ MAINTAINER pierre@critiqueslibres.com
 ENV MAJORVER=9.6
 ENV MINORVER=2
 ENV PGVER=96
-ENV container docker
 RUN yum update -y ; yum clean all
 RUN yum install -y epel-release libxslt sudo openssh-server openssh-clients jq passwd rsync && \
     yum install -y systemd-sysv iproute python-setuptools hostname inotify-tools yum-utils which rsync && \
@@ -22,17 +21,10 @@ RUN rpm -i /tmp/postgresql${PGVER}-${MAJORVER}.${MINORVER}-1PGDG.rhel7.x86_64.rp
            /tmp/postgresql${PGVER}-server-${MAJORVER}.${MINORVER}-1PGDG.rhel7.x86_64.rpm && \
 	   rm -f /tmp/postgresql*.rpm
 # install repmgr
-ADD https://yum.postgresql.org/9.6/redhat/rhel-7-x86_64/repmgr96-3.3-1.rhel7.x86_64.rpm /tmp
-RUN rpm -i /tmp/repmgr96-3.3-1.rhel7.x86_64.rpm ;  rm /tmp/repmgr96-3.3-1.rhel7.x86_64.rpm 
-RUN echo "#replication manager" >> $PGDATA/pg_hba.conf && \
-    echo "local    replication   repmgr                  trust" >> $PGDATA/pg_hba.conf && \
-    echo "host     replication   repmgr  127.0.0.1/32    trust" >> $PGDATA/pg_hba.conf && \
-    echo "host     replication   repmgr  172.18.0.0/16   trust" >> $PGDATA/pg_hba.conf && \
-    echo "local    repmgr        repmgr                  trust" >> $PGDATA/pg_hba.conf && \
-    echo "host     repmgr   repmgr       127.0.0.1/32    trust" >> $PGDATA/pg_hba.conf && \
-    echo "host     repmgr   repmgr       172.18.0.0/16    trust" >> $PGDATA/pg_hba.conf 
-ADD ./repmgr.conf /etc/repmgr/9.6/
-RUN chown postgres:postgres /etc/repmgr/9.6/repmgr.conf 
+ADD https://yum.postgresql.org/${MAJORVER}/redhat/rhel-7-x86_64/repmgr${PGVER}-3.3-1.rhel7.x86_64.rpm /tmp
+RUN rpm -i /tmp/repmgr${PGVER}-3.3-1.rhel7.x86_64.rpm ;  rm /tmp/repmgr${PGVER}-3.3-1.rhel7.x86_64.rpm 
+ADD ./repmgr.conf /etc/repmgr/${MAJORVER}/
+RUN chown postgres:postgres /etc/repmgr/${MAJORVER}/repmgr.conf 
 RUN chown postgres:postgres /var/log/repmgr
 RUN mkdir -p /u01/pg${PGVER}/data /u02/backup /u02/archive && chown -R postgres:postgres /u01/pg${PGVER} /u02/backup /u02/archive && \
     chmod 700 /u01/pg${PGVER}/data /u02/archive
@@ -47,17 +39,12 @@ RUN echo postgres:postgres | chpasswd
 RUN echo root:postgres | chpasswd
 ADD ssh_keys /home/postgres/.ssh
 RUN chown -R postgres:postgres /home/postgres/.ssh && chmod 700 /home/postgres/.ssh && chmod 644 /home/postgres/.ssh/* && chmod 600 /home/postgres/.ssh/id_rsa
-#selinux inside the container is not possible, commands below only make sense on a host
-#RUN semanage fcontext --add --type postgresql_exec_t "/usr/pgsql-9.6/bin/(initdb|postgres|pg_ctl)" && \
-#    restorecon -rv /usr/pgsql-9.6/bin/* && \
-#    semanage fcontext --add --type postgresql_db_t "/u01/pg96/data(/.*)?" && \
-#    restorecon -rv --type=postgresql_db_t /u01/pg96/data
 RUN  echo "export PATH=\$PATH:/usr/pgsql-${MAJORVER}/bin" >  /etc/profile.d/postgres.sh
 RUN  echo "[ -f /etc/profile ] && source /etc/profile" >> /home/postgres/.bash_profile && \
-     echo "export PGDATA=/u01/pg96/data" >> /home/postgres/.bash_profile
+     echo "export PGDATA=/u01/pg${PGVER}/data" >> /home/postgres/.bash_profile
 #Some useful aliases for replication
 RUN echo "alias pool_nodes='psql --username=repmgr -h ##IPFAILOVER## -p 9999 repmgr -c \"show pool_nodes;\"'" >> /home/postgres/.bashrc && \
-    echo "alias cluster_show='repmgr -f /etc/repmgr/9.6/repmgr.conf cluster show'" >> /home/postgres/.bashrc && \
+    echo "alias cluster_show='repmgr -f /etc/repmgr/${MAJORVER}/repmgr.conf cluster show'" >> /home/postgres/.bashrc && \
     echo "alias cluster_monitor='psql --username=repmgr repmgr -c \"select * from repl_monitor order by last_monitor_time desc limit 1;\"'" >> /home/postgres/.bashrc
 #
 # this localedef command is needed because of bug in centos docker image?
@@ -79,6 +66,8 @@ RUN echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config && \
     echo "LogLevel QUIET" >> /etc/ssh/ssh_config 
 #pgpass
 RUN echo "*:*:repmgr:repmgr:repmgrpwd" > /home/postgres/.pgpass && chmod 600 /home/postgres/.pgpass && chown postgres:postgres /home/postgres/.pgpass
+HEALTHCHECK --interval=30s \
+  CMD /opt/cl-pg-utils/scripts/health_check.sh
 ENV PATH=$PATH:/usr/pgsql-${MAJORVER}/bin
 EXPOSE 5432
 EXPOSE 22
