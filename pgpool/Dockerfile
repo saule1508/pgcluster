@@ -21,7 +21,6 @@ ADD ssh_keys /home/postgres/.ssh
 RUN chown -R postgres:postgres /home/postgres/.ssh && chmod 700 /home/postgres/.ssh && chmod 644 /home/postgres/.ssh/* && chmod 600 /home/postgres/.ssh/id_rsa
 RUN mkdir /var/run/postgresql && chown postgres:postgres /var/run/postgresql
 RUN chown postgres:postgres /var/run/pgpool
-ADD pgpool.conf /etc/pgpool-II/
 ADD pool_hba.conf /etc/pgpool-II/
 RUN echo "postgres:c40a332fdc07de0ff41f8460824c3756" >> /etc/pgpool-II/pcp.conf
 RUN echo "*:*:postgres:evs123" > /home/postgres/.pcppass && chown postgres:postgres /home/postgres/.pcppass && chmod 600 /home/postgres/.pcppass

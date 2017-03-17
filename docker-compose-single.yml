@@ -4,8 +4,10 @@ services:
     build: 
       context: ./postgres
       dockerfile: Dockerfile.supervisor
-    image: pg
+    image: localhost:5000/pg:9.6.2
     environment:
+      NODE_ID: 1
+      NODE_NAME: pg01
       INITIAL_NODE_TYPE: single
       MSLIST: "asset,ingest,playout" 
               # for each micro-service two db users are created, for ex. asset_owner and asset_user, etc.
@@ -17,16 +19,27 @@ services:
       - pg01db:/u01/pg96/data
       - pg01arc:/u02/archive
   pgpool01:
-    build: ./pgpool
-    image: pgpool
+    #build: ./pgpool
+    image: localhost:5000/pgpool:9.6.2
     environment:
-      STREAMING_REPLICATION: 0
+      PGMASTER_NODE_NAME: pg01
+      #PG_BACKEND_NODE_LIST: 0:pg01:9999:1:/u01/pg96/data:ALLOW_TO_FAILOVER, 1:pg01, etc.
+                # csv list of backend postgres databases, each backend db contains (separated by :)
+                # number (start with 0):host name:pgpool port (default 9999):data dir (default /u01/pg96/data):flag ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
+                # not needed when there is a single postgres DB
+      PGP_NODE_NAME: pgpool01
+      #REPMGRPWD: repmgr
+      #DELEGATE_IP: 172.18.0.100
+      #TRUSTED_SERVERS: 172.23.1.250
+      #PGP_HEARTBEATS: "0:pgpool01:9694,1:pgpool02:9694"
+      #PGP_OTHERS: "0:pgpool02:9999"
+                # csv list of other pgpool nodes, each node contains (separated by :)
+                # number (start with 0):host name:pgpool port (default 9999)
+                # not needed when there is a single pgpool node
     ports:
       - 9999:9999
     depends_on:
       - pg01
 volumes:
   pg01db:
-  pg02db:
   pg01arc:
-  pg02arc:

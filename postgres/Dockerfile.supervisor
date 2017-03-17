@@ -23,8 +23,6 @@ RUN rpm -i /tmp/postgresql${PGVER}-${MAJORVER}.${MINORVER}-1PGDG.rhel7.x86_64.rp
 # install repmgr
 ADD https://yum.postgresql.org/${MAJORVER}/redhat/rhel-7-x86_64/repmgr${PGVER}-3.3-1.rhel7.x86_64.rpm /tmp
 RUN rpm -i /tmp/repmgr${PGVER}-3.3-1.rhel7.x86_64.rpm ;  rm /tmp/repmgr${PGVER}-3.3-1.rhel7.x86_64.rpm 
-ADD ./repmgr.conf /etc/repmgr/${MAJORVER}/
-RUN chown postgres:postgres /etc/repmgr/${MAJORVER}/repmgr.conf 
 RUN chown postgres:postgres /var/log/repmgr
 RUN mkdir -p /u01/pg${PGVER}/data /u02/backup /u02/archive && chown -R postgres:postgres /u01/pg${PGVER} /u02/backup /u02/archive && \
     chmod 700 /u01/pg${PGVER}/data /u02/archive

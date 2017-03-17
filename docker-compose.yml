@@ -7,20 +7,17 @@ services:
     environment:
       INITIAL_NODE_TYPE: master
       NODE_ID: 1
-      #CLUSTER_NODE_NETWORK_NAME: pg01
+      NODE_NAME: pg01
       #POSTGRES_DB: postgres
       MSLIST: "asset,ingest,playout" 
               # for each micro-service two db users are created, for ex. asset_owner and asset_user, etc.
       MSOWNERPWDLIST: "asset_owner,ingest_owner,playout_owner"
       MSUSERPWDLIST: "asset_user,ingest_user,playout_user"
     ports:
-      - 19999:9999 # pgpool port
       - 15432:5432 # postgres port
     volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup
       - pg01db:/u01/pg96/data
       - pg01arc:/u02/archive
-    privileged: true
   pg02:
     build: 
       context: ./postgres
@@ -28,19 +25,16 @@ services:
     environment:
       INITIAL_NODE_TYPE: slave
       NODE_ID: 2
-      #CLUSTER_NODE_NETWORK_NAME: pg02
+      NODE_NAME: pg02
       MSLIST: "asset,ingest,playout" 
               # for each micro-service two db users are created, for ex. asset_owner and asset_user, etc.
       MSOWNERPWDLIST: "asset_owner,ingest_owner,playout_owner"
       MSUSERPWDLIST: "asset_user,ingest_user,playout_user"
     ports:
-      - 29999:9999 # pgpool port
       - 25432:5432 # postgres port
     volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup
       - pg02db:/u01/pg96/data
       - pg02arc:/u02/archive
-    privileged: true
     depends_on:
       - pg01
   pgpool01:

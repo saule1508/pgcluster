@@ -63,11 +63,20 @@ log_info "MSOWNERPWDLIST: ${MSOWNERPWDLIST}"
 log_info "MSUSERPWDLIST: ${MSUSERPWDLIST}" 
 log_info "PGDATA: ${PGDATA}" 
 log_info "INITIAL_NODE_TYPE: ${INITIAL_NODE_TYPE}" 
+log_info "NODE_ID: ${NODE_ID}"
+log_info "NODE_NAME: ${NODE_NAME}"
 INITIAL_NODE_TYPE=${INITIAL_NODE_TYPE:-single} 
 NOARCHIVELOG=${NOARCHIVELOG:-0}
 log_info "NOARCHIVELOG: ${NOARCHIVELOG}" 
 export PATH=$PATH:/usr/pgsql-9.6/bin
 MSLIST=${MSLIST-"asset,ingest,playout"}
+log_info "MSLIST: ${MSLIST}"
+REPMGRPWD=${REPMGRPWD:-repmgr}
+log_info "REPMGRPWD=${REPMGRPWD}"
+echo "NOARCHIVELOG: ${NOARCHIVELOG}" >> /opt/cl-pg-utils/lib/cl_pg_utils.env
+echo "NODE_ID: ${NODE_ID}" >> /opt/cl-pg-utils/lib/cl_pg_utils.env
+echo "NODE_NAME: ${NODE_NAME}" >> /opt/cl-pg-utils/lib/cl_pg_utils.env
+
 
 create_microservices(){
  IFS=',' read -ra MSERVICES <<< "$MSLIST"
@@ -90,20 +99,49 @@ create_microservices(){
  done
 }
 
+#repmgr.conf
+sudo touch /etc/repmgr/9.6/repmgr.conf && sudo chown postgres:postgres /etc/repmgr/9.6/repmgr.conf
+cat <<EOF > /etc/repmgr/9.6/repmgr.conf
+cluster=critlib
+node=${NODE_ID}
+node_name=${NODE_NAME}
+conninfo='host=${NODE_NAME} dbname=repmgr user=repmgr password=${REPMGRPWD}'
+use_replication_slots=1
+restore_command = cp /u02/archive/%f %p
+logfile='/var/log/repmgr/repmgr.log'
+failover=manual
+monitor_interval_secs=30
+pg_bindir = '/usr/pgsql-9.6/bin'
+EOF
+if [ -f /etc/supervisor/supervisord.conf ] ; then
+  cat <<EOF >> /etc/repmgr/9.6/repmgr.conf
+service_start_command = pg_ctl start
+service_stop_command = pg_ctl stop
+service_restart_command = pg_ctl restart
+service_reload_command = pg_ctl reload
+EOF
+else
+  cat <<EOF >> /etc/repmgr/9.6/repmgr.conf
+service_start_command = sudo systemctl start postgresql-9.6
+service_stop_command = sudo systemctl stop postgresql-9.6
+service_restart_command = sudo systemctl restart postgresql-9.6
+service_reload_command = sudo systemctl reload postgresql-9.6
+EOF
+fi
 
-master_slave_mode = on
-if [[ $INITIAL_NODE_TYPE = "single" ]] ; then
+if [ $INITIAL_NODE_TYPE = "single" ] ; then
   log_info "Single node set-up, disable repmgr in supervisord.conf"
   awk '/program:repmgr/ {l=5}; (l-- > 0) {$0="# "$0} 1' /etc/supervisor/supervisord.conf > /tmp/supervisor.patched
   sudo cp /tmp/supervisor.patched /etc/supervisor/supervisord.conf
   rm /tmp/supervisor.patched
-else
-  cat <<EOF >> /home/postgres/.pgpass 
-*:*:repmgr:repmgr:repmgrpwd
-*:*:replication:repmgr:repmgrpwd
-EOF
-  chmod 600 /home/postgres/.pgpass
 fi
+
+touch /home/postgres/.pgpass
+cat <<EOF >> /home/postgres/.pgpass 
+*:*:repmgr:repmgr:${REPMGRPWD}
+*:*:replication:repmgr:${REPMGRPWD}
+EOF
+chmod 600 /home/postgres/.pgpass
 
 if [ ! -f ${PGDATA}/postgresql.conf ] ; then
   log_info "$PGDATA/postgresql.conf does not exist"
@@ -127,20 +165,16 @@ EOF
     pg_ctl -D ${PGDATA} start -w 
     psql --command "create database phoenix ENCODING='UTF8' LC_COLLATE='en_US.UTF8';"
     create_microservices
-    if [ $INITIAL_NODE_TYPE = "master" ] ; then
-      log_info "Creating repmgr database and user"
-      createuser -s repmgr
-      createdb repmgr -O repmgr
-      psql --username=repmgr -d repmgr -c "alter user repmgr login password 'repmgrpwd';"
-      psql --username=repmgr -d repmgr -c "ALTER USER repmgr SET search_path TO repmgr_critlib, \"\$user\", public;"
-      log_info "Register master in repmgr"
-      repmgr -f /etc/repmgr/9.6/repmgr.conf -v master register
-    fi
+    log_info "Creating repmgr database and user"
+    createuser -s repmgr
+    createdb repmgr -O repmgr
+    psql --username=repmgr -d repmgr -c "alter user repmgr login password '${REPMGRPWD}';"
+    psql --username=repmgr -d repmgr -c "ALTER USER repmgr SET search_path TO repmgr_critlib, \"\$user\", public;"
+    log_info "Register master in repmgr"
+    repmgr -f /etc/repmgr/9.6/repmgr.conf -v master register
     log_info "Stopping database"
     pg_ctl -D ${PGDATA} stop -w
   else
-    log_info "This node is a slave, fix repmgr.conf"
-    sudo sed -i -e "s/pg01/pg02/" -e "/^node=/s/1/2/" /etc/repmgr/9.6/repmgr.conf
     log_info "Wait that master is up and running"
     wait_for_master
     if [ $? -eq 0 ] ; then
