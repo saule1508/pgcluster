@@ -66,16 +66,16 @@ log_info "INITIAL_NODE_TYPE: ${INITIAL_NODE_TYPE}"
 log_info "NODE_ID: ${NODE_ID}"
 log_info "NODE_NAME: ${NODE_NAME}"
 INITIAL_NODE_TYPE=${INITIAL_NODE_TYPE:-single} 
-NOARCHIVELOG=${NOARCHIVELOG:-0}
-log_info "NOARCHIVELOG: ${NOARCHIVELOG}" 
+ARCHIVELOG=${ARCHIVELOG:-1}
+log_info "ARCHIVELOG: ${ARCHIVELOG}" 
 export PATH=$PATH:/usr/pgsql-9.6/bin
 MSLIST=${MSLIST-"asset,ingest,playout"}
 log_info "MSLIST: ${MSLIST}"
 REPMGRPWD=${REPMGRPWD:-repmgr}
 log_info "REPMGRPWD=${REPMGRPWD}"
-echo "NOARCHIVELOG: ${NOARCHIVELOG}" >> /opt/cl-pg-utils/lib/cl_pg_utils.env
-echo "NODE_ID: ${NODE_ID}" >> /opt/cl-pg-utils/lib/cl_pg_utils.env
-echo "NODE_NAME: ${NODE_NAME}" >> /opt/cl-pg-utils/lib/cl_pg_utils.env
+sed -i -e "/^NODE_ID=/d" -e "/^NODE_NAME=/d" /opt/cl-pg-utils/lib/cl_pg_utils.env
+echo "NODE_ID=${NODE_ID}" >> /opt/cl-pg-utils/lib/cl_pg_utils.env
+echo "NODE_NAME=${NODE_NAME}" >> /opt/cl-pg-utils/lib/cl_pg_utils.env
 
 
 create_microservices(){
@@ -130,10 +130,15 @@ EOF
 fi
 
 if [ $INITIAL_NODE_TYPE = "single" ] ; then
-  log_info "Single node set-up, disable repmgr in supervisord.conf"
-  awk '/program:repmgr/ {l=5}; (l-- > 0) {$0="# "$0} 1' /etc/supervisor/supervisord.conf > /tmp/supervisor.patched
-  sudo cp /tmp/supervisor.patched /etc/supervisor/supervisord.conf
-  rm /tmp/supervisor.patched
+  if [ -f /etc/supervisor/supervisord.conf ] ; then
+    log_info "Single node set-up, disable repmgr in supervisord.conf"
+    awk '/program:repmgr/ {l=5}; (l-- > 0) {$0="# "$0} 1' /etc/supervisor/supervisord.conf > /tmp/supervisor.patched
+    sudo cp /tmp/supervisor.patched /etc/supervisor/supervisord.conf
+    rm /tmp/supervisor.patched
+  else
+    log_info "Single node set-up, disable service repmgrd"
+    sudo systemctl disable rempgr96
+  fi
 fi
 
 touch /home/postgres/.pgpass
@@ -174,6 +179,7 @@ EOF
     repmgr -f /etc/repmgr/9.6/repmgr.conf -v master register
     log_info "Stopping database"
     pg_ctl -D ${PGDATA} stop -w
+    echo "ARCHIVELOG=${ARCHIVELOG}" > $PGDATA/override.env
   else
     log_info "Wait that master is up and running"
     wait_for_master
@@ -191,4 +197,7 @@ EOF
   fi
 else
   log_info "File ${PGDATA}/postgresql.conf already exist"
+  touch $PGDATA/override.env
+  sed -i -e "/^ARCHIVELOG=/d" $PGDATA/override.env
+  echo "ARCHIVELOG=${ARCHIVELOG}" >> $PGDATA/override.env
 fi

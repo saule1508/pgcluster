@@ -62,8 +62,6 @@ RUN find /opt/cl-pg-utils -name "*.sh" -exec chmod +x {} \;
 RUN echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config && \
     echo "UserKnownHostsFile /dev/null" >> /etc/ssh/ssh_config && \
     echo "LogLevel QUIET" >> /etc/ssh/ssh_config 
-#pgpass
-RUN echo "*:*:repmgr:repmgr:repmgrpwd" > /home/postgres/.pgpass && chmod 600 /home/postgres/.pgpass && chown postgres:postgres /home/postgres/.pgpass
 HEALTHCHECK --interval=30s \
   CMD /opt/cl-pg-utils/scripts/health_check.sh
 ENV PATH=$PATH:/usr/pgsql-${MAJORVER}/bin

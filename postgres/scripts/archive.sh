@@ -1,9 +1,12 @@
 #!/bin/bash
 
 source /opt/cl-pg-utils/lib/cl_pg_utils_lib.sh
+if [ -f $PGDATA/override.env ] ; then
+  source $PGDATA/override.env
+fi
 THISHOST=`hostname`
-if [ $NOARCHIVELOG -eq 1 ] ; then
-  log_info archive "archiving $1 skipped because NOARCHIVELOG is 1"
+if [ $ARCHIVELOG -eq 0 ] ; then
+  log_info archive "archiving $1 skipped because ARCHIVELOG is 0"
   exit 0
 fi
 log_info archive "archiving $1"

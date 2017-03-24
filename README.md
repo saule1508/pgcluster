@@ -1,79 +1,65 @@
-# evs-pg-cluster
-Postgres database 9.6 on Centos 7.3 with phoenix database with support for replication. This image will contain a ssh server and systemd (because we'll need multiple service running in the container)
+# cl-pg-cluster
+Postgres database 9.6 on Centos 7.3 with postgres database with support for replication. The postgres image will contain a ssh server, repmgr and supervisord (there is a variant with systemd)
 
-The docker-compose file should be used to set all env variables and start the master and the slave container
+Everytime the container is started (postgres container or pgpool container), it is configured again based on the environment variables (i.e. /etc/repmgr/9.6/repmgr.conf and /etc/pgpool-II/pgpool.conf are rebuild, among others). Similarly the file /etc/pgpool-II/pool_passwd is rebuild again, by querying the postgres database).
+
+There are various instances of docker-compose files, to test various test cases. docker-compose files are convenient to set all env variables.
 
 ** this is WIP: the end result will be 1 master, 2 slaves (with repmgr) and 2 pgpool **
 
 ## build
 
-see the script build.sh
+see the script build.sh, it build the image postgres (pg) and the image pgpool
 
-## run
+## run postgres
 
 The container should be started in detached mode with a bunch of environment variables
 
-docker run -d -p 5432:5432 -v /sys/fs/cgroup:/sys/fs/cgroup --name pg evs-pg-cluster
-
-The entrypoint of the image is the script initdb.sh. This script tests if the file $PGDATA/postgresql.conf exists and if not it creates the phoenix DB with the users. The logic is that if 
-you don't mount an existing database onto /u01/pg96/data then a standard phoenix db is created (and it will be deleted when the container is removed)
-
-* Note that it is possible to override initdb.sh, you can mount it with /tmp/initdb.sh (see below)
-* The following microservices are initialized by initdb.sh: asset, ingest, playout. You can override this list via the environment variables MSLIST
 ```
-docker run -d -p 543:5432 -v /sys/fs/cgroup:/sys/fs/cgroup --name pg -e "MSLIST=asset,playout,ats" evs-pg-cluster
-```
-with this MSLIST, the users and scheams asset_owner, playout_owner and ats_owner will be created plus the corresponfing _user accounts.
-
-## example 
-
-* with a host mount. In this case /home/evs/data must be owner by uid 50010 (postgres)
-
-```
-docker run -d -p 5432:5432 -v /sys/fs/cgroup:/sys/fs/cgroup -v /home/evs/data:/u01/pg96/data --name pg evs-pg-cluster
+docker volume create --name pg01data
+docker run -d -p 5432:5432 \
+  -e NODE_ID=1 \
+  -e NODE_NAME=pg01 \
+  -e INITIAL_NODE_TYPE=single \
+  -e REPMGRPWD=mypassword \
+  -e MSLIST=critlib \
+  -e MSOWNERPWDLIST=clowner_pwd \
+  -e MSUSERPWDLIST=cluser_pwd \
+  -v pg01data:/u01/pg96/data --name pg01 pg:9.6.2
 ```
 
-* without a volume. The database is created inside the container and is lost when the container is removed
+The entrypoint of the image is entrypoint.sh. This script calls initdb.sh (directory bootstrap). initdb.sh tests if the file $PGDATA/postgresql.conf exists, and if not it creates the database with the users corresponding to MSLIST. For each micro-service in the list, a _owner and _user user are created. passwords can be given via MSOWNERPWDLIST and MSUSERPWDLIST
 
-```
-docker run -d -p 5432:5432 -v /sys/fs/cgroup:/sys/fs/cgroup --name pg evs-pg-cluster
-```
-
-* to override the database creation script
-
-```
-docker run -v /home/evs/initdb.sh:/tmp/initdb.sh -v /sys/fs/cgroup:/sys/fs/cgroup --name pg -d -p 5432:5432 evs-pg-cluster
-```
-
-* with a docker volume (not advised on production)
-
-first create the volume
-```
-docker create volume --name pg01data
-```
-
-then use it in the run command
-```
-docker run -d -v pg01data:/u01/pg96/data -v /sys/fs/cgroup:/sys/fs/cgroup --name pg01 -p 5432:5432 evs-pg-cluster
-```
-
-
-## get inside the container
+### get inside the container
 
 you can exec a shell in the container to look around
 
 ```
-docker exec -ti pg /bin/bash
+docker exec -ti pgpool01 /bin/bash
 ```
+you can also ssh into the container
 
-but you can also ssh into the container
+## run pgpool
 
-you can use the image to run a shell and have the binaries (psql, pg_dump, etc.)
-```
-docker run -ti --name pgclient --entrypoint=/bin/bash evs-phoenix-postgres
-```
+When the container starts the configuration /etc/pgpool-II/pgpool.conf is build based on environment variables passed in the run command.
+
+The following environment variables are important to properly set-up pgpool
+
+
+* PGMASTER_NODE_NAME: pg01. Node name of the postgres database. Needed so that the container can query the list of users and build the pool_passwd list
+* PG_BACKEND_NODE_LIST: 0:pg01:9999:1:/u01/pg96/data:ALLOW_TO_FAILOVER, 1:pg02, etc.
+                # csv list of backend postgres databases, each backend db contains (separated by :)
+                # number (start with 0):host name:pgpool port (default 9999):data dir (default /u01/pg96/data):flag ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
+                # not needed when there is a single postgres DB
+* PGP_NODE_NAME: pgpool01
+* REPMGRPWD: repmgr_pwd (must correspond to the value in postgres of course)
+* DELEGATE_IP: 172.18.0.100 Only if you want the watchdog mode. Note that this watchdog mode does not make a lot of sense inside docker, it is probably better to use the HA functionality of docker swarm
+* TRUSTED_SERVERS: 172.23.1.250 When using the watchdog, it helps prevent split-brain
+* PGP_HEARTBEATS: "0:pgpool01:9694,1:pgpool02:9694" When using the watchdog
+* PGP_OTHERS: "0:pgpool02:9999" The other pgpool nodes, needed for the configuration
+
 
 ## users and passords
 
-* the users are created via the script initdb.sh, have a look at it.(TODO: pwd should be given via ENV)
+* the users are created via the script initdb.sh, have a look at it.
 * postgres unix user has uid 50010

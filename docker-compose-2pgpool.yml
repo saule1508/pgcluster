@@ -1,29 +1,51 @@
 version: '2'
 services:
   pg01:
-    #build: 
-    #  context: .
-    #  dockerfile: Dockerfile.supervisor
-    #image: evs-r-docker.bebr.evs.tv:5000/evs-pg:9.6.2
     image: localhost:5000/pg:9.6.2
     environment:
-      INITIAL_NODE_TYPE: single
+      INITIAL_NODE_TYPE: master
       NODE_ID: 1
       NODE_NAME: pg01
-      NOARCHIVELOG: 1
+      ARCHIVELOG: 1
       MSLIST: "asset,ingest,playout" 
               # for each micro-service two db users are created, for ex. asset_owner and asset_user, etc.
       MSOWNERPWDLIST: "asset_owner,ingest_owner,playout_owner"
       MSUSERPWDLIST: "asset_user,ingest_user,playout_user"
       #REPMGRPWD: repmgr
     ports:
-      - 5432:5432 # postgres port
+      - 15432:5432 # postgres port
     volumes:
       - pg01db:/u01/pg96/data
       - pg01archive:/u02/archive
       - pg01backup:/u02/backup
-    logging:
-      driver: "journald"
+      - /sys/fs/cgroup:/sys/fs/cgroup
+    #logging:
+    #  driver: "journald"
+    privileged: true
+
+  pg02:
+    image: localhost:5000/pg:9.6.2
+    environment:
+      INITIAL_NODE_TYPE: slave
+      NODE_ID: 2
+      NODE_NAME: pg02
+      ARCHIVELOG: 1
+      MSLIST: "asset,ingest,playout" 
+              # for each micro-service two db users are created, for ex. asset_owner and asset_user, etc.
+      MSOWNERPWDLIST: "asset_owner,ingest_owner,playout_owner"
+      MSUSERPWDLIST: "asset_user,ingest_user,playout_user"
+      #REPMGRPWD: repmgr
+    ports:
+      - 25432:5432 # postgres port
+    volumes:
+      - pg02db:/u01/pg96/data
+      - pg02archive:/u02/archive
+      - pg02backup:/u02/backup
+      - /sys/fs/cgroup:/sys/fs/cgroup
+    depends_on:
+      - pg01
+    privileged: true
+
   pgpool01:
     #build:
     #  context: .
@@ -32,14 +54,14 @@ services:
     image: localhost:5000/pgpool:9.6.2
     environment:
       PGMASTER_NODE_NAME: pg01
-      #PG_BACKEND_NODE_LIST: 0:pg01:9999:1:/u01/pg96/data:ALLOW_TO_FAILOVER, 1:pg01, etc.
+      PG_BACKEND_NODE_LIST: 0:pg01:9999:/u01/pg96/data:ALLOW_TO_FAILOVER,1:pg02:9999:/u01/pg96/data:ALLOW_TO_FAILOVER
                 # csv list of backend postgres databases, each backend db contains (separated by :)
                 # number (start with 0):host name:pgpool port (default 9999):data dir (default /u01/pg96/data):flag ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
                 # not needed when there is a single postgres DB
       PGP_NODE_NAME: pgpool01
       #REPMGRPWD: repmgr
       DELEGATE_IP: 172.18.0.100
-      TRUSTED_SERVERS: 172.23.1.250
+      TRUSTED_SERVERS: 192.168.1.1
       PGP_HEARTBEATS: "0:pgpool01:9694,1:pgpool02:9694"
       PGP_OTHERS: "0:pgpool02:9999"
                 # csv list of other pgpool nodes, each node contains (separated by :)
@@ -49,23 +71,25 @@ services:
       - 9999:9999 
     cap_add:
       - NET_ADMIN
+    depends_on:
+      - pg01
 
   pgpool02:
     #build:
     #  context: .
     #  dockerfile: Dockerfile.pgpool
     #image: evs-r-docker.bebr.evs.tv:5000/evs-pgpool:9.6.2
-    image: evs-pgpool:9.6.2
+    image: localhost:5000/pgpool:9.6.2
     environment:
       PGMASTER_NODE_NAME: pg01
-      #PG_BACKEND_NODE_LIST: 0:pg01:9999:1:/u01/pg96/data:ALLOW_TO_FAILOVER, 1:pg01, etc.
+      PG_BACKEND_NODE_LIST: 0:pg01:9999:/u01/pg96/data:ALLOW_TO_FAILOVER,1:pg02:9999:/u01/pg96/data:ALLOW_TO_FAILOVER
                 # csv list of backend postgres databases, each backend db contains (separated by :)
                 # number (start with 0):host name:pgpool port (default 9999):data dir (default /u01/pg96/data):flag ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
                 # not needed when there is a single postgres DB
       PGP_NODE_NAME: pgpool02
       #REPMGRPWD: repmgr
       DELEGATE_IP: 172.18.0.100
-      TRUSTED_SERVERS: 172.23.1.250
+      TRUSTED_SERVERS: 192.168.1.1
       PGP_HEARTBEATS: "0:pgpool01:9694,1:pgpool02:9694"
       PGP_OTHERS: "0:pgpool01:9999"
                 # csv list of other pgpool nodes, each node contains (separated by :)
@@ -75,8 +99,13 @@ services:
       - 29999:9999
     cap_add:
       - NET_ADMIN
+    depends_on:
+      - pg01
 
 volumes:
   pg01db:
   pg01archive:
   pg01backup:
+  pg02db:
+  pg02archive:
+  pg02backup:

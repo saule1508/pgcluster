@@ -253,7 +253,7 @@ delay_threshold = 10000000
 
 # - Special commands -
 
-follow_master_command = '/opt/evs/pg-utils/pgpool/follow_master.sh %d %h %m %p %H %M %P'
+follow_master_command = '/opt/cl-pg-utils/pgpool/pgpool/follow_master.sh %d %h %m %p %H %M %P'
                                    # Executes this command after master failover
                                    # Special values:
                                    #   %d = node id
@@ -298,7 +298,7 @@ connect_timeout = 10000
 # FAILOVER AND FAILBACK
 #------------------------------------------------------------------------------
 
-failover_command = '/opt/evs/pg-utils/pgpool/failover.sh  %d %h %P %m %H %R'
+failover_command = '/opt/cl-pg-utils/pgpool/failover.sh  %d %h %P %m %H %R'
                                    # Executes this command at failover
                                    # Special values:
                                    #   %d = node id
@@ -420,7 +420,7 @@ delegate_IP = '${DELEGATE_IP}'
                                     # delegate IP address
                                     # If this is empty, virtual IP never bring up.
                                     # (change requires restart)
-if_cmd_path = '/opt/evs/pg-utils/pgpool'
+if_cmd_path = '/opt/cl-pg-utils/pgpool'
                                     # path to the directory where if_up/down_cmd exists
                                     # (change requires restart)
 if_up_cmd = 'ip_w.sh addr add \$_IP_\$/16 dev eth0 label eth0:0'
@@ -429,7 +429,7 @@ if_up_cmd = 'ip_w.sh addr add \$_IP_\$/16 dev eth0 label eth0:0'
 if_down_cmd = 'ip_w.sh addr del \$_IP_\$/16 dev eth0'
                                     # shutdown delegate IP command
                                     # (change requires restart)
-arping_path = '/opt/evs/pg-utils/pgpool'
+arping_path = '/opt/cl-pg-utils/pgpool'
                                     # arping command path
                                     # (change requires restart)
 arping_cmd = 'arping_w.sh -U \$_IP_\$ -I eth0 -w 1'
