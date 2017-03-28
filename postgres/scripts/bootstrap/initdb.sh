@@ -63,6 +63,8 @@ log_info "MSOWNERPWDLIST: ${MSOWNERPWDLIST}"
 log_info "MSUSERPWDLIST: ${MSUSERPWDLIST}" 
 log_info "PGDATA: ${PGDATA}" 
 log_info "INITIAL_NODE_TYPE: ${INITIAL_NODE_TYPE}" 
+NODE_ID=${NODE_ID:-1}
+NODE_NAME=${NODE_NAME:-pg01}
 log_info "NODE_ID: ${NODE_ID}"
 log_info "NODE_NAME: ${NODE_NAME}"
 INITIAL_NODE_TYPE=${INITIAL_NODE_TYPE:-single} 
@@ -141,8 +143,7 @@ if [ $INITIAL_NODE_TYPE = "single" ] ; then
   fi
 fi
 
-touch /home/postgres/.pgpass
-cat <<EOF >> /home/postgres/.pgpass 
+cat <<EOF > /home/postgres/.pgpass 
 *:*:repmgr:repmgr:${REPMGRPWD}
 *:*:replication:repmgr:${REPMGRPWD}
 EOF
@@ -177,6 +178,14 @@ EOF
     psql --username=repmgr -d repmgr -c "ALTER USER repmgr SET search_path TO repmgr_critlib, \"\$user\", public;"
     log_info "Register master in repmgr"
     repmgr -f /etc/repmgr/9.6/repmgr.conf -v master register
+    if [ -f /usr/pgsql-9.6/share/extension/pgpool-recovery.sql ] ; then
+      log_info "pgpool extension"
+      psql  < /usr/pgsql-9.6/share/extension/pgpool-recovery.sql
+    else
+      log_info "pgpool-recovery.sql extension not found"
+    fi
+    cp /opt/cl-pg-utils/pgpool/pgpool_recovery.sh /opt/cl-pg-utils/pgpool/pgpool_remote_start.sh ${PGDATA}/
+    chmod 500 ${PGDATA}/pgpool_remote_start.sh ${PGDATA}/pgpool_recovery.sh
     log_info "Stopping database"
     pg_ctl -D ${PGDATA} stop -w
     echo "ARCHIVELOG=${ARCHIVELOG}" > $PGDATA/override.env
