@@ -1,0 +1,4 @@
+---
+
+  - name: start docker
+    systemd: state=started name=docker

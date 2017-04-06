@@ -1,0 +1,101 @@
+---
+
+
+  - debug: var=groups['cluster'][0]
+  - name: Add IP address of all hosts in group cluster to all hosts in group
+    lineinfile:
+      dest: /etc/hosts
+      line: "{{ hostvars[item].ansible_host }} {{ hostvars[item].inventory_hostname }} {{ hostvars[item].inventory_hostname_short }}"
+      state: present
+    with_items: "{{ groups.cluster }}"
+
+
+  - name: fetch postgres public ssh key
+    shell: cat /home/postgres/.ssh/id_rsa.pub
+    register: postgres_ssh_keys
+
+  - name: deploy postgres public key to all servers
+    authorized_key: user=postgres key="{{ item[0] }}" state=present
+    delegate_to: "{{ item[1] }}"
+    with_nested:
+      - "{{ postgres_ssh_keys.stdout }}"
+      - "{{ groups['cluster'] }}"
+
+  - name: generate host key file
+    command: "ssh-keyscan -t ecdsa-sha2-nistp256 {{ inventory_hostname }}"
+    register: host_pub_key
+
+  - debug: var=host_pub_key.stdout
+
+  - name: add to know_hosts of other servers
+    known_hosts:
+      path: /home/postgres/.ssh/known_hosts
+      name: "{{ inventory_hostname }}"
+      #key: "{{ lookup('file','/tmp/host.pub') }}"
+      key: "{{ host_pub_key.stdout }}"
+    delegate_to: "{{ item }}"
+    when: item != inventory_hostname
+    with_items:
+      - "{{ groups['cluster'] }}"
+
+  - debug: var=hostvars[item]['ansible_default_ipv4']['address']
+    with_items: "{{ groups['cluster'] }}"
+
+  - debug: var=groups['cluster'][0]
+
+
+  - lineinfile:
+      dest: /etc/evs/config
+      state: present
+      line: 'PG_INITIAL_NODE_TYPE=master'
+    when: inventory_hostname == groups.cluster[0] 
+
+  - name: determine swarm status on manager node
+    shell: >
+      docker info | egrep '^Swarm: ' | cut -d ' ' -f2
+    register: swarm_manager_status
+    when: "inventory_hostname == groups.cluster[0]"
+
+  - debug: var=swarm_manager_status.stdout_lines
+    when: inventory_hostname == groups.cluster[0]
+
+  - name: firewall ports for swarm
+    firewalld:
+      port: "{{ item }}"
+      permanent: true
+      state: enabled
+      immediate: yes
+    with_items:
+      - 2376/tcp
+      - 2377/tcp
+      - 7946/tcp
+      - 7946/udp
+      - 4789/udp
+
+
+  - name: init swarm
+    shell: >
+      echo docker swarm init --advertise-addr "{{ swarm_iface | default(hostvars[groups['cluster'][0]]['ansible_default_ipv4']['address']) }}"
+    register: swarm_init
+    #when: "inventory_hostname == groups[cluster][0] and 'active' not in swarm_manager_status.stdout_lines "
+    when: inventory_hostname == groups['cluster'][0] and 'active' not in swarm_manager_status.stdout_lines
+
+  - debug: var=swarm_init.stdout_lines
+
+  - name: retrieve swarm token on manager needed by worker nodes
+    shell: >
+      docker swarm join-token -q worker
+    register: swarm_worker_join_token
+    when: inventory_hostname == groups.cluster[0]
+
+  - name: worker nodes join swarm cluster
+    shell: >
+      docker swarm join --token {{ swarm_worker_join_token.stdout }} {{  swarm_iface | default(hostvars[groups['cluster'][0]]['ansible_default_ipv4']['address']) }}:2377
+    ignore_errors: true
+    delegate_to: "{{ item }}"
+    when: inventory_hostname == groups.cluster[0] and item != groups.cluster[0]
+    with_items: 
+      - "{{ groups['cluster'] }}"
+
+
+...

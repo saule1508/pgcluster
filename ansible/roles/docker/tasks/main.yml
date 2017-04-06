@@ -1,0 +1,48 @@
+---
+
+#  TODO
+#  - name: enable extra repository for Red-Hat
+#    yum_repository:
+#      name: rhel-7-server-extras-rpms
+#      description: Red-hat extra RPMS
+#      #baseurl: 
+#      #gpgkey: 
+#    when: when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+  - name: install docker
+    yum:
+      name: docker
+      state: latest
+
+  - name: check if docker is already configured
+    stat:
+      path: /var/lib/docker
+    register: docker_dir
+
+  - name: check if device sdb exists
+    command: fdisk -l {{ docker_disk }}
+    register: docker_disk_exists
+    failed_when: docker_disk_exists.rc != 0
+
+  - name: volume group vg_docker
+    lvg: 
+      vg: vg_docker 
+      pvs: "{{ docker_disk }}"
+      state: present
+    when: docker_disk_exists.rc == 0 and docker_dir is not defined
+    become: true
+
+  - name : configure docker-storage-setup
+    template:
+      src: docker-storage-setup
+      dest: /etc/sysconfig/docker-storage-setup
+      owner: root
+    when: docker_disk_exists.rc == 0 and docker_dir is not defined
+    become: true
+    notify:
+      - restart docker
+
+  - name: enable docker
+    systemd: 
+      name=docker
+      enabled=true

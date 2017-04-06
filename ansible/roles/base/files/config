@@ -1,0 +1,7 @@
+NODE_NAME=pg01
+NODE_ID=1
+PG_INITIAL_NODE_TYPE=master
+MSLIST=apiman,keycloak,asset,ingest,playout
+MSOWNERPWDLIST=apiman_owner,keycloak_owner,asset_owner,ingest_owner,playout_owner
+MSUSERPWDLIST=apiman_user,keycloak_user,asset_user,ingest_user,playout_user
+REPMGRPWD=evs123

@@ -1,0 +1,55 @@
+---
+
+- hosts: madweb
+  vars:
+    docker_disk: /dev/sdb
+    jetty_ver: 9.3.10
+    nginx_ver: 1.10.1
+  remote_user: root
+  become: yes
+  become_method: sudo
+  roles:
+    - base
+    - docker
+    - madweb
+
+- hosts: phoenix
+  vars:
+    pgversion: 96
+    docker_disk: /dev/sdb
+
+  remote_user: root
+  become: yes
+  become_method: sudo
+
+  roles:
+    - { role: base, tags: ['init'] }
+    - { role: docker, tags: ['init'] }
+    - { role: postgres, tags: ['init'] }
+    
+- hosts: postgres
+  vars:
+    pgversion: 96
+    postgres_ver: 9.6.2
+    docker_disk: /dev/sdb
+    pgdata_disk: /dev/sdc
+    pgbackup_disk: /dev/sdd
+    u01_size: 16G
+
+  remote_user: root
+  become: yes
+  become_method: sudo
+
+  roles:
+    - base
+    - docker-ce
+    - postgres
+
+- hosts: cluster
+ 
+  remote_user: root
+  become: yes
+  become_method: sudo
+
+  roles:
+    - cluster
