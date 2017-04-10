@@ -35,7 +35,7 @@ EOF
 
 wait_for_master(){
  SLEEP_TIME=5
- HOST=pg01
+ HOST=${PGMASTER}
  PORT=5432
  MAX_TRIES=10
 
@@ -63,6 +63,7 @@ log_info "MSOWNERPWDLIST: ${MSOWNERPWDLIST}"
 log_info "MSUSERPWDLIST: ${MSUSERPWDLIST}" 
 log_info "PGDATA: ${PGDATA}" 
 log_info "INITIAL_NODE_TYPE: ${INITIAL_NODE_TYPE}" 
+log_info "PGMASTER: ${PGMASTER}" 
 NODE_ID=${NODE_ID:-1}
 NODE_NAME=${NODE_NAME:-pg01}
 log_info "NODE_ID: ${NODE_ID}"
@@ -111,7 +112,12 @@ conninfo='host=${NODE_NAME} dbname=repmgr user=repmgr password=${REPMGRPWD}'
 use_replication_slots=1
 restore_command = cp /u02/archive/%f %p
 logfile='/var/log/repmgr/repmgr.log'
-failover=manual
+failover=automatic
+reconnect_attempts=3
+reconnect_interval=5
+promote_command='/usr/pgsql-9.6/bin/repmgr standby promote -f /etc/repmgr/9.6/repmgr.conf --log-to-file'
+follow_command='/usr/pgsql-9.6/bin/repmgr standby follow -f /etc/repmgr/9.6/repmgr.conf --log-to-file'
+
 monitor_interval_secs=30
 pg_bindir = '/usr/pgsql-9.6/bin'
 EOF
@@ -196,9 +202,9 @@ EOF
      log_info "Master is ready, sleep 10 seconds before cloning slave"
      sleep 10
      sudo rm -rf ${PGDATA}/*
-     repmgr -h pg01 -U repmgr -d repmgr -D ${PGDATA} -f /etc/repmgr/9.6/repmgr.conf standby clone
+     repmgr -h ${PGMASTER} -U repmgr -d repmgr -D ${PGDATA} -f /etc/repmgr/9.6/repmgr.conf standby clone
      pg_ctl -D ${PGDATA} start -w
-     repmgr -f /etc/repmgr/9.6/repmgr.conf standby register
+     repmgr -f /etc/repmgr/9.6/repmgr.conf standby register -F
      pg_ctl stop -w 
     else
      log_info "Master is not ready, standby will not be initialized"

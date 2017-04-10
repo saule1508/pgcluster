@@ -5,7 +5,8 @@ ENV MINORVER=2
 ENV PGVER=96
 ENV container docker
 RUN yum update -y ; yum clean all
-RUN yum install -y libxslt systemd-sysv sudo openssh-server openssh-clients passwd rsync; yum clean all
+RUN yum install -y http://www.pgpool.net/yum/rpms/3.6/redhat/rhel-7-x86_64/pgpool-II-release-3.6-1.noarch.rpm; yum clean all
+RUN yum install -y libxslt systemd-sysv sudo openssh-server openssh-clients passwd rsync pgpool-II-pg${PGVER}-extensions; yum clean all
 RUN mkdir /var/run/sshd
 RUN ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N ''
 RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == \

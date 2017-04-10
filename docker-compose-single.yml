@@ -1,9 +1,6 @@
 version: '2'
 services:
   pg01:
-    build: 
-      context: ./postgres
-      dockerfile: Dockerfile.supervisor
     image: localhost:5000/pg:9.6.2
     environment:
       NODE_ID: 1
@@ -19,7 +16,6 @@ services:
       - pg01db:/u01/pg96/data
       - pg01arc:/u02/archive
   pgpool01:
-    #build: ./pgpool
     image: localhost:5000/pgpool:9.6.2
     environment:
       PGMASTER_NODE_NAME: pg01
