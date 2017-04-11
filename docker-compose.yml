@@ -60,6 +60,7 @@ services:
 
     depends_on:
       - pg01
+      - pg02
 volumes:
   pg01db:
   pg02db:

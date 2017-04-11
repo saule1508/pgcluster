@@ -253,7 +253,7 @@ delay_threshold = 10000000
 
 # - Special commands -
 
-follow_master_command = 'echo /opt/cl-pg-utils/pgpool/pgpool/follow_master.sh %d %h %m %p %H %M %P'
+follow_master_command = '/opt/cl-pg-utils/pgpool/follow_master.sh %d %h %m %p %H %M %P'
                                    # Executes this command after master failover
                                    # Special values:
                                    #   %d = node id
@@ -298,7 +298,7 @@ connect_timeout = 10000
 # FAILOVER AND FAILBACK
 #------------------------------------------------------------------------------
 
-failover_command = 'echo /opt/cl-pg-utils/pgpool/failover.sh  %d %h %P %m %H %R'
+failover_command = '/opt/cl-pg-utils/pgpool/failover.sh  %d %h %P %m %H %R'
                                    # Executes this command at failover
                                    # Special values:
                                    #   %d = node id
@@ -349,7 +349,7 @@ recovery_password = 'postgres'
                                    # Online recovery password
 recovery_1st_stage_command = 'pgpool_recovery.sh'
                                    # Executes a command in first stage
-recovery_2nd_stage_command = ''
+recovery_2nd_stage_command = 'echo recovery_2nd_stage_command'
                                    # Executes a command in second stage
 recovery_timeout = 90
                                    # Timeout in seconds to wait for the

@@ -3,14 +3,11 @@
 #put keys on the remote AND on the local server
 #NOT TESTED
 
-if [ ! -d /var/log/cl-pg-utils ] ; then
- sudo mkdir /var/log/cl-pg-utils
- sudo chown postgres:postgres /var/log/cl-pg-utils
+if [ ! -d /var/log/pg-utils ] ; then
+ sudo mkdir /var/log/pg-utils
+ sudo chown postgres:postgres /var/log/pg-utils
 fi
-LOGFILE=/var/log/cl-pg-utils/follow_master.log
-if [ ! -f $LOGFILE ] ; then
- > $LOGFILE
-fi
+LOGFILE=/var/log/pg-utils/follow_master.log
 
 echo "executing follow_master.sh at `date`"  | tee -a $LOGFILE
 
@@ -39,3 +36,16 @@ else
   $ssh_options postgres@${HOSTNAME} "/usr/pgsql-9.6/bin/repmgr --log-to-file -f /etc/repmgr/9.6/repmgr.conf -h ${NEW_MASTER_HOST} -D /u01/pg96/data -U repmgr -d repmgr standby follow -v "
 fi
 ) 2>&1 | tee -a $LOGFILE
+
+
+#follow_master_command = '/opt/evs-infra-pg-utils/scripts/pgpool/follow_master.sh %d %h %m %p %H %M %P'
+#                                   # Executes this command after master failover
+#                                   # Special values:
+#                                   #   %d = node id
+#                                   #   %h = host name
+#                                   #   %p = port number
+#                                   #   %D = database cluster path
+#                                   #   %m = new master node id
+#                                   #   %H = hostname of the new master node
+#                                   #   %M = old master node id
+#                                   #   %P = old primary node id

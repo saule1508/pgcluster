@@ -2,11 +2,11 @@
 
 # make sure ssh keys are installed on the remote AND on the local server
 
-if [ ! -d /var/log/cl-pg-utils ] ; then
- sudo mkdir /var/log/cl-pg-utils
- sudo chown postgres:postgres /var/log/cl-pg-utils
+if [ ! -d /var/log/pg-utils ] ; then
+ sudo mkdir /var/log/pg-utils
+ sudo chown postgres:postgres /var/log/pg-utils
 fi
-LOGFILE=/var/log/cl-pg-utils/failover.log
+LOGFILE=/var/log/pg-utils/failover.log
 if [ ! -f $LOGFILE ] ; then
  > $LOGFILE
 fi

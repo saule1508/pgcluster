@@ -112,7 +112,7 @@ conninfo='host=${NODE_NAME} dbname=repmgr user=repmgr password=${REPMGRPWD}'
 use_replication_slots=1
 restore_command = cp /u02/archive/%f %p
 logfile='/var/log/repmgr/repmgr.log'
-failover=automatic
+failover=manual
 reconnect_attempts=3
 reconnect_interval=5
 promote_command='/usr/pgsql-9.6/bin/repmgr standby promote -f /etc/repmgr/9.6/repmgr.conf --log-to-file'
@@ -186,12 +186,12 @@ EOF
     repmgr -f /etc/repmgr/9.6/repmgr.conf -v master register
     if [ -f /usr/pgsql-9.6/share/extension/pgpool-recovery.sql ] ; then
       log_info "pgpool extension"
-      psql  < /usr/pgsql-9.6/share/extension/pgpool-recovery.sql
+      psql -f /usr/pgsql-9.6/share/extension/pgpool-recovery.sql -d template1
     else
       log_info "pgpool-recovery.sql extension not found"
     fi
-    cp /opt/cl-pg-utils/pgpool/pgpool_recovery.sh /opt/cl-pg-utils/pgpool/pgpool_remote_start.sh ${PGDATA}/
-    chmod 500 ${PGDATA}/pgpool_remote_start.sh ${PGDATA}/pgpool_recovery.sh
+    cp /opt/cl-pg-utils/pgpool/pgpool_recovery.sh /opt/cl-pg-utils/pgpool/pgpool_remote_start ${PGDATA}/
+    chmod 700 ${PGDATA}/pgpool_remote_start ${PGDATA}/pgpool_recovery.sh
     log_info "Stopping database"
     pg_ctl -D ${PGDATA} stop -w
     echo "ARCHIVELOG=${ARCHIVELOG}" > $PGDATA/override.env

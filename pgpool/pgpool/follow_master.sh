@@ -3,11 +3,11 @@
 #put keys on the remote AND on the local server
 #NOT TESTED
 
-if [ ! -d /var/log/evs-pg-utils ] ; then
- sudo mkdir /var/log/evs-pg-utils
- sudo chown postgres:postgres /var/log/evs-pg-utils
+if [ ! -d /var/log/pg-utils ] ; then
+ sudo mkdir /var/log/pg-utils
+ sudo chown postgres:postgres /var/log/pg-utils
 fi
-LOGFILE=/var/log/evs-pg-utils/follow_master.log
+LOGFILE=/var/log/pg-utils/follow_master.log
 
 echo "executing follow_master.sh at `date`"  | tee -a $LOGFILE
 
