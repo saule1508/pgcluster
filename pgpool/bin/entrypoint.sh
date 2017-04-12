@@ -67,22 +67,40 @@ wait_for_master $PGBACKEND_NODE_LIST
 echo "Sleep 10 seconds"
 sleep 10
 echo "rebuild the pgpool_status file based on repl_nodes table"
+# if the cluster is initializing it is possible that repl_nodes does not contain
+# all backend yet
+# we might need to wait a bit...
+IFS=',' read -ra PG_HOSTS <<< "$PGBACKEND_NODE_LIST"
 ssh ${h} "psql -U repmgr repmgr -t -c 'select name,active from repl_nodes;'" > /tmp/repl_nodes
+nbrlines=$( grep -v "^$" /tmp/repl_nodes | wl -l )
+nbrbackend=${#PG_HOSTS[@]}
+NBRTRY=5
+while [[ $nbrlines -lt $nbrbackend -a $NBRTRY -gt 0 ] ; do
+  sleep 5
+  echo "waiting for repl_nodes to be initialized: currently $nbrlines iso $nbrbackend"
+  ssh ${h} "psql -U repmgr repmgr -t -c 'select name,active from repl_nodes;'" > /tmp/repl_nodes
+  nbrlines=$( grep -v "^$" /tmp/repl_nodes | wl -l )
+  NBRTRY=$((NBRTRY-1))
+done
 echo ">>>repl_nodes:"
 cat /tmp/repl_nodes
-IFS=',' read -ra PG_HOSTS <<< "$PGBACKEND_NODE_LIST"
 > /tmp/pgpool_status
 for i in ${PG_HOSTS[@]}
 do
   h=$( echo $i | cut -f2 -d":" )
   echo "check state of $h in repl_nodes"
   active=$( grep $h /tmp/repl_nodes | cut -f2 -d"|" )
-  if [ $active == "t" ] ; then
+  if [ "a$active" == "at" ] ; then
     echo $h is up in repl_nodes
     echo up >> /tmp/pgpool_status
-  else
+  fi
+  if [ "a$active" == "af" ] ; then
     echo $h is down in repl_nodes
     echo down >> /tmp/pgpool_status
+  fi
+  if [ "a$active" == "a" ] ; then
+    (>&2 echo "backend $h is not found in repl_nodes, marking as up")
+    echo up >> /tmp/pgpool_status
   fi
 done
 echo ">>> pgpool_status file"
