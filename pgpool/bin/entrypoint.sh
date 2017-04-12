@@ -72,10 +72,10 @@ echo "rebuild the pgpool_status file based on repl_nodes table"
 # we might need to wait a bit...
 IFS=',' read -ra PG_HOSTS <<< "$PGBACKEND_NODE_LIST"
 ssh ${h} "psql -U repmgr repmgr -t -c 'select name,active from repl_nodes;'" > /tmp/repl_nodes
-nbrlines=$( grep -v "^$" /tmp/repl_nodes | wl -l )
+nbrlines=$( grep -v "^$" /tmp/repl_nodes | wc -l )
 nbrbackend=${#PG_HOSTS[@]}
 NBRTRY=5
-while [[ $nbrlines -lt $nbrbackend -a $NBRTRY -gt 0 ] ; do
+while [[ $nbrlines -lt $nbrbackend -a $NBRTRY -gt 0 ]] ; do
   sleep 5
   echo "waiting for repl_nodes to be initialized: currently $nbrlines iso $nbrbackend"
   ssh ${h} "psql -U repmgr repmgr -t -c 'select name,active from repl_nodes;'" > /tmp/repl_nodes
