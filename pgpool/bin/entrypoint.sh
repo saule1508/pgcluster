@@ -4,7 +4,6 @@ CONFIG_FILE=/etc/pgpool-II/pgpool.conf
 
 wait_for_master(){
   SLEEP_TIME=5
-  PORT=5432
   MAX_TRIES=10
   IFS=',' read -ra PG_HOSTS <<< "$1"
   found=0
@@ -64,16 +63,35 @@ echo REPMGRPWD=${REPMGRPWD}
 
 
 echo "Waiting for one pg database in ${PGBACKEND_NODE_LIST} to be ready"
-
 wait_for_master $PGBACKEND_NODE_LIST
 echo "Sleep 10 seconds"
 sleep 10
-echo "rebuild the status pgp_status file based on repl_nodes table: TODO"
+echo "rebuild the pgpool_status file based on repl_nodes table"
+ssh ${h} "psql -U repmgr repmgr -t -c 'select name,active from repl_nodes;'" > /tmp/repl_nodes
+echo ">>>repl_nodes:"
+cat /tmp/repl_nodes
+IFS=',' read -ra PG_HOSTS <<< "$PGBACKEND_NODE_LIST"
+> /tmp/pgpool_status
+for i in ${PG_HOSTS[@]}
+do
+  h=$( echo $i | cut -f2 -d":" )
+  echo "check state of $h in repl_nodes"
+  active=$( grep $h /tmp/repl_nodes | cut -f2 -d"|" )
+  if [ $active == "t" ] ; then
+    echo $h is up in repl_nodes
+    echo up >> /tmp/pgpool_status
+  else
+    echo $h is down in repl_nodes
+    echo down >> /tmp/pgpool_status
+  fi
+done
+echo ">>> pgpool_status file"
+cat /tmp/pgpool_status
 echo "Create user hcuser (fails if the hcuser already exists, which is ok)"
-ssh ${PGMASTER_NODE_NAME} "psql -c \"create user hcuser with login password 'hcuser';\""
-echo "Generate pool_passwd file from ${PGMASTER_NODE_NAME}"
+ssh ${h} "psql -c \"create user hcuser with login password 'hcuser';\""
+echo "Generate pool_passwd file from ${h}"
 touch /etc/pgpool-II/pool_passwd
-ssh postgres@${PGMASTER_NODE_NAME} "psql -c \"select rolname,rolpassword from pg_authid;\"" | awk 'BEGIN {FS="|"}{print $1" "$2}' | grep md5 | while read f1 f2
+ssh postgres@${h} "psql -c \"select rolname,rolpassword from pg_authid;\"" | awk 'BEGIN {FS="|"}{print $1" "$2}' | grep md5 | while read f1 f2
 do
  # delete the line and recreate it
  echo "setting passwd of $f1 in /etc/pgpool-II/pool_passwd"
