@@ -3,25 +3,53 @@
 CONFIG_FILE=/etc/pgpool-II/pgpool.conf
 
 wait_for_master(){
- SLEEP_TIME=5
- HOST=${PGMASTER_NODE_NAME}
- PORT=5432
- MAX_TRIES=10
+  SLEEP_TIME=5
+  PORT=5432
+  MAX_TRIES=10
+  IFS=',' read -ra PG_HOSTS <<< "$1"
+  found=0
+  i=0
+  echo "Using list of backend $1 to find a db to connect to"
+  while [ $found -eq 0 ] ; do
+    while [ $found -eq 0 -a $i -lt ${#PG_HOSTS[@]} ] ; do
+      echo i is $i and ${PG_HOSTS[$i]}
+      h=$( echo ${PG_HOSTS[$i]} | cut -f2 -d":" )
+      port=$( echo ${PG_HOSTS[$i]} | cut -f3 -d":" )
+      echo trying to ping $h
+      ping -c 1 $h
+      if [ $? -eq 0 ] ; then
+        echo "found node: $h"
+        found=1
+      else
+        echo cannot ping node $h
+      fi
+      i=$((i+1))
+    done
+ done
 
- ssh ${HOST} "psql --username=repmgr -p ${PORT} repmgr -c \"select 1;\"" > /dev/null
+ if [ $found -eq 0 ] ; then
+   echo "Could not find a pg host to query"
+   exit 1
+ fi
+ if [ -z $port ] ; then
+   port=5432
+ fi
+ echo "pg backend found at host $h and port $port"
+
+ ssh ${h} "psql --username=repmgr -p ${port} repmgr -c \"select 1;\"" > /dev/null
  ret=$?
  if [ $ret -eq 0 ] ; then
   echo "server ready"
   return 0
  fi
  until [[ $ret -eq 0 ]] || [[ "$MAX_TRIES" == "0" ]]; do
-  echo "$(date) - waiting for postgres..."
-  sleep $SLEEP_TIME
-  MAX_TRIES=`expr "$MAX_TRIES" - 1`
-  ssh ${HOST} "psql --username=repmgr -p ${PORT} repmgr -c \"select 1;\"" > /dev/null
-  ret=$?
+   echo "$(date) - waiting for postgres..."
+   sleep $SLEEP_TIME
+   MAX_TRIES=`expr "$MAX_TRIES" - 1`
+   ssh ${h} "psql --username=repmgr -p ${port} repmgr -c \"select 1;\"" > /dev/null
+   ret=$?
  done
- ssh ${HOST} "psql --username=repmgr -p ${PORT} repmgr -c \"select 1;\"" > /dev/null
+ ssh ${h} "psql --username=repmgr -p ${port} repmgr -c \"select 1;\"" > /dev/null
  return $?
 }
 
@@ -34,10 +62,13 @@ echo PGP_NODE_NAME=${PGP_NODE_NAME}
 REPMGRPWD=${REPMGRPWD:-repmgr}
 echo REPMGRPWD=${REPMGRPWD}
 
-echo "Waiting for master pg database on ${PGMASTER_NODE_NAME} to be ready"
-wait_for_master
+
+echo "Waiting for one pg database in ${PGBACKEND_NODE_LIST} to be ready"
+
+wait_for_master $PGBACKEND_NODE_LIST
 echo "Sleep 10 seconds"
 sleep 10
+echo "rebuild the status pgp_status file based on repl_nodes table: TODO"
 echo "Create user hcuser (fails if the hcuser already exists, which is ok)"
 ssh ${PGMASTER_NODE_NAME} "psql -c \"create user hcuser with login password 'hcuser';\""
 echo "Generate pool_passwd file from ${PGMASTER_NODE_NAME}"
@@ -63,8 +94,8 @@ listen_backlog_multiplier = 2
 serialize_accept = off
 EOF
 echo "Adding backend-connection info for each pg node in $PGBACKEND_NODE_LIST"
-IFS=',' read -ra HOSTS <<< "$PGBACKEND_NODE_LIST"
-for HOST in ${HOSTS[@]}
+IFS=',' read -ra PG_HOSTS <<< "$PGBACKEND_NODE_LIST"
+for HOST in ${PG_HOSTS[@]}
 do
     IFS=':' read -ra INFO <<< "$HOST"
 
