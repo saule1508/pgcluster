@@ -75,11 +75,11 @@ ssh ${h} "psql -U repmgr repmgr -t -c 'select name,active from repl_nodes;'" > /
 nbrlines=$( grep -v "^$" /tmp/repl_nodes | wc -l )
 nbrbackend=${#PG_HOSTS[@]}
 NBRTRY=5
-while [[ $nbrlines -lt $nbrbackend -a $NBRTRY -gt 0 ]] ; do
+while [ $nbrlines -lt $nbrbackend -a $NBRTRY -gt 0 ] ; do
   sleep 5
-  echo "waiting for repl_nodes to be initialized: currently $nbrlines iso $nbrbackend"
+  echo "waiting for repl_nodes to be initialized: currently $nbrlines in repl_node iso $nbrbackend"
   ssh ${h} "psql -U repmgr repmgr -t -c 'select name,active from repl_nodes;'" > /tmp/repl_nodes
-  nbrlines=$( grep -v "^$" /tmp/repl_nodes | wl -l )
+  nbrlines=$( grep -v "^$" /tmp/repl_nodes | wc -l )
   NBRTRY=$((NBRTRY-1))
 done
 echo ">>>repl_nodes:"
@@ -89,7 +89,8 @@ for i in ${PG_HOSTS[@]}
 do
   h=$( echo $i | cut -f2 -d":" )
   echo "check state of $h in repl_nodes"
-  active=$( grep $h /tmp/repl_nodes | cut -f2 -d"|" )
+  active=$( grep $h /tmp/repl_nodes | sed -e "s/ //g" | cut -f2 -d"|" )
+  echo "active is $active for $h"
   if [ "a$active" == "at" ] ; then
     echo $h is up in repl_nodes
     echo up >> /tmp/pgpool_status

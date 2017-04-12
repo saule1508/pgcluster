@@ -192,6 +192,8 @@ EOF
     fi
     cp /opt/cl-pg-utils/pgpool/pgpool_recovery.sh /opt/cl-pg-utils/pgpool/pgpool_remote_start ${PGDATA}/
     chmod 700 ${PGDATA}/pgpool_remote_start ${PGDATA}/pgpool_recovery.sh
+    log_info "Create hcuser"
+    psql -c "create user hcuser with login password 'hcuser';"
     log_info "Stopping database"
     pg_ctl -D ${PGDATA} stop -w
     echo "ARCHIVELOG=${ARCHIVELOG}" > $PGDATA/override.env
