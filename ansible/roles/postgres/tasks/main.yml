@@ -21,23 +21,20 @@
       regexp: '^postgres'
       line: 'postgres ALL=(ALL) NOPASSWD: ALL'
 
+  - name: set password for postgres
+    command: echo 'evsadmi!' | passwd --stdin postgres
 
   - name: volume group vg_01
     lvg:
       vg: vg01
-      pvs: "{{ pgdata_disk }}"
+      pvs: "/dev/{{ pgdata_disk }}"
       state: present
 
   - name: volume group vg_02
     lvg:
       vg: vg02
-      pvs: "{{ pgbackup_disk }}"
+      pvs: "/dev/{{ pgbackup_disk }}"
       state: present
-
-  - name: check if lv_u01 already exists
-    command: lvdisplay /dev/vg01/lv_u01
-    ignore_errors: true
-    register: lv_u01_exists
 
   - name: creating LVM logical volume lv_u01
     lvol: 
@@ -45,7 +42,7 @@
       lv: lv_u01
       size: "100%FREE"
       state: present
-    when: lv_u01_exists.rc != 0
+    when:  hostvars[inventory_hostname]['ansible_lvm']['lvs']['lv_u01'] is not defined
 
   - name: creating filesystem on lv_u01
     filesystem: 
@@ -59,20 +56,13 @@
       fstype: xfs
       state: mounted
 
-  - name: check if lv_u02 already exists
-    command: lvdisplay /dev/vg02/lv_u02
-    ignore_errors: true
-    register: lv_u02_exists
-
-  - debug: var=lv_u02_exists.rc
-
   - name: creating LVM logical volume lv_u02
     lvol: 
       vg: vg02
       lv: lv_u02
       size: "100%FREE"
       state: present
-    when: lv_u02_exists.rc != 0
+    when:  hostvars[inventory_hostname]['ansible_lvm']['lvs']['lv_u02'] is not defined
 
   - name: creating filesystem on lv_u02
     filesystem: 
@@ -110,51 +100,61 @@
       owner: postgres
       group: postgres
 
-  - name: copy rpm evs-pg-utils to server 
-    copy:
-      src: "{{ item }}"
-      dest: /tmp/{{ item | basename }}
-    with_fileglob:
-      - "{{ stage_dir }}/evs-pg-utils*.rpm"
+#  - name: copy rpm evs-pg-utils to server 
+#    copy:
+#      src: "{{ item }}"
+#      dest: /tmp/{{ item | basename }}
+#    with_fileglob:
+#      - "{{ stage_dir }}/evs-pg-utils*.rpm"
+#
+#  - name: find name of rpm to install 
+#    shell: ls /tmp/evs-pg-utils*.rpm | tail -1
+#    register: ls_content
+#
+#  - name: install evs-pg-utils rpm
+#    yum:
+#      name: "{{ ls_content.stdout }} "
+#      state: present
+#    when: ls_content.stdout.find('evs-pg-utils') != -1
 
-  - name: find name of rpm to install 
-    shell: ls /tmp/evs-pg-utils*.rpm | tail -1
-    register: ls_content
+#  - name: copy evs-phoenix-postgres image tar to server
+#    copy:
+#      src: "{{ stage_dir }}/evs-phoenix-postgres.{{ postgres_ver }}.tar"
+#      dest: /tmp/evs-phoenix-postgres.{{ postgres_ver }}.tar
+#
+#  - name: pull evs-phoenix-postgres image
+#    docker_image:
+#      name: evs-phoenix-postgres
+#      load_path: /tmp/evs-phoenix-postgres.{{ postgres_ver }}.tar
+#      state: present
+#
+#  - name: remove evs-phoenix-postgres image tar file
+#    file:
+#      path: /tmp/evs-phoenix-postgres.{{ postgres_ver }}.tar
+#      state: absent
+#
+#  - name: copy evs-phoenix-ppgpool image tar to server
+#    copy:
+#      src: "{{ stage_dir }}/evs-phoenix-pgpool.{{ postgres_ver }}.tar"
+#      dest: /tmp/evs-phoenix-pgpool.{{ postgres_ver }}.tar
+#
+#  - name: pull evs-phoenix-pgpool image
+#    docker_image:
+#      name: evs-phoenix-ppgpool
+#      load_path: /tmp/evs-phoenix-pgpool.{{ postgres_ver }}.tar
+#      state: present
+#
+#  - name: remove evs-phoenix-pgpool image tar file
+#    file:
+#      path: /tmp/evs-phoenix-pgpool.{{ postgres_ver }}.tar
+#      state: absent
 
-  - name: install evs-pg-utils rpm
-    yum:
-      name: "{{ ls_content.stdout }} "
-      state: present
-    when: ls_content.stdout.find('evs-pg-utils') != -1
+  - name: load postgres image
+    include: "../../../shared_tasks/load_image.yml"
+    vars:
+      image: "{{ images.postgres }}"
 
-  - name: copy evs-phoenix-postgres image tar to server
-    copy:
-      src: "{{ stage_dir }}/evs-phoenix-postgres.{{ postgres_ver }}.tar"
-      dest: /tmp/evs-phoenix-postgres.{{ postgres_ver }}.tar
-
-  - name: pull evs-phoenix-postgres image
-    docker_image:
-      name: evs-phoenix-postgres
-      load_path: /tmp/evs-phoenix-postgres.{{ postgres_ver }}.tar
-      state: present
-
-  - name: remove evs-phoenix-postgres image tar file
-    file:
-      path: /tmp/evs-phoenix-postgres.{{ postgres_ver }}.tar
-      state: absent
-
-  - name: copy evs-phoenix-ppgpool image tar to server
-    copy:
-      src: "{{ stage_dir }}/evs-phoenix-pgpool.{{ postgres_ver }}.tar"
-      dest: /tmp/evs-phoenix-pgpool.{{ postgres_ver }}.tar
-
-  - name: pull evs-phoenix-pgpool image
-    docker_image:
-      name: evs-phoenix-ppgpool
-      load_path: /tmp/evs-phoenix-pgpool.{{ postgres_ver }}.tar
-      state: present
-
-  - name: remove evs-phoenix-pgpool image tar file
-    file:
-      path: /tmp/evs-phoenix-pgpool.{{ postgres_ver }}.tar
-      state: absent
+  - name: load pgpool image
+    include: "../../../shared_tasks/load_image.yml"
+    vars:
+       image: "{{ images.pgpool }}"

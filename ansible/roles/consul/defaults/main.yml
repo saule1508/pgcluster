@@ -1,0 +1,6 @@
+---
+  consul_ver: "0.8.1"
+  when: consul_ver is undefined
+
+...
+

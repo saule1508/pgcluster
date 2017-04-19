@@ -1,0 +1,78 @@
+---
+  # copied over from euranova MVP - to be documented and improved
+
+  - debug: var=consul_ver
+
+  - name: consul - install unzip
+    yum:
+      name: unzip
+      state: present
+
+  - stat: path=/usr/local/bin/consul
+    register: consul_exists
+
+  - debug: 
+      msg: "consul does not exist"
+    when: consul_exists.stat.exists == False
+
+  - debug: 
+      msg: "consul does exist"
+    when: consul_exists.stat.exists == True
+
+  - name: consul - get consul binary
+    get_url:
+      url: "https://releases.hashicorp.com/consul/{{ consul_ver }}/consul_{{ consul_ver }}_linux_amd64.zip"
+      dest: "/opt/consul_{{ consul_ver }}_linux_amd64.zip"
+    #when: consul_exists.stat.exists == False
+
+  - name: consul - unarchive consul
+    unarchive:
+      src: "/opt/consul_{{ consul_ver }}_linux_amd64.zip"
+      dest: /usr/local/bin
+      copy: no
+    when: consul_bin_exists.stat.exists is defined and not consul_bin_exists.stat.exists
+
+  - name: consul - add user
+    user:
+      name: consul
+      #uid: 1000
+      generate_ssh_key: no
+      ssh_key_bits: 2048
+      ssh_key_file: .ssh/id_rsa
+      comment: "consul user"
+      state: present
+
+  - name: consul - create dirs
+    file: path={{ item  }} state=directory mode=0755 owner=consul
+    with_items:
+    - /etc/consul.d/bootstrap
+    - /etc/consul.d/server
+    - /etc/consul.d/client
+    - /var/consul
+
+  - set_fact:
+      consul_bootstrap_server: "{{ inventory_hostname == groups['cluster'][0] }}"
+
+  - name: consul - config
+    template:
+      src: "consul-config.json.j2"
+      dest: /etc/consul.d/{{ consul_bootstrap_server | ternary('bootstrap', 'server') }}/config.json
+    vars:
+      bootstrap: "{{ consul_bootstrap_server | ternary('true', 'false') }}"
+      #join_server: "{{ consul_bootstrap_server | ternary('', consul_join_server) }}"
+      #advertise_addr: "{{ consul_advertise_address }}"
+      # TODO : use best local DNS resolv rather than google.
+      dns_recursor: "8.8.8.8"
+
+  - name: consul - systemd
+    template:
+      src: "consul-systemd.service.j2"
+      dest: /etc/systemd/system/consul.service
+    vars:
+      consul_server_type: "{{ consul_bootstrap_server | ternary('bootstrap', 'server') }}"
+
+#  - name: consul - start service
+#    service: name=consul state=restarted
+
+
+...

@@ -1,14 +1,68 @@
 ---
 
+  # let us use a group called cluster
+  - add_host:
+      name: "{{ item }}"
+      groups: cluster
+    with_items: "{{ groups.phoenix }}"
+    when: groups.cluster is undefined
 
-  - debug: var=groups['cluster'][0]
-  - name: Add IP address of all hosts in group cluster to all hosts in group
+  #- debug: var=groups['cluster']
+
+  - name: add config NODE_ID
+    lineinfile: 
+      dest: /etc/evs/config
+      state: present
+      regexp: '^NODE_ID='
+      line: NODE_ID={{ groups.cluster.index(inventory_hostname)+1 }}
+
+  - name: add config PG_NODE_NAME
+    lineinfile: 
+      dest: /etc/evs/config
+      state: present
+      regexp: '^PG_NODE_NAME='
+      line: PG_NODE_NAME=pg0{{ groups.cluster.index(inventory_hostname)+1 }}
+  
+  - name: remove config PG_BACKEND_LIST
+    lineinfile:
+      dest: /etc/evs/config
+      state: absent
+      regexp: '^PG_BACKEND_NODE_LIST'
+
+  - name: add config PG_BACKEND_NODE_LIST
+    lineinfile:
+      dest: /etc/evs/config
+      # Comma-separated string of all postgres backends
+      line: |
+        {% set comma = joiner(",") %}
+        PG_BACKEND_NODE_LIST={% for item in groups.cluster -%}
+            {{ comma() }}{{loop.index-1}}:pg0{{ loop.index }}:5432:1:/u01/pg96/data:ALLOW_TO_FAILOVER
+        {%- endfor %}
+      state: present
+
+  - name: remove config NODE_LIST
+    lineinfile:
+      dest: /etc/evs/config
+      state: absent
+      regexp: '^NODE_LIST'
+
+  - name: add config NODE_LIST
+    lineinfile:
+      dest: /etc/evs/config
+      # Comma-separated string of all nodename
+      line: |
+        {% set comma = joiner(",") %}
+        NODE_LIST={% for item in groups.cluster -%}
+            {{ comma() }}{{ hostvars[item].inventory_hostname }}
+        {%- endfor %}
+      state: present
+
+  - name: Add IP address of all hosts in /etc/hosts 
     lineinfile:
       dest: /etc/hosts
       line: "{{ hostvars[item].ansible_host }} {{ hostvars[item].inventory_hostname }} {{ hostvars[item].inventory_hostname_short }}"
       state: present
     with_items: "{{ groups.cluster }}"
-
 
   - name: fetch postgres public ssh key
     shell: cat /home/postgres/.ssh/id_rsa.pub
@@ -25,30 +79,34 @@
     command: "ssh-keyscan -t ecdsa-sha2-nistp256 {{ inventory_hostname }}"
     register: host_pub_key
 
-  - debug: var=host_pub_key.stdout
+#  - debug: var=host_pub_key.stdout
 
   - name: add to know_hosts of other servers
     known_hosts:
       path: /home/postgres/.ssh/known_hosts
       name: "{{ inventory_hostname }}"
-      #key: "{{ lookup('file','/tmp/host.pub') }}"
       key: "{{ host_pub_key.stdout }}"
     delegate_to: "{{ item }}"
     when: item != inventory_hostname
     with_items:
       - "{{ groups['cluster'] }}"
 
-  - debug: var=hostvars[item]['ansible_default_ipv4']['address']
-    with_items: "{{ groups['cluster'] }}"
+#  - debug: var=hostvars[item]['ansible_default_ipv4']['address']
+#    with_items: "{{ groups['cluster'] }}"
 
-  - debug: var=groups['cluster'][0]
-
+#  - debug: var=groups['cluster'][0]
 
   - lineinfile:
       dest: /etc/evs/config
       state: present
       line: 'PG_INITIAL_NODE_TYPE=master'
     when: inventory_hostname == groups.cluster[0] 
+
+  - lineinfile:
+      dest: /etc/evs/config
+      state: present
+      line: 'PG_INITIAL_NODE_TYPE=slave'
+    when: inventory_hostname != groups.cluster[0] 
 
   - name: determine swarm status on manager node
     shell: >
@@ -72,12 +130,10 @@
       - 7946/udp
       - 4789/udp
 
-
   - name: init swarm
     shell: >
-      echo docker swarm init --advertise-addr "{{ swarm_iface | default(hostvars[groups['cluster'][0]]['ansible_default_ipv4']['address']) }}"
+      docker swarm init --advertise-addr "{{ swarm_iface | default(hostvars[groups['cluster'][0]]['ansible_default_ipv4']['address']) }}"
     register: swarm_init
-    #when: "inventory_hostname == groups[cluster][0] and 'active' not in swarm_manager_status.stdout_lines "
     when: inventory_hostname == groups['cluster'][0] and 'active' not in swarm_manager_status.stdout_lines
 
   - debug: var=swarm_init.stdout_lines
@@ -97,5 +153,35 @@
     with_items: 
       - "{{ groups['cluster'] }}"
 
+  - name: docker_swarm | Capturing Docker Swarm Networks
+    command: "docker network ls"
+    changed_when: false
+    register: "docker_networks"
+    when: inventory_hostname == groups.cluster[0]
 
+  - debug: var=docker_swarm_networks
+
+  - name: docker_swarm | Creating Docker Swarm Networks
+    command: "docker network create --driver {{ item.driver }} {{ item.name }}"
+    with_items: '{{ docker_swarm_networks }}'
+    when: >
+          inventory_hostname == groups.cluster[0] and
+          item.state|lower == "present" and
+          item.name not in docker_networks.stdout
+
+  - name: ensure directory /opt/evs/run exists
+    file:
+      path: /opt/evs/run
+      state: directory
+      mode: 0755
+  
+  - name: install docker-compose.infra.ym in /opt/evs/run
+    template: 
+      src: "docker-compose.infra.yml"
+      dest: "/opt/evs/run/docker-compose.infra.yml"
+      owner: evs
+      group: evs
+      mode: "u=rw,g=r,o=r"
+    
+ 
 ...

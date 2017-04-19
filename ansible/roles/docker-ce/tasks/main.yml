@@ -6,21 +6,17 @@
       description: Docker CE Stable - $basearch
       baseurl: https://download.docker.com/linux/centos/7/$basearch/stable
       gpgkey: https://download.docker.com/linux/centos/gpg
+      state: present
 
   - name: install docker-ce-stable yum package
     yum:
       name: docker-ce
       state: latest
 
-  - name: check if device sdb exists
-    command: fdisk -l {{ docker_disk }}
-    register: docker_disk_exists
-    failed_when: docker_disk_exists.rc != 0
-
   - name: create docker volume group
     lvg: 
       vg: docker 
-      pvs: "{{ docker_disk }}"
+      pvs: "/dev/{{ docker_disk }}"
       state: present
 
   - name : create thinpool for docker
@@ -31,10 +27,10 @@
       opts: --wipesignatures y
       state: present
 
-  - name : check thinpoolmeta exists
-    command: lvdisplay /dev/docker/thinpoolmeta
-    ignore_errors: yes
-    register: thinpoolmeta_exists
+#  - name : check thinpoolmeta exists
+#    command: lvdisplay /dev/docker/thinpoolmeta
+#    ignore_errors: yes
+#    register: thinpoolmeta_exists
 
   - name : create meta for docker
     lvol: 
@@ -42,13 +38,13 @@
       lv: thinpoolmeta
       size: 5%VG
       opts: --wipesignatures y
-    when: thinpoolmeta_exists.rc != 0
+    when:  hostvars[inventory_hostname]['ansible_lvm']['lvs']['thinpool'] is not defined
       
   - name: test if pool is already converted to thinpool
     shell: lvs -o lv_attr docker/thinpool | tail -1 | awk '{print $1}' | cut -c1
     register: thinpool_converted
 
-  - debug: var=thinpool_converted.stdout
+  - debug: var=thinpool_converted
       
   - name: convert pool to a thinpool
     command: lvconvert -y --zero n -c 512K --thinpool docker/thinpool --poolmetadata docker/thinpoolmeta
@@ -70,9 +66,11 @@
     copy:
       src: daemon.json
       dest: /etc/docker/daemon.json
+    notify:
+      - start docker
 
-  - name: start docker
+  - name: start and enable docker
     systemd:
       name: docker
-      state: started
       enabled: true
+      state: started
