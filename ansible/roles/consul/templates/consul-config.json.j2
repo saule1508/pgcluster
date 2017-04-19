@@ -1,13 +1,13 @@
 {
-#    {% if bootstrap != "true" %}
-#    "retry-join": ["{{ join_server }}"],
-#    {% endif %}
-     {% set comma = joiner(",") %}
-        "retry-join": {% for item in groups['cluster'] %}
-                        {{ comma() }}{{ groups.cluster[item].ansible_default_ipv4.address }}
-                      {% endfor %}
+     {% if single_machine != true %}
+       {% set comma = joiner(",") %}
+       "retry-join": {% for item in groups['cluster'] %}
+                        {{ comma() }}{{ groups.consul[item].ansible_default_ipv4.address }}
+                     {% endfor %}
+     {% else %}
+     "bootstrap": true,
+     {% endif %}
 
-    "bootstrap-expect": {{ groups['cluster'] | length }},
     "server": true,
     "advertise_addr": "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}",
     "bind_addr": "0.0.0.0",

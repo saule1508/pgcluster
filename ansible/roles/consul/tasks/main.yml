@@ -3,9 +3,43 @@
 
   - debug: var=consul_ver
 
+  # let us use a group called consul
+  - add_host:
+      name: "{{ item }}"
+      groups: consul
+    with_items: "{{ groups.phoenix }}"
+    when: groups.consul is undefined
+    changed_when: false
+
+
+  - set_fact:
+      single_machine: true
+    when: "{{ groups['consul'] | length }} == 1"
+
+  - set_fact:
+      single_machine: false
+    when: "{{ groups['consul'] | length }} > 1"
+
+  - debug: var=single_machine
+
   - name: consul - install unzip
     yum:
       name: unzip
+      state: present
+ 
+  - name: consul - install bind-utils
+    yum:
+      name: bind-utils
+      state: present
+
+  - name: consul - install epel
+    yum:
+      name: epel-release
+      state: present
+
+  - name: consul - install jq
+    yum:
+      name: jq
       state: present
 
   - stat: path=/usr/local/bin/consul
@@ -23,18 +57,19 @@
     get_url:
       url: "https://releases.hashicorp.com/consul/{{ consul_ver }}/consul_{{ consul_ver }}_linux_amd64.zip"
       dest: "/opt/consul_{{ consul_ver }}_linux_amd64.zip"
-    #when: consul_exists.stat.exists == False
+    when: consul_exists.stat.exists == False
 
   - name: consul - unarchive consul
     unarchive:
       src: "/opt/consul_{{ consul_ver }}_linux_amd64.zip"
       dest: /usr/local/bin
       copy: no
-    when: consul_bin_exists.stat.exists is defined and not consul_bin_exists.stat.exists
+    when: consul_exists.stat.exists == False
 
   - name: consul - add user
     user:
       name: consul
+      group: bin
       #uid: 1000
       generate_ssh_key: no
       ssh_key_bits: 2048
@@ -51,7 +86,15 @@
     - /var/consul
 
   - set_fact:
-      consul_bootstrap_server: "{{ inventory_hostname == groups['cluster'][0] }}"
+      consul_bootstrap_server: "{{ inventory_hostname == groups['consul'][0] }}"
+
+  - name: consul - systemd
+    template:
+      src: "consul-systemd.service.j2"
+      dest: /etc/systemd/system/consul.service
+    vars:
+      consul_server_type: "{{ consul_bootstrap_server | ternary('bootstrap', 'server') }}"
+
 
   - name: consul - config
     template:
@@ -63,13 +106,6 @@
       #advertise_addr: "{{ consul_advertise_address }}"
       # TODO : use best local DNS resolv rather than google.
       dns_recursor: "8.8.8.8"
-
-  - name: consul - systemd
-    template:
-      src: "consul-systemd.service.j2"
-      dest: /etc/systemd/system/consul.service
-    vars:
-      consul_server_type: "{{ consul_bootstrap_server | ternary('bootstrap', 'server') }}"
 
 #  - name: consul - start service
 #    service: name=consul state=restarted
