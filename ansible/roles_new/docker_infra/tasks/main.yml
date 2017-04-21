@@ -1,0 +1,21 @@
+---
+
+  - name: load infra images 
+    include: "../../../shared_tasks/load_image.yml"
+    vars:
+      image: "{{ images[item] }}"
+    with_items:
+      - registrator
+      - kafka
+      - apiman
+      - keycloak
+      - haproxy
+      - sx_proxy
+      - asset_manager
+      - audit_manager
+      - web_ui
+      - api_gateway_setup
+      - asset_demo_counter
+
+
+...

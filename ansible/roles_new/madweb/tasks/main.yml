@@ -1,0 +1,61 @@
+---
+
+  - name: copy docker image tar to server nginx-mad.1.10.1.tar
+    copy:
+      src: "{{ stage_dir }}/nginx-mad.{{nginx_ver}}.tar"
+      dest: /tmp/nginx-mad.{{ nginx_ver }}.tar
+
+  - name: pull nginx-mad image
+    docker_image:
+      name: nginx-mad
+      load_path: /tmp/nginx-mad.{{ nginx_ver }}.tar
+      state: present
+
+  - name: remove nginx docker image tar file
+    file: 
+      path: /tmp/nginx-mad.{{ nginx_ver }}.tar
+      state: absent  
+  
+  - name: copy docker image tar to server jetty-mad.9.3.10.tar
+    copy:
+      src: "{{ stage_dir }}/jetty-mad.9.3.10.tar"
+      dest: /tmp/jetty-mad.{{ jetty_ver }}.tar
+
+  - name: pull jetty-mad image
+    docker_image:
+      name: nginx-mad
+      load_path: /tmp/jetty-mad.{{ jetty_ver }}.tar
+      state: present
+
+  - name: remove jetty docker image tar file
+    file: 
+      path: /tmp/jetty-mad.{{ jetty_ver }}.tar
+      state: absent  
+
+  - name: unarchive evs-mad-nginx
+    unarchive:
+      remote_src: no
+      src: "{{ stage_dir }}/evs-mad-nginx.tar"
+      dest: /opt
+      owner: evs
+      group: evs
+
+  - name: unarchive evs-mad-jetty
+    unarchive:
+      remote_src: no
+      src: "{{ stage_dir }}/evs-mad-jetty.tar"
+      dest: /opt
+      owner: evs
+      group: evs
+
+  - name: open firewall port 443
+    firewalld:
+      service: https
+      permanent: true
+      state: enabled
+
+  - name: open firewall port 80
+    firewalld:
+      service: http
+      permanent: true
+      state: enabled

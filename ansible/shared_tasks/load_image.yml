@@ -1,0 +1,55 @@
+---
+
+  # this file can be included when you want to upload a docker
+  # image from the staging dir to the server.
+  # it will first check if the image is already present with the same id, in which case it does nothing
+  #
+  # parameter: image. It is a dict object containing name, id, tag,file. It is passed as parameter in the include
+
+  #- name: check what is in item
+  #  debug: var=image
+
+  - name: check image id on the server
+    shell: docker images -q {{image.name}}:{{image.tag}}
+    register: docker_image
+
+  #- debug: var=docker_image
+
+  - name: check on the host
+    shell: ls /tmp | grep -q {{ image.file }}
+    register: file_present
+    failed_when: false
+    ignore_errors: yes
+    changed_when: false
+
+  - name: see file_present
+    debug: var=file_present
+
+  - name: copy file
+    copy:
+      src: "{{stage_dir}}/{{ image.file }}"
+      dest: /tmp
+    when:
+      - file_present.rc != 0
+      - docker_image.stdout != "{{ image.id }}"
+
+  - name: load docker image
+    shell: docker load --input=/tmp/{{ image.file }}
+    when: docker_image.stdout != "{{ image.id }}"
+
+  - name: check image id on the server
+    shell: docker images -q {{image.name}}:{{image.tag}}
+    register: docker_image
+
+  - assert:
+      that:
+        - image.id in docker_image.stdout
+      msg : "loaded image id must match"
+
+  - name: remove image from /tmp
+    file: 
+      path: "/tmp/{{ image.file }}"
+      state: absent
+
+...
+
