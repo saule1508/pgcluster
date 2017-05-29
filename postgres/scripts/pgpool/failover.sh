@@ -2,17 +2,26 @@
 
 # make sure ssh keys are installed on the remote AND on the local server
 
-if [ ! -d /var/log/pg-utils ] ; then
- sudo mkdir /var/log/pg-utils
- sudo chown postgres:postgres /var/log/pg-utils
+if [ ! -d /var/log/evs/pg-utils ] ; then
+ sudo mkdir -p /var/log/evs/pg-utils
+ sudo chown postgres:postgres /var/log/evs/pg-utils
 fi
-LOGFILE=/var/log/pg-utils/failover.log
+LOGFILE=/var/log/evs/pg-utils/failover.log
 if [ ! -f $LOGFILE ] ; then
  > $LOGFILE
 fi
 
 
-echo "executing failover.sh at `date`"  | tee -a ${LOGFILE}
+#if we want to use automatic failover of repmgrd, uncomment lines below (it will simply exit 0)
+#echo "failover.sh detected, will just exit 0 so that pgpool reconfigure itself"  | tee -a $LOGFILE
+#echo "FALLING_NODE: $FALLING_NODE" | tee -a $LOGFILE
+#echo "FALLING_HOST: $FALLING_HOST" | tee -a $LOGFILE
+#echo "OLD_PRIMARY_ID: $OLD_PRIMARY_ID" | tee -a $LOGFILE
+#echo "NEW_PRIMARY_ID: $NEW_PRIMARY_ID" | tee -a $LOGFILE
+#echo "NEW_PRIMARY_HOST: $NEW_PRIMARY_HOST" | tee -a $LOGFILE
+#echo "NEW_MASTER_PGDATA: $NEW_MASTER_PGDATA" | tee -a $LOGFILE
+#exit 0
+
 #if [ $# -ne 6 ]
 #then
 #    echo "$0 expecting 6 parameters but received only $#" | tee -a /opt/evs-infra-pg-utils/logs/failover.log

@@ -1,7 +1,7 @@
 version: '2'
 services:
   pg01:
-    image: localhost:5000/pg:9.6.2
+    image: localhost:5000/pg:0.3.0
     environment:
       INITIAL_NODE_TYPE: master
       NODE_ID: 1
@@ -11,7 +11,7 @@ services:
               # for each micro-service two db users are created, for ex. asset_owner and asset_user, etc.
       MSOWNERPWDLIST: "asset_owner,ingest_owner,playout_owner"
       MSUSERPWDLIST: "asset_user,ingest_user,playout_user"
-      #REPMGRPWD: repmgr
+      REPMGRPWD: rep123
     ports:
       - 15432:5432 # postgres port
     volumes:
@@ -21,10 +21,9 @@ services:
       - /sys/fs/cgroup:/sys/fs/cgroup
     #logging:
     #  driver: "journald"
-    privileged: true
 
   pg02:
-    image: localhost:5000/pg:9.6.2
+    image: localhost:5000/pg:0.3.0
     environment:
       INITIAL_NODE_TYPE: slave
       NODE_ID: 2
@@ -34,7 +33,7 @@ services:
               # for each micro-service two db users are created, for ex. asset_owner and asset_user, etc.
       MSOWNERPWDLIST: "asset_owner,ingest_owner,playout_owner"
       MSUSERPWDLIST: "asset_user,ingest_user,playout_user"
-      #REPMGRPWD: repmgr
+      REPMGRPWD: rep123
     ports:
       - 25432:5432 # postgres port
     volumes:
@@ -44,22 +43,20 @@ services:
       - /sys/fs/cgroup:/sys/fs/cgroup
     depends_on:
       - pg01
-    privileged: true
 
   pgpool01:
     #build:
     #  context: .
     #  dockerfile: Dockerfile.pgpool
-    #image: evs-r-docker.bebr.evs.tv:5000/evs-pgpool:9.6.2
-    image: localhost:5000/pgpool:9.6.2
+    image: localhost:5000/pgpool:0.3.0
     environment:
       PGMASTER_NODE_NAME: pg01
-      PG_BACKEND_NODE_LIST: 0:pg01:9999:/u01/pg96/data:ALLOW_TO_FAILOVER,1:pg02:9999:/u01/pg96/data:ALLOW_TO_FAILOVER
+      PG_BACKEND_NODE_LIST: 0:pg01:5432:/u01/pg96/data:ALLOW_TO_FAILOVER,1:pg02:5432:/u01/pg96/data:ALLOW_TO_FAILOVER
                 # csv list of backend postgres databases, each backend db contains (separated by :)
                 # number (start with 0):host name:pgpool port (default 9999):data dir (default /u01/pg96/data):flag ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
                 # not needed when there is a single postgres DB
       PGP_NODE_NAME: pgpool01
-      #REPMGRPWD: repmgr
+      REPMGRPWD: rep123
       DELEGATE_IP: 172.18.0.100
       TRUSTED_SERVERS: 192.168.1.1
       PGP_HEARTBEATS: "0:pgpool01:9694,1:pgpool02:9694"
@@ -73,13 +70,13 @@ services:
       - NET_ADMIN
     depends_on:
       - pg01
+      - pg02
 
   pgpool02:
     #build:
     #  context: .
     #  dockerfile: Dockerfile.pgpool
-    #image: evs-r-docker.bebr.evs.tv:5000/evs-pgpool:9.6.2
-    image: localhost:5000/pgpool:9.6.2
+    image: localhost:5000/pgpool:0.3.0
     environment:
       PGMASTER_NODE_NAME: pg01
       PG_BACKEND_NODE_LIST: 0:pg01:9999:/u01/pg96/data:ALLOW_TO_FAILOVER,1:pg02:9999:/u01/pg96/data:ALLOW_TO_FAILOVER
@@ -87,7 +84,7 @@ services:
                 # number (start with 0):host name:pgpool port (default 9999):data dir (default /u01/pg96/data):flag ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
                 # not needed when there is a single postgres DB
       PGP_NODE_NAME: pgpool02
-      #REPMGRPWD: repmgr
+      REPMGRPWD: rep123
       DELEGATE_IP: 172.18.0.100
       TRUSTED_SERVERS: 192.168.1.1
       PGP_HEARTBEATS: "0:pgpool01:9694,1:pgpool02:9694"

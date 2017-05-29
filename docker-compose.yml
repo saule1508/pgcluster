@@ -1,7 +1,7 @@
 version: '2'
 services:
   pg01:
-    image: pg:9.6.2
+    image: pg:0.3.0
     environment:
       INITIAL_NODE_TYPE: master
       NODE_ID: 1
@@ -17,9 +17,8 @@ services:
     volumes:
       - pg01db:/u01/pg96/data
       - pg01arc:/u02/archive
-    privileged: true
   pg02:
-    image: pg:9.6.2
+    image: pg:0.3.0
     environment:
       INITIAL_NODE_TYPE: slave
       NODE_ID: 2
@@ -37,9 +36,8 @@ services:
       - pg02arc:/u02/archive
     depends_on:
       - pg01
-    privileged: true
   pgpool01:
-    image: pgpool:9.6.2
+    image: pgpool:0.3.0
     ports:
       - 9999:9999
     environment:

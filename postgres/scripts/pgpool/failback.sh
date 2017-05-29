@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Failback to a master server
-# No clue what this script is supposed to do and when it is called...
+# this script is called when pcp_attach_node is executed ???
 # TODO: remove it if not used
 
 if [ $# -ne 4 ]

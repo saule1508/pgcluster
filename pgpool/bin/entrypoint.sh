@@ -4,14 +4,16 @@ CONFIG_FILE=/etc/pgpool-II/pgpool.conf
 
 wait_for_master(){
   SLEEP_TIME=5
-  MAX_TRIES=10
+  MAX_TRIES=60
   IFS=',' read -ra PG_HOSTS <<< "$1"
   found=0
   i=0
   echo "Using list of backend $1 to find a db to connect to"
   while [ $found -eq 0 ] ; do
+    i=0
+    echo waiting for one node to be pingable
     while [ $found -eq 0 -a $i -lt ${#PG_HOSTS[@]} ] ; do
-      echo i is $i and ${PG_HOSTS[$i]}
+      echo trying with ${PG_HOSTS[$i]}
       h=$( echo ${PG_HOSTS[$i]} | cut -f2 -d":" )
       port=$( echo ${PG_HOSTS[$i]} | cut -f3 -d":" )
       echo trying to ping $h
@@ -24,63 +26,80 @@ wait_for_master(){
       fi
       i=$((i+1))
     done
- done
-
- if [ $found -eq 0 ] ; then
-   echo "Could not find a pg host to query"
-   exit 1
- fi
- if [ -z $port ] ; then
+    sleep $SLEEP_TIME
+  done
+  if [ -z $port ] ; then
    port=5432
- fi
- echo "pg backend found at host $h and port $port"
+  fi
+  echo "pg backend found at host $h and port $port"
 
- ssh ${h} "psql --username=repmgr -p ${port} repmgr -c \"select 1;\"" > /dev/null
- ret=$?
- if [ $ret -eq 0 ] ; then
-  echo "server ready"
-  return 0
- fi
- until [[ $ret -eq 0 ]] || [[ "$MAX_TRIES" == "0" ]]; do
-   echo "$(date) - waiting for postgres..."
-   sleep $SLEEP_TIME
-   MAX_TRIES=`expr "$MAX_TRIES" - 1`
-   ssh ${h} "psql --username=repmgr -p ${port} repmgr -c \"select 1;\"" > /dev/null
-   ret=$?
- done
- ssh ${h} "psql --username=repmgr -p ${port} repmgr -c \"select 1;\"" > /dev/null
- return $?
+  sleep $SLEEP_TIME
+  ssh ${h} "psql --username=repmgr -p ${port} repmgr -c \"select 1;\"" 
+  ret=$?
+  echo "ret of ssh is $ret"
+  if [ $ret -eq 0 ] ; then
+   echo "server ready"
+   return 0
+  fi
+  until [[ $ret -eq 0 ]] || [[ "$MAX_TRIES" == "0" ]]; do
+    echo "$(date) - waiting for postgres..."
+    sleep $SLEEP_TIME
+    MAX_TRIES=`expr "$MAX_TRIES" - 1`
+    ssh ${h} "psql --username=repmgr -p ${port} repmgr -c \"select 1;\"" > /dev/null
+    ret=$?
+  done
+  ssh ${h} "psql --username=repmgr -p ${port} repmgr -c \"select 1;\"" > /dev/null
+  return $?
 }
 
-PGMASTER_NODE_NAME=${PGMASTER_NODE_NAME:-pg01}
-echo PGMASTER_NODE_NAME=${PGMASTER_NODE_NAME}
-PGBACKEND_NODE_LIST=${PGBACKEND_NODE_LIST:-0:${PGMASTER_NODE_NAME}:5432}
-echo PGBACKEND_NODE_LIST=${PGBACKEND_NODE_LIST}
+PG_MASTER_NODE_NAME=${PG_MASTER_NODE_NAME:-pg01}
+echo PG_MASTER_NODE_NAME=${PG_MASTER_NODE_NAME}
+PG_BACKEND_NODE_LIST=${PG_BACKEND_NODE_LIST:-0:${PG_MASTER_NODE_NAME}:5432}
+echo PG_BACKEND_NODE_LIST=${PG_BACKEND_NODE_LIST}
 PGP_NODE_NAME=${PGP_NODE_NAME:-pgpool01}
 echo PGP_NODE_NAME=${PGP_NODE_NAME}
-REPMGRPWD=${REPMGRPWD:-repmgr}
+REPMGRPWD=${REPMGRPWD:-evs123}
 echo REPMGRPWD=${REPMGRPWD}
+FAIL_OVER_ON_BACKEND_ERROR=${FAIL_OVER_ON_BACKEND_ERROR:-off}
+echo FAIL_OVER_ON_BACKEND_ERROR=${FAIL_OVER_ON_BACKEND_ERROR}
+CONNECTION_CACHE=${CONNECTION_CACHE:-on}
+echo CONNECTION_CACHE=${CONNECTION_CACHE}
+
+IFS=',' read -ra PG_HOSTS <<< "$PG_BACKEND_NODE_LIST"
+nbrbackend=${#PG_HOSTS[@]}
+if [ $nbrbackend -gt 1 ] ; then
+  MASTER_SLAVE_MODE=on
+else
+  MASTER_SLAVE_MODE=off
+fi
+echo MASTER_SLAVE_MODE=$MASTER_SLAVE_MODE
 
 
-echo "Waiting for one pg database in ${PGBACKEND_NODE_LIST} to be ready"
-wait_for_master $PGBACKEND_NODE_LIST
-echo "Sleep 10 seconds"
-sleep 10
-echo "rebuild the pgpool_status file based on repl_nodes table"
+echo "Waiting for master pg database on ${PG_MASTER_NODE_NAME} to be ready"
+wait_for_master $PG_BACKEND_NODE_LIST
+echo "Checking backend databases state in repl_nodes table"
 # if the cluster is initializing it is possible that repl_nodes does not contain
 # all backend yet
 # we might need to wait a bit...
-IFS=',' read -ra PG_HOSTS <<< "$PGBACKEND_NODE_LIST"
 ssh ${h} "psql -U repmgr repmgr -t -c 'select name,active from repl_nodes;'" > /tmp/repl_nodes
+if [ $? -ne 0 ] ; then
+  echo "error connecting to $h, try again in 10 seconds"
+  sleep 10
+fi
+ssh ${h} "psql -U repmgr repmgr -t -c 'select name,active from repl_nodes;'" > /tmp/repl_nodes
+if [ $? -ne 0 ] ; then
+  echo "error connecting to $h, try again in 10 seconds"
+  sleep 10
+fi
 nbrlines=$( grep -v "^$" /tmp/repl_nodes | wc -l )
-nbrbackend=${#PG_HOSTS[@]}
-NBRTRY=5
+NBRTRY=30
 while [ $nbrlines -lt $nbrbackend -a $NBRTRY -gt 0 ] ; do
-  sleep 5
-  echo "waiting for repl_nodes to be initialized: currently $nbrlines in repl_node iso $nbrbackend"
+  echo "waiting for repl_nodes to be initialized: currently $nbrlines in repl_node, there must be one line per back-end ($nbrbackend)"
   ssh ${h} "psql -U repmgr repmgr -t -c 'select name,active from repl_nodes;'" > /tmp/repl_nodes
   nbrlines=$( grep -v "^$" /tmp/repl_nodes | wc -l )
   NBRTRY=$((NBRTRY-1))
+  echo "Sleep 10 seconds, still $NBRTRY to go..."
+  sleep 10
 done
 echo ">>>repl_nodes:"
 cat /tmp/repl_nodes
@@ -107,10 +126,10 @@ done
 echo ">>> pgpool_status file"
 cat /tmp/pgpool_status
 echo "Create user hcuser (fails if the hcuser already exists, which is ok)"
-ssh ${h} "psql -c \"create user hcuser with login password 'hcuser';\""
+ssh ${PG_MASTER_NODE_NAME} "psql -c \"create user hcuser with login password 'hcuser';\""
 echo "Generate pool_passwd file from ${h}"
 touch /etc/pgpool-II/pool_passwd
-ssh postgres@${h} "psql -c \"select rolname,rolpassword from pg_authid;\"" | awk 'BEGIN {FS="|"}{print $1" "$2}' | grep md5 | while read f1 f2
+ssh postgres@${PG_MASTER_NODE_NAME} "psql -c \"select rolname,rolpassword from pg_authid;\"" | awk 'BEGIN {FS="|"}{print $1" "$2}' | grep md5 | while read f1 f2
 do
  # delete the line and recreate it
  echo "setting passwd of $f1 in /etc/pgpool-II/pool_passwd"
@@ -119,7 +138,7 @@ do
 done
 echo "Builing the configuration in $CONFIG_FILE"
 
-cat <<EOF > /etc/pgpool-II/pgpool.conf
+cat <<EOF > $CONFIG_FILE
 # config file generated by entrypoint at `date`
 listen_addresses = '*'
 port = 9999
@@ -130,9 +149,9 @@ pcp_socket_dir = '/var/run/pgpool'
 listen_backlog_multiplier = 2
 serialize_accept = off
 EOF
-echo "Adding backend-connection info for each pg node in $PGBACKEND_NODE_LIST"
-IFS=',' read -ra PG_HOSTS <<< "$PGBACKEND_NODE_LIST"
-for HOST in ${PG_HOSTS[@]}
+echo "Adding backend-connection info for each pg node in $PG_BACKEND_NODE_LIST"
+IFS=',' read -ra HOSTS <<< "$PG_BACKEND_NODE_LIST"
+for HOST in ${HOSTS[@]}
 do
     IFS=':' read -ra INFO <<< "$HOST"
 
@@ -168,10 +187,10 @@ ssl = off
 # POOLS
 #------------------------------------------------------------------------------
 # - Concurrent session and pool size -
-num_init_children = 32
+num_init_children = ${NUM_INIT_CHILDREN:-62}
                                    # Number of concurrent sessions allowed
                                    # (change requires restart)
-max_pool = 4
+max_pool = ${MAX_POOL:-4}
                                    # Number of connection pool caches per connection
                                    # (change requires restart)
 # - Life time -
@@ -207,7 +226,7 @@ log_connections = on
 log_hostname = on
                                    # Hostname will be shown in ps status
                                    # and in logs if connections are logged
-log_statement = on
+log_statement = ${LOG_STATEMENT:-off}
                                    # Log all statements
 log_per_node_statement = off
                                    # Log all statements
@@ -224,7 +243,7 @@ syslog_facility = 'LOCAL0'
 syslog_ident = 'pgpool'
                                    # Syslog program identification string
                                    # Default to 'pgpool'
-debug_level = 1
+debug_level = ${DEBUG_LEVEL:-0}
                                    # Debug message verbosity level
                                    # 0 means no message, 1 or more mean verbose
 log_error_verbosity = verbose          # terse, default, or verbose messages
@@ -242,7 +261,7 @@ logdir = '/tmp'
 # CONNECTION POOLING
 #------------------------------------------------------------------------------
 
-connection_cache = on
+connection_cache = ${CONNECTION_CACHE}
                                    # Activate connection pools
                                    # (change requires restart)
 
@@ -260,7 +279,7 @@ replication_mode = off
 # LOAD BALANCING MODE
 #------------------------------------------------------------------------------
 
-load_balance_mode = on
+load_balance_mode = ${MASTER_SLAVE_MODE}
                                    # Activate load balancing mode
                                    # (change requires restart)
 ignore_leading_white_space = on
@@ -292,7 +311,7 @@ allow_sql_comments = off
 # MASTER/SLAVE MODE
 #------------------------------------------------------------------------------
 
-master_slave_mode = on
+master_slave_mode = ${MASTER_SLAVE_MODE}
                                    # Activate master/slave mode
                                    # (change requires restart)
 master_slave_sub_mode = 'stream'
@@ -321,7 +340,7 @@ delay_threshold = 10000000
 
 # - Special commands -
 
-follow_master_command = '/opt/cl-pg-utils/pgpool/follow_master.sh %d %h %m %p %H %M %P'
+follow_master_command = '/opt/scripts/follow_master.sh %d %h %m %p %H %M %P'
                                    # Executes this command after master failover
                                    # Special values:
                                    #   %d = node id
@@ -365,8 +384,10 @@ connect_timeout = 10000
 #------------------------------------------------------------------------------
 # FAILOVER AND FAILBACK
 #------------------------------------------------------------------------------
-
-failover_command = '/opt/cl-pg-utils/pgpool/failover.sh  %d %h %P %m %H %R'
+EOF
+if [ $MASTER_SLAVE_MODE == "on" ] ; then
+  cat <<EOF >> $CONFIG_FILE
+failover_command = '/opt/scripts/failover.sh  %d %h %P %m %H %R'
                                    # Executes this command at failover
                                    # Special values:
                                    #   %d = node id
@@ -380,7 +401,7 @@ failover_command = '/opt/cl-pg-utils/pgpool/failover.sh  %d %h %P %m %H %R'
                                                                    #   %r = new master port number
                                                                    #   %R = new master database cluster path
                                    #   %% = '%' character
-failback_command = 'echo failback'
+failback_command = 'echo failback %d %h %p %D %m %H %M %P'
                                    # Executes this command at failback.
                                    # Special values:
                                    #   %d = node id
@@ -394,8 +415,16 @@ failback_command = 'echo failback'
                                                                    #   %r = new master port number
                                                                    #   %R = new master database cluster path
                                    #   %% = '%' character
+EOF
+else 
+  cat <<EOF >> $CONFIG_FILE
+failover_command = ''
+failback_command = '' 
+EOF
+fi
 
-fail_over_on_backend_error = on
+cat <<EOF >> $CONFIG_FILE
+fail_over_on_backend_error = ${FAIL_OVER_ON_BACKEND_ERROR}
                                    # Initiates failover when reading/writing to the
                                    # backend communication socket fails
                                    # If set to off, pgpool will report an
@@ -413,7 +442,7 @@ search_primary_node_timeout = 300
 
 recovery_user = 'postgres'
                                    # Online recovery user
-recovery_password = 'postgres'
+recovery_password = '${REPMGRPWD}'
                                    # Online recovery password
 recovery_1st_stage_command = 'pgpool_recovery.sh'
                                    # Executes a command in first stage
@@ -488,19 +517,19 @@ delegate_IP = '${DELEGATE_IP}'
                                     # delegate IP address
                                     # If this is empty, virtual IP never bring up.
                                     # (change requires restart)
-if_cmd_path = '/opt/cl-pg-utils/pgpool'
+if_cmd_path = '/opt/scripts'
                                     # path to the directory where if_up/down_cmd exists
                                     # (change requires restart)
-if_up_cmd = 'ip_w.sh addr add \$_IP_\$/16 dev eth0 label eth0:0'
+if_up_cmd = 'ip_w.sh addr add $_IP_$/16 dev eth0 label eth0:0'
                                     # startup delegate IP command
                                     # (change requires restart)
-if_down_cmd = 'ip_w.sh addr del \$_IP_\$/16 dev eth0'
+if_down_cmd = 'ip_w.sh addr del $_IP_$/16 dev eth0'
                                     # shutdown delegate IP command
                                     # (change requires restart)
-arping_path = '/opt/cl-pg-utils/pgpool'
+arping_path = '/opt/scripts'
                                     # arping command path
                                     # (change requires restart)
-arping_cmd = 'arping_w.sh -U \$_IP_\$ -I eth0 -w 1'
+arping_cmd = 'arping_w.sh -U $_IP_$ -I eth0 -w 1'
                                     # arping command
                                     # (change requires restart)
 
@@ -610,6 +639,6 @@ check_unlogged_table = on
 memory_cache_enabled = off
 EOF
 
+rm -f /var/run/pgpool/pgpool.pid 2>/dev/null
 echo "Start pgpool in foreground"
-sudo rm /var/run/pgpool/pgpool.pid 2>/dev/null
 /usr/bin/pgpool -f /etc/pgpool-II/pgpool.conf -n
