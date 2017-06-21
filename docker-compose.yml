@@ -1,4 +1,4 @@
-version: '2'
+version: '3'
 services:
   pg01:
     image: pg:0.3.0
@@ -42,7 +42,7 @@ services:
       - 9999:9999
     environment:
       PGMASTER_NODE_NAME: pg01
-      PGBACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg96/data:ALLOW_TO_FAILOVER,1:pg02:5432:1:/u01/pg96/data:ALLOW_TO_FAILOVER
+      PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg96/data:ALLOW_TO_FAILOVER,1:pg02:5432:1:/u01/pg96/data:ALLOW_TO_FAILOVER
                 # csv list of backend postgres databases, each backend db contains (separated by :)
                 # number (start with 0):host name:pgpool port (default 9999):data dir (default /u01/pg96/data):flag ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
                 # not needed when there is a single postgres DB
@@ -59,6 +59,12 @@ services:
     depends_on:
       - pg01
       - pg02
+  manager:
+    image: manager:0.1.1
+    ports:
+      - 8081:8080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
 volumes:
   pg01db:
   pg02db:

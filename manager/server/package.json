@@ -1,0 +1,24 @@
+{
+  "name": "pxconsole",
+  "version": "0.1.0",
+  "description": "phoenix console",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [
+    "phoenix",
+    "console",
+    "postgres"
+  ],
+  "author": "p.timmermans@evs.com",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.15.2",
+    "express-ws": "^3.0.0",
+    "node-js": "^1.0.0",
+    "pg": "^6.1.5",
+    "request": "^2.81.0"
+  }
+}

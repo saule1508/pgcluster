@@ -1,17 +1,5 @@
 ---
 
-- hosts: madweb
-  vars:
-    docker_disk: /dev/sdb
-    jetty_ver: 9.3.10
-    nginx_ver: 1.10.1
-  remote_user: root
-  become: yes
-  become_method: sudo
-  roles:
-    - base
-    - docker
-    - madweb
 
 - hosts: phoenix
   vars:
@@ -24,7 +12,7 @@
 
   roles:
     - { role: base, tags: ['init'] }
-    - { role: docker, tags: ['init'] }
+    - { role: docker-ce, tags: ['init'] }
     - { role: postgres, tags: ['init'] }
     
 - hosts: postgres
