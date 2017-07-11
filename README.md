@@ -7,28 +7,23 @@ There are various instances of docker-compose files, to test various test cases.
 
 ** this is WIP: the end result will be 1 master, 2 slaves (with repmgr) and 2 pgpool **
 
+I will build a small web application on top of pgpool to visually see the cluster state and to allow fail-over, switch-over, etc. this is completly WIP for now. The backend will be nodejs with websocket and the front-end React+Redux. I will also make an electron app. 
+
+I don't have time to work on it now. However in the coming months I will have to do it for work and so will get time...
+
 ## build
 
 see the script build.sh, it build the image postgres (pg) and the image pgpool
 
-## run postgres
+## run 
 
-The container should be started in detached mode with a bunch of environment variables
+It is easy to start the containers with docker compose. For production one will need to use docker in swarm mode but to test on a single machine docker compose is perfect.
 
 ```
-docker volume create --name pg01data
-docker run -d -p 5432:5432 \
-  -e NODE_ID=1 \
-  -e NODE_NAME=pg01 \
-  -e INITIAL_NODE_TYPE=single \
-  -e REPMGRPWD=mypassword \
-  -e MSLIST=critlib \
-  -e MSOWNERPWDLIST=clowner_pwd \
-  -e MSUSERPWDLIST=cluser_pwd \
-  -v pg01data:/u01/pg96/data --name pg01 pg:9.6.2
+docker-compose up
 ```
 
-The entrypoint of the image is entrypoint.sh. This script calls initdb.sh (directory bootstrap). initdb.sh tests if the file $PGDATA/postgresql.conf exists, and if not it creates the database with the users corresponding to MSLIST. For each micro-service in the list, a _owner and _user user are created. passwords can be given via MSOWNERPWDLIST and MSUSERPWDLIST
+The entrypoint of the docker image is entrypoint.sh. This script calls initdb.sh (directory bootstrap). initdb.sh tests if the file $PGDATA/postgresql.conf exists, and if not it creates the database with the users corresponding to MSLIST. For each micro-service in the list, a _owner and _user user are created. passwords can be given via MSOWNERPWDLIST and MSUSERPWDLIST
 
 ### get inside the container
 
