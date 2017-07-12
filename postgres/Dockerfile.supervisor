@@ -13,10 +13,10 @@ RUN yum install -y epel-release libxslt sudo openssh-server openssh-clients jq p
 RUN easy_install supervisor
 RUN mkdir /var/run/sshd
 RUN ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N ''
-ADD https://yum.postgresql.org/${MAJORVER}/redhat/rhel-7-x86_64/postgresql${PGVER}-${MAJORVER}.${MINORVER}-1PGDG.rhel7.x86_64.rpm /tmp
-ADD https://yum.postgresql.org/${MAJORVER}/redhat/rhel-7-x86_64/postgresql${PGVER}-contrib-${MAJORVER}.${MINORVER}-1PGDG.rhel7.x86_64.rpm /tmp
-ADD https://yum.postgresql.org/${MAJORVER}/redhat/rhel-7-x86_64/postgresql${PGVER}-libs-${MAJORVER}.${MINORVER}-1PGDG.rhel7.x86_64.rpm /tmp
-ADD https://yum.postgresql.org/${MAJORVER}/redhat/rhel-7-x86_64/postgresql${PGVER}-server-${MAJORVER}.${MINORVER}-1PGDG.rhel7.x86_64.rpm /tmp
+ADD https://download.postgresql.org/pub/repos/yum/${MAJORVER}/redhat/rhel-7-x86_64/postgresql${PGVER}-${MAJORVER}.${MINORVER}-1PGDG.rhel7.x86_64.rpm /tmp
+ADD https://download.postgresql.org/pub/repos/yum/${MAJORVER}/redhat/rhel-7-x86_64/postgresql${PGVER}-contrib-${MAJORVER}.${MINORVER}-1PGDG.rhel7.x86_64.rpm /tmp
+ADD https://download.postgresql.org/pub/repos/yum/${MAJORVER}/redhat/rhel-7-x86_64/postgresql${PGVER}-libs-${MAJORVER}.${MINORVER}-1PGDG.rhel7.x86_64.rpm /tmp
+ADD https://download.postgresql.org/pub/repos/yum/${MAJORVER}/redhat/rhel-7-x86_64/postgresql${PGVER}-server-${MAJORVER}.${MINORVER}-1PGDG.rhel7.x86_64.rpm /tmp
 RUN useradd -u 50010 postgres
 RUN rpm -i /tmp/postgresql${PGVER}-${MAJORVER}.${MINORVER}-1PGDG.rhel7.x86_64.rpm \
            /tmp/postgresql${PGVER}-contrib-${MAJORVER}.${MINORVER}-1PGDG.rhel7.x86_64.rpm \
@@ -24,8 +24,8 @@ RUN rpm -i /tmp/postgresql${PGVER}-${MAJORVER}.${MINORVER}-1PGDG.rhel7.x86_64.rp
            /tmp/postgresql${PGVER}-server-${MAJORVER}.${MINORVER}-1PGDG.rhel7.x86_64.rpm && \
 	   rm -f /tmp/postgresql*.rpm
 # install repmgr
-ADD https://yum.postgresql.org/${MAJORVER}/redhat/rhel-7-x86_64/repmgr${PGVER}-3.3-2.rhel7.x86_64.rpm /tmp
-RUN rpm -i /tmp/repmgr${PGVER}-3.3-2.rhel7.x86_64.rpm ;  rm /tmp/repmgr${PGVER}-3.3-2.rhel7.x86_64.rpm 
+ADD https://download.postgresql.org/pub/repos/yum/${MAJORVER}/redhat/rhel-7-x86_64/repmgr${PGVER}-3.3.1-1.rhel7.x86_64.rpm /tmp
+RUN rpm -i /tmp/repmgr${PGVER}-3.3.1-1.rhel7.x86_64.rpm ;  rm /tmp/repmgr${PGVER}-3.3.1-1.rhel7.x86_64.rpm
 RUN chown postgres:postgres /var/log/repmgr
 RUN mkdir -p /u01/pg${PGVER}/data /u02/backup /u02/archive && chown -R postgres:postgres /u01/pg${PGVER} /u02/backup /u02/archive && chmod 700 /u01/pg${PGVER}/data /u02/archive
 ENV PGDATA /u01/pg${PGVER}/data
