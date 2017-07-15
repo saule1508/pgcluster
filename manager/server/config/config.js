@@ -10,13 +10,21 @@ systemctl daemon-reload
 
 */
 module.exports = {
-	pg: {
+	pg: [{
 		'host': 'pg01',
 		'port': 5432,
 		'user': 'repmgr',
 		'password': 'rep123',
 		'database': 'repmgr'
 	},
+	{
+		'host': 'pg02',
+		'port': 5432,
+		'user': 'repmgr',
+		'password': 'rep123',
+		'database': 'repmgr'
+	}
+	],
 	pgp: {
 		'host': 'pgpool01',
 		'port': 9999,

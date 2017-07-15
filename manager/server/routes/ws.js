@@ -2,31 +2,50 @@ var express = require('express')
 var wsrouter = express.Router();
 
 
-/*
-wsrouter.ws('/', function(ws, req) {
-  let interval;
 
-  ws.on('message', (msg)=>{
-    console.log(msg);
-    ws.send(new Date().toString());
-  })
+wsrouter.ws('/dbstates', function(ws, req) {
+  let interval ;
+  let pollInterval = require('../config/config.js').pollInterval;
+  let pg = require('../DAO/pg.js');
 
-  interval = setInterval(()=>{
-    ws.send(new Date().toString());
-  }, 2000);
+  let getStates = () => {
+    pg.dbStates()
+      .then((data)=>{
+        let response = {'result': data.rows, 'timestamp': new Date()};    
+        ws.send(JSON.stringify(response));
+      })
+      .catch((err)=>{
+        let msg = err.detail ? err.detail : null;
+        if (! msg){
+          msg = 'server error ' + (err.code ? err.code + ' - ' : ' - ' ) + (err.errno ? err.errno : '');
+        }
+        ws.send(JSON.stringify({'message': msg,'error': err } ));
+      })
+  }
+
+  getStates();
+  interval = setInterval(getStates, pollInterval);
 
   ws.on('close', function(msg) {
-  	console.log('close with ' + msg);
+    console.log('close with ' + msg);
     if (interval){
       clearInterval(interval);
     } else {
       console.log('no interval to clear ??');
     }
   });
+
+  ws.on('error', (err)=>{
+    if (interval){
+      clearInterval(interval);
+    }
+    console.log('web socker error in /dbstates');
+    console.log(err);
+  })
   
 
 });
-*/
+
 
 wsrouter.ws('/repl_nodes', function(ws, req) {
   let interval ;
@@ -66,6 +85,9 @@ wsrouter.ws('/repl_nodes', function(ws, req) {
   });
 
   ws.on('error', (err)=>{
+    if (interval){
+      clearInterval(interval);
+    }
     console.log('web socker error in /repl_nodes');
     console.log(err);
   })
@@ -111,6 +133,9 @@ wsrouter.ws('/pool_nodes', function(ws, req) {
     }
   });
   ws.on('error', (err)=>{
+    if (interval){
+      clearInterval(interval);
+    }
     console.log('web socker error in /pool_nodes');
     console.log(err);
   })

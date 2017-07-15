@@ -1,6 +1,7 @@
 import React, { Component} from 'react'
 import ServicesContainer from '../../docker/components/ServicesContainer.js'
 import NodesContainer from '../../docker/components/NodesContainer.js'
+import DBStates from '../../postgres/components/DBStates.js'
 import PgpoolContainer from '../../postgres/components/PgpoolContainer.js'
 import ReplContainer from '../../postgres/components/ReplContainer.js'
 
@@ -10,11 +11,11 @@ class Home extends Component {
   render() {
     return (
       <div>
-      {/*
+      
         <div className="row"  style={{'marginBottom': 20}} >
-          <HealthCheckContainer service='ingest' />
+          <DBStates  />
         </div>
-      */}
+      
         <div className="row" style={{'marginBottom': 20}}>  
           <div className="col-md-6">
             <ReplContainer /> 

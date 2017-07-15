@@ -1,4 +1,8 @@
-import { getPgpool, getRepl, getStatActivity } from '../api/index.js'
+import { getDBStates, getPgpool, getRepl, getStatActivity } from '../api/index.js'
+
+export const FETCH_DBSTATES_REQUEST = 'FETCH_DBSTATES_REQUEST';
+export const FETCH_DBSTATES_FAILURE = 'FETCH_DBSTATES_FAILURE';
+export const FETCH_DBSTATES_SUCCESS = 'FETCH_DBSTATES_SUCCESS';
 
 export const FETCH_PGPOOL_REQUEST = 'FETCH_PGPOOL_REQUEST';
 export const FETCH_PGPOOL_FAILURE = 'FETCH_PGPOOL_FAILURE';
@@ -11,6 +15,37 @@ export const FETCH_REPL_SUCCESS = 'FETCH_REPL_SUCCESS';
 export const FETCH_STAT_ACTIVITY_REQUEST = 'FETCH_STAT_ACTIVITY_REQUEST';
 export const FETCH_STAT_ACTIVITY_FAILURE = 'FETCH_STAT_ACTIVITY_FAILURE';
 export const FETCH_STAT_ACTIVITY_SUCCESS = 'FETCH_STAT_ACTIVITY_SUCCESS';
+
+const fetchDBStatesRequest = () => ({
+	'type': FETCH_DBSTATES_REQUEST
+});
+
+export const fetchDBStatesFailure = (error) => ({
+	'type': FETCH_DBSTATES_FAILURE,
+	'payload': error
+});
+
+export const fetchDBStatesSuccess = (rows) => ({
+	'type': FETCH_DBSTATES_SUCCESS,
+	'payload': rows
+});
+
+export const fetchDBStates = () => {
+	return (dispatch,getStore) => {
+		dispatch(fetchDBStatesRequest());
+		getDBStates()
+			.then((result)=>{
+				dispatch(fetchDBStatesSuccess(result.rows));
+			})
+			.catch((error)=>{
+				let errorStr = (error && error.detail) ? error.detail : 'Internal error';
+				if (error && error.hint){
+					errorStr += ' (hint: ' + error.hint + ')';
+				}
+				dispatch(fetchDBStatesFailure(errorStr));
+			})
+	}
+};
 
 const fetchPgpoolRequest = () => ({
 	'type': FETCH_PGPOOL_REQUEST

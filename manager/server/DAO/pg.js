@@ -17,7 +17,7 @@ const getStatActivity = () => {
 }
 
 const getReplNodes = () => {
-	let pgpool = require('./pgpool').pool;
+	let pgpool = require('./pgppool').pool;
 	let q = new Promise((resolve,reject)=>{
 		pgpool.connect().
 			then((client)=>{
@@ -62,9 +62,25 @@ const getPoolNodes = () => {
 	return q;
 }
 
+const dbStates = () => {
+	let pools = require.('./pgpool').pools;
+	let pool = require.('./pgpool').pool;
+	let states = [];
+	pools.forEeach((el,idx)=>{
+		pool.connect(idx).then(()=>{
+			states.push({idx: idx, status: 'green'})
+		})
+		.catch(()=>{
+			states.push({idx: idx, status:'red'});
+		}	
+	})
+	return states;	
+}
+
 module.exports = {
 	'getStatActivity': getStatActivity,
 	'getReplNodes': getReplNodes,
-	'getPoolNodes': getPoolNodes
+	'getPoolNodes': getPoolNodes,
+	dbStates: dbStates
 }
 
