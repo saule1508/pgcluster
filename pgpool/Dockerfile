@@ -21,10 +21,10 @@ RUN chown -R postgres:postgres /home/postgres/.ssh && chmod 700 /home/postgres/.
 RUN mkdir /var/run/postgresql && chown postgres:postgres /var/run/postgresql
 RUN chown postgres:postgres /var/run/pgpool
 ADD pool_hba.conf /etc/pgpool-II/
-# pcp user is postgres and password is pg123 (hard-coded)
+# pcp user is postgres and password is postgres (hard-coded)
 # note that this user has nothing to do with postgres or linux, it is purely for pcp
-RUN echo "postgres:c40a332fdc07de0ff41f8460824c3756" >> /etc/pgpool-II/pcp.conf
-RUN echo "*:*:postgres:pg123" > /home/postgres/.pcppass && chown postgres:postgres /home/postgres/.pcppass && chmod 600 /home/postgres/.pcppass
+RUN echo "postgres:e8a48653851e28c69d0506508fb27fc5" >> /etc/pgpool-II/pcp.conf
+RUN echo "*:*:postgres:postgres" > /home/postgres/.pcppass && chown postgres:postgres /home/postgres/.pcppass && chmod 600 /home/postgres/.pcppass
 RUN chown -R postgres:postgres /etc/pgpool-II 
 ADD scripts /opt/scripts
 ADD bin/entrypoint.sh /
