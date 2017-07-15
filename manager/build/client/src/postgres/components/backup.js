@@ -14,7 +14,7 @@ class Backup extends Component{
     const protocolPrefix = (window.location.protocol === 'https:') ? 'wss:' : 'ws:';
     let host = window.location.host;
     if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-      host = 'localhost:8080';
+      host = 'localhost:8081';
     }
 		this.ws = new WebSocket(protocolPrefix + '//' + host + '/ws/backup');
     this.ws.onopen = () => {

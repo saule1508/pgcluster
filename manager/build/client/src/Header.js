@@ -1,6 +1,23 @@
 import React, { Component } from 'react'
 import { NavLink } from 'react-router-dom'
 
+import {Route, Link} from 'react-router-dom'
+
+const NavItem = ({children, to, exact}) => {
+
+    return (
+        <Route path={to} exact={exact} children={(props) => {          
+          return (
+            <li className={props.match ? 'nav-item active' : 'nav-item'} >
+                <Link to={to}>{children}</Link>
+            </li>
+          )
+        }
+        }/>
+    )
+}
+
+
 class Header extends Component{
   render(){
     return(
@@ -18,15 +35,13 @@ class Header extends Component{
             </div>
             <div className="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
               <ul className="nav navbar-nav">
-                <li>
-                  <NavLink to="/" >Dashboard</NavLink>
-                </li>
-                <li>
-                  <NavLink to="/postgres/stat_activity">Postgres</NavLink>
-                </li>
-                <li>
-                  <NavLink to="/docker/info">Docker</NavLink>
-                </li>
+                
+                  <NavItem exact={true} to="/" >Dashboard</NavItem>
+                
+                  <NavItem exact={false} to="/postgres">Postgres</NavItem>
+                
+                  <NavItem exact={false} to="/docker">Docker</NavItem>
+                
               </ul>
               <ul className="nav navbar-nav navbar-right">
                 <li>

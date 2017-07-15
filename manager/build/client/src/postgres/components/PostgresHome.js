@@ -17,7 +17,7 @@ const NavItem = ({children, to, exact}) => {
 const Header = () => {
   return (
     <ul className="nav nav-tabs">
-      <NavItem to="/postgres/stat_activity">Stat activity</NavItem>
+      <NavItem exact to="/postgres">Stat activity</NavItem>
       <NavItem to="/postgres/backup">Backup</NavItem>
     </ul>
   )
@@ -30,9 +30,9 @@ class PostgresHome extends Component{
       <div>
         <h2>Postgres</h2>
         <Header />
-        
-        <Route path='/postgres/stat_activity' component={StatActivityContainer} />
-        <Route path='/postgres/backup' component={Backup} />
+        <Route exact path='/postgres' component={StatActivityContainer} />
+        <Route path='/postgres/stat_activity' component={StatActivityContainer} /> 
+        <Route path='/postgres/backup' exact={false} component={Backup} />
       
       </div>
     )

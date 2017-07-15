@@ -1,7 +1,7 @@
 FROM centos:latest
 MAINTAINER p.timmermans@evs.com
-ADD https://nodejs.org/dist/v8.0.0/node-v8.0.0-linux-x64.tar.xz /
-ENV PATH $PATH:/node-v8.0.0-linux-x64/bin
+ADD https://nodejs.org/dist/v8.1.4/node-v8.1.4-linux-x64.tar.xz /
+ENV PATH $PATH:/node-v8.1.4-linux-x64/bin
 #RUN yum install -y git && yum clean all && mkdir /root/.ssh
 ADD ssh_keys /root/.ssh
 RUN chmod 700 /root/.ssh && chmod 600 /root/.ssh/* && chmod 644 /root/.ssh/known_hosts
