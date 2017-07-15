@@ -17,7 +17,7 @@ NEW_PRIMARY=$4          # %H
 #REPL_PASS=$5
 #TRIGGER_FILE=$6
 
-echo "failback.sh FALLING_NODE: ${FALLING_NODE}; FALLING_HOST: ${FALLING_HOST}; OLDPRIMARY_NODE: ${OLDPRIMARY_NODE}; NEW_PRIMARY: ${NEW_PRIMARY}; at $(date)\n" >> //tmp/failback.log
+echo "failback.sh FALLING_NODE: ${FALLING_NODE}; FALLING_HOST: ${FALLING_HOST}; OLDPRIMARY_NODE: ${OLDPRIMARY_NODE}; NEW_PRIMARY: ${NEW_PRIMARY}; at $(date)\n" >> /tmp/failback.log
 
 if [ $FALLING_NODE = $OLDPRIMARY_NODE ]; then
     if [ $UID -eq 0 ]

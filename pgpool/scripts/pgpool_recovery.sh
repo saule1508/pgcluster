@@ -12,11 +12,11 @@
 
 PATH=$PATH:/usr/pgsql-9.6/bin
 
-if [ ! -d /var/log/evs/pg-utils ] ; then
- sudo mkdir -p /var/log/evs/pg-utils
- sudo chown postgres:postgres /var/log/evs/pg-utils
+if [ ! -d /var/log/pg ] ; then
+ sudo mkdir -p /var/log/pg
+ sudo chown postgres:postgres /var/log/pg
 fi
-LOGFILE=/var/log/evs/pg-utils/pgpool_recovery.log
+LOGFILE=/var/log/pg/pgpool_recovery.log
 if [ ! -f $LOGFILE ] ; then
  > $LOGFILE
 fi
@@ -49,7 +49,8 @@ $ssh_copy "rm -Rf $replica_path/*"
 echo let us use repmgr on the replica host to force it to sync again
 $ssh_copy "/usr/pgsql-9.6/bin/repmgr -h ${primary_host} --username=repmgr -d repmgr -D ${replica_path} -f /etc/repmgr/9.6/repmgr.conf standby clone -v"
 echo "Start database on ${replica_host} "
-$ssh_copy "/usr/pgsql-9.6/bin/pg_ctl -D ${replica_path} start"
+# -s -l /dev/null is needed otherwise ssh hangs
+$ssh_copy "/usr/pgsql-9.6/bin/pg_ctl -s -l /dev/null -D ${replica_path} start"
 echo sleeping 20
 sleep 20
 echo "Register standby database"

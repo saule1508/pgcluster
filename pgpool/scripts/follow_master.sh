@@ -3,11 +3,11 @@
 #put keys on the remote AND on the local server
 #NOT TESTED
 
-if [ ! -d /var/log/evs/pg-utils ] ; then
- sudo mkdir -p /var/log/evs/pg-utils
- sudo chown postgres:postgres /var/log/evs/pg-utils
+if [ ! -d /var/log/pg ] ; then
+ sudo mkdir -p /var/log/pg
+ sudo chown postgres:postgres /var/log/pg
 fi
-LOGFILE=/var/log/evs/pg-utils/follow_master.log
+LOGFILE=/var/log/pgfollow_master.log
 if [ ! -f $LOGFILE ] ; then
  > $LOGFILE
 fi

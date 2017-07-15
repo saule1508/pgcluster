@@ -1,11 +1,11 @@
 #!/bin/sh
 
-if [ ! -d /var/log/evs-pg-utils ] ; then
- sudo mkdir /var/log/evs-pg-utils
- sudo chown postgres:postgres /var/log/evs-pg-utils
+if [ ! -d /var/log/pg ] ; then
+ sudo mkdir /var/log/pg
+ sudo chown postgres:postgres /var/log/pg
 fi
 
-LOGFILE=/var/log/evs-pg-utils/ip_w.log
+LOGFILE=/var/log/pg/ip_w.log
 echo "Exec ip with params $@ at `date`" | tee -a ${LOGFILE}
 sudo /usr/sbin/ip $@
 exit 0
