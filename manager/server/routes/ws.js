@@ -64,6 +64,11 @@ wsrouter.ws('/repl_nodes', function(ws, req) {
       console.log('no interval to clear ??');
     }
   });
+
+  ws.on('error', (err)=>{
+    console.log('web socker error in /repl_nodes');
+    console.log(err);
+  })
   
 
 });
@@ -105,6 +110,10 @@ wsrouter.ws('/pool_nodes', function(ws, req) {
       console.log('no interval to clear ??');
     }
   });
+  ws.on('error', (err)=>{
+    console.log('web socker error in /pool_nodes');
+    console.log(err);
+  })
   
 
 });
