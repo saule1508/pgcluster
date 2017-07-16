@@ -1,4 +1,4 @@
-import combineReducers from 'redux'
+import { combineReducers } from 'redux'
 
 import {
   FETCH_DBSTATES_REQUEST, FETCH_DBSTATES_FAILURE, FETCH_DBSTATES_SUCCESS,
@@ -23,14 +23,20 @@ const STAT_ACTIVITY_INITIAL_STATE = {
   rows: []
 }
 
-const dbstates = (state = {loading: false, error: null, rows: [], action) => {
+export const getDBStatesSorted = ( dbstates ) => {
+  return dbstates.sort((el1,el2)=>{
+    return el1.idx - el2.idx
+  })
+}
+
+const dbstates = (state = {loading: false, error: null, rows: []}, action) => {
   switch (action.type) {
     case FETCH_DBSTATES_REQUEST:
       return Object.assign({},state, {'loading': true});
     case FETCH_DBSTATES_FAILURE:
       return Object.assign({},state, {'loading': false, 'error': action.payload});
     case FETCH_DBSTATES_SUCCESS:
-      return Object.asssign({},state, {'loading': false, 'error': null, 'rows': action.payload});
+      return Object.assign({},state, {'loading': false, 'error': null, 'rows': action.payload});
     default:
       return state;
   }
@@ -44,7 +50,7 @@ const repl_nodes = (state = REPL_NODES_INITIAL_STATE, action) => {
     case FETCH_REPL_FAILURE:
       return Object.assign({},state, {'loading': false, 'error': action.payload});
     case FETCH_REPL_SUCCESS:
-      return Object.asssign({},state, {'loading': false, 'error': null, 'rows': action.payload});
+      return Object.assign({},state, {'loading': false, 'error': null, 'rows': action.payload});
     default:
       return state;
   }
@@ -57,7 +63,7 @@ const pool_nodes = (state = POOL_NODES_INITIAL_STATE, action) => {
     case FETCH_PGPOOL_FAILURE:
       return Object.assign({},state, {'loading': false, 'error': action.payload});
     case FETCH_PGPOOL_SUCCESS:
-      return Object.asssign({},state, {'loading': false, 'error': null, 'rows': action.payload});
+      return Object.assign({},state, {'loading': false, 'error': null, 'rows': action.payload});
     default:
       return state;
   }

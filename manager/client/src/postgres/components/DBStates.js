@@ -1,17 +1,22 @@
 import React, { Component } from 'react'
 import ConnectedStatus from '../../shared/components/ConnectedStatus'
+import { getDBStatesSorted } from '../reducers/index.js'
 
 
 const Backend = ( {backend} ) => {
 
-	let color= backend.status === 'up'  ? '#89C35C' : 'red';
+	let color= backend.status === 'green'  ? '#89C35C' : 'red';
 
 	return (
-		<svg width="210" height="100">
+		<svg width="180" height="100">
 			
-			<rect width={200} height={100} style={{fill : color}} />
+			<rect width={160} height={100} style={{fill : color}} />
 			<text x={10} y={40} style={{fontSize: '80%'}} fill='black'>
-				ID: {backend.idx} - State: {backend.status} 
+				ID: {backend.idx} - Host: {backend.host}
+        <tspan x={10} y={60}>
+        State: {backend.status}
+        </tspan>
+        <tspan x={10} y={80}>In recovery: {backend.in_recovery && backend.in_recovery === true ? 'true' : 'false'}</tspan>
 			</text>
 		</svg>
 	)
@@ -41,6 +46,7 @@ class DBStates extends Component{
       this.ws.onmessage = e => {
         console.log('on message');
       	let result = JSON.parse(e.data);
+        console.log(result);
         this.setState({'serverTimeStamp': result.timestamp});
         if (result && result.error ){
           this.props.fetchDBStatesFailure(result.message || 'server error');
@@ -75,7 +81,9 @@ class DBStates extends Component{
 		if (this.props.rows.length === 0){
 			return (<div className="loader"></div>);
 		}
-		let content = this.props.rows.map((el,idx)=>{
+    let rows = getDBStatesSorted(this.props.rows);
+
+		let content = rows.map((el,idx)=>{
 
 			return(
 				<Backend key={el.idx} backend={el} />

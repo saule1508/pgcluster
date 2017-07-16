@@ -11,10 +11,13 @@ wsrouter.ws('/dbstates', function(ws, req) {
   let getStates = () => {
     pg.dbStates()
       .then((data)=>{
-        let response = {'result': data.rows, 'timestamp': new Date()};    
+        let response = {'result': data, 'timestamp': new Date()};    
+        console.log(response);
         ws.send(JSON.stringify(response));
       })
       .catch((err)=>{
+        console.log('got error');
+        console.log(err);
         let msg = err.detail ? err.detail : null;
         if (! msg){
           msg = 'server error ' + (err.code ? err.code + ' - ' : ' - ' ) + (err.errno ? err.errno : '');

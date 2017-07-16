@@ -63,19 +63,29 @@ const getPoolNodes = () => {
 }
 
 const dbStates = () => {
-	let pools = require.('./pgpool').pools;
-	let pool = require.('./pgpool').pool;
+	let pools = require('./pgpool').pools;
+
+	let pool = require('./pgpool');
 	let states = [];
-	pools.forEeach((el,idx)=>{
-		pool.connect(idx).then(()=>{
-			states.push({idx: idx, status: 'green'})
+	return new Promise((resolve,reject)=>{
+		pools.forEach((el,idx)=>{
+			console.log('query in idx ' + idx);
+			
+			pool.query(idx,'select pg_is_in_recovery() as in_recovery',{},(err,result)=>{
+				if (err){
+					states.push({idx: idx, host: el.host, status:'red'});
+				} else {
+					console.log(result.rows[0]);
+					states.push({idx: idx, host: el.host,status: 'green', in_recovery: result.rows[0].in_recovery})
+				}
+				if (states.length === pools.length){
+					return resolve(states);
+				}			
+			})
 		})
-		.catch(()=>{
-			states.push({idx: idx, status:'red'});
-		}	
 	})
-	return states;	
 }
+
 
 module.exports = {
 	'getStatActivity': getStatActivity,

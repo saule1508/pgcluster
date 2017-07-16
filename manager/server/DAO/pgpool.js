@@ -3,19 +3,21 @@ let config = require('../config/config.js').pg;
 
 let pools = [];
 config.map((el,idx)=>{
-  pools.push(new Pool(el));
+  pools.push({pool: new Pool(el), host: el.host});
 })
-module.exports.pools = pools;
 
-module.exports.query = (idx = 0,text, values, callback) => {
-  console.log('query on db idx:', text, values, idx);
-  return pools[idx].query(text, values, callback);
+const query = (idx = 0,text, values, callback) => {
+  return pools[idx].pool.query(text, values, callback);
 };
 
 // the pool also supports checking out a client for
 // multiple operations, such as a transaction
-module.exports.connect = (idx = 0,callback) => {
-  return pool[idx].connect(callback);
+const connect = (idx = 0,callback) => {
+  return pools[idx].pool.connect(callback);
 };
 
-module.exports.pool = pool;
+module.exports = {
+  pools: pools,
+  query: query,
+  connect: connect
+}

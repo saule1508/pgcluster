@@ -4,18 +4,19 @@ import ConnectedStatus from '../../shared/components/ConnectedStatus'
 
 const Backend = ( {backend} ) => {
 
-	let color= backend.status === 'up'  ? '#89C35C' : 'red';
+	let color= backend.status === 'up' || backend.status === 'waiting' ? '#89C35C' : 'red';
   let strokeW = backend.role === 'primary' ? 5 : 2;
 	let strokeC = backend.role === 'primary' ? 'blue' : 'grey';
 
 	return (
-		<svg width="210" height="100">
+		<svg width="180" height="100">
 			
-			<rect width={200} height={100} style={{fill : color,strokeWidth: strokeW, stroke: strokeC}} />
+			<rect width={160} height={100} style={{fill : color,strokeWidth: strokeW, stroke: strokeC}} />
 			<text x={40} y={20} style={{fontSize: '110%'}} fill={strokeC}>** {backend.role} **</text>
 			<text x={10} y={40} style={{fontSize: '80%'}} fill='black'>
-				ID: {backend.node_id} - Host:{backend.hostname} - State:{backend.status} 
-				<tspan x={10} y={60}>Select count: {backend.select_cnt}</tspan>
+				ID: {backend.node_id} - Host:{backend.hostname} 
+				<tspan x={10} y={60}>State:{backend.status}</tspan>
+        <tspan x={10} y={70}>Select count: {backend.select_cnt}</tspan>
 				<tspan x={10} y={80}>Load balance node? {backend.load_balance_node}</tspan>
 			</text>
 		</svg>
