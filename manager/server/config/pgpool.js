@@ -1,5 +1,5 @@
 let Pool = require('pg').Pool;
-let config = require('../config/config.js').pg;
+let config = require('./config.js').pg;
 
 let pools = [];
 config.map((el,idx)=>{

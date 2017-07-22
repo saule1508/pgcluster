@@ -1,5 +1,5 @@
 ---
-  consul_ver: "0.8.1"
+  consul_ver: "0.9.0"
   when: consul_ver is undefined
 
 ...

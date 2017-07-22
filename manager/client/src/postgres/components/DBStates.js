@@ -81,7 +81,6 @@ class DBStates extends Component{
 		if (this.props.rows.length === 0){
 			return (<div className="loader"></div>);
 		}
-    let rows = getDBStatesSorted(this.props.rows);
 
 		let content = rows.map((el,idx)=>{
 

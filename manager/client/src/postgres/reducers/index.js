@@ -23,8 +23,8 @@ const STAT_ACTIVITY_INITIAL_STATE = {
   rows: []
 }
 
-export const getDBStatesSorted = ( dbstates ) => {
-  return dbstates.sort((el1,el2)=>{
+export const getDBStatesSorted = ( state ) => {
+  return state.postgres.dbstates.rows.sort((el1,el2)=>{
     return el1.idx - el2.idx
   })
 }

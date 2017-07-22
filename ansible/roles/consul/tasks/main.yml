@@ -7,7 +7,7 @@
   - add_host:
       name: "{{ item }}"
       groups: consul
-    with_items: "{{ groups.phoenix }}"
+    with_items: "{{ groups.all }}"
     when: groups.consul is undefined
     changed_when: false
 

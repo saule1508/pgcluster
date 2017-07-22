@@ -1,0 +1,65 @@
+version: '3'
+
+networks:
+  default:
+    external:
+      name: ${INFRA_NETWORK_NAME}
+
+services:
+  pgpool01:
+    image: {{ images.pgpool.name }}:{{ images.pgpool.tag }}
+    environment:
+      PG_MASTER_NODE_NAME: pg01
+      PG_BACKEND_NODE_LIST: ${PG_BACKEND_NODE_LIST}
+      PGP_NODE_NAME: pgpool01
+      REPMGRPWD: ${REPMGRPDW:-rep123}
+    ports:
+      - 9999:9999
+
+  #POSTGRESQL
+  pg01:
+    image: {{ images.postgres.name }}:{{ images.postgres.tag }}
+    environment:
+      SERVICE_NAME: pg01
+      INITIAL_NODE_TYPE: master
+      NODE_ID: ${NODE_ID}
+      NODE_NAME: ${PG_NODE_NAME}
+      ARCHIVELOG: 1
+      MSLIST: ${MSLIST}
+      MSOWNERPWDLIST: ${MSOWNERPWDLIST}
+      MSUSERPWDLIST: ${MSUSERPWDLIST}
+      REPMGRPWD: ${REPMGRPDW:-rep123}
+    deploy:
+      placement:
+        constraints:
+          - node.id == {{ swarm_first_master }}
+    volumes:
+      - /u01/pg96/data:/u01/pg96/data
+      - /u02/archive:/u02/archive
+      - /u02/backup:/u02/backup
+    ports:
+      - 5432:5432
+
+  pg02:
+    image: {{ images.postgres.name }}:{{ images.postgres.tag }}
+    environment:
+      SERVICE_NAME: pg02
+      INITIAL_NODE_TYPE: slave
+      NODE_ID: 2
+      NODE_NAME: pg02
+      ARCHIVELOG: 1
+      MSLIST: ${MSLIST}
+      MSOWNERPWDLIST: ${MSOWNERPWDLIST}
+      MSUSERPWDLIST: ${MSUSERPWDLIST}
+      REPMGRPWD: ${REPMGRPDW:-rep123}
+    deploy:
+      placement:
+        constraints:
+          - node.id != {{ swarm_first_manager }}
+    volumes:
+      - /u01/pg96/data:/u01/pg96/data
+      - /u02/archive:/u02/archive
+      - /u02/backup:/u02/backup
+    ports:
+      - 5432:5432
+

@@ -1,11 +1,12 @@
 import {connect} from 'react-redux'  
 import { fetchDBStates,fetchDBStatesSuccess, fetchDBStatesFailure } from '../actions'
+import { getDBStatesSorted } from '../reducers/index'
 import DBStates from './DBStates'
 
 
 const mapStateToProps = (state) => {
   return {
-    rows: state.postgres.dbstates.rows,
+    rows: getDBStatesSorted(state),
     loading: state.postgres.dbstates.loading,
     error: state.postgres.dbstates.error
   }

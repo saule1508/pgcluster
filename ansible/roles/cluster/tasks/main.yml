@@ -4,34 +4,34 @@
   - add_host:
       name: "{{ item }}"
       groups: cluster
-    with_items: "{{ groups.phoenix }}"
+    with_items: "{{ groups.all }}"
     when: groups.cluster is undefined
 
   #- debug: var=groups['cluster']
 
   - name: add config NODE_ID
     lineinfile: 
-      dest: /etc/evs/config
+      dest: /etc/critlib/config
       state: present
       regexp: '^NODE_ID='
       line: NODE_ID={{ groups.cluster.index(inventory_hostname)+1 }}
 
   - name: add config PG_NODE_NAME
     lineinfile: 
-      dest: /etc/evs/config
+      dest: /etc/critlib/config
       state: present
       regexp: '^PG_NODE_NAME='
       line: PG_NODE_NAME=pg0{{ groups.cluster.index(inventory_hostname)+1 }}
   
-  - name: remove config PG_BACKEND_LIST
+  - name: remove config PG_BACKEND_NODE_LIST
     lineinfile:
-      dest: /etc/evs/config
+      dest: /etc/critlib/config
       state: absent
       regexp: '^PG_BACKEND_NODE_LIST'
 
   - name: add config PG_BACKEND_NODE_LIST
     lineinfile:
-      dest: /etc/evs/config
+      dest: /etc/critlib/config
       # Comma-separated string of all postgres backends
       line: |
         {% set comma = joiner(",") %}
@@ -42,13 +42,13 @@
 
   - name: remove config NODE_LIST
     lineinfile:
-      dest: /etc/evs/config
+      dest: /etc/critlib/config
       state: absent
       regexp: '^NODE_LIST'
 
   - name: add config NODE_LIST
     lineinfile:
-      dest: /etc/evs/config
+      dest: /etc/critlib/config
       # Comma-separated string of all nodename
       line: |
         {% set comma = joiner(",") %}
@@ -97,13 +97,13 @@
 #  - debug: var=groups['cluster'][0]
 
   - lineinfile:
-      dest: /etc/evs/config
+      dest: /etc/critlib/config
       state: present
       line: 'PG_INITIAL_NODE_TYPE=master'
     when: inventory_hostname == groups.cluster[0] 
 
   - lineinfile:
-      dest: /etc/evs/config
+      dest: /etc/critlib/config
       state: present
       line: 'PG_INITIAL_NODE_TYPE=slave'
     when: inventory_hostname != groups.cluster[0] 
@@ -169,18 +169,12 @@
           item.state|lower == "present" and
           item.name not in docker_networks.stdout
 
-  - name: ensure directory /opt/evs/run exists
-    file:
-      path: /opt/evs/run
-      state: directory
-      mode: 0755
-  
-  - name: install docker-compose.infra.ym in /opt/evs/run
+  - name: install docker-compose.yml
     template: 
-      src: "docker-compose.infra.yml"
-      dest: "/opt/evs/run/docker-compose.infra.yml"
-      owner: evs
-      group: evs
+      src: "docker-compose.yml"
+      dest: "/opt/critlib/docker-compose.yml"
+      owner: critlib
+      group: critlib
       mode: "u=rw,g=r,o=r"
     
  

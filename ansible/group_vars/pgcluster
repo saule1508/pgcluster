@@ -1,17 +1,13 @@
-#to do: remove postgres_ver
-postgres_ver: 9.6.2
 # VG docker will be created with sdb
 docker_disk: sdb
-# VG vg01 + lv lv_u01 mounted on /u01
-pgdata_disk: sdc
-# VG vg02 + lv lv_u02 mounted on /u02
-pgbackup_disk: sdd
+#  disk for postgres
+pg_disk: sdc
 
 #following variables will inserted in /etc/evs/config
 #those variables can be injected from the commandline, for example via a config file (i.e with the param extra-vars="@<file.yml>")
-ms_list: "{{ mslist | default('apiman,keycloak,asset,ingest,playout') }}"
-ms_ownerpwdlist: "{{ msownerpwdlist | default('apiman_owner,keycloak_owner,asset_owner,ingest_owner,playout_owner') }}"
-ms_userpwdlist: "{{ msuserpwdlist | default('apiman_user,keycloak_user,asset_user,ingest_user,playout_user') }}"
+ms_list: "{{ mslist | default('asset,ingest,playout') }}"
+ms_ownerpwdlist: "{{ msownerpwdlist | default('asset_owner,ingest_owner,playout_owner') }}"
+ms_userpwdlist: "{{ msuserpwdlist | default('asset_user,ingest_user,playout_user') }}"
 repmgr_pwd: "{{ repmgrpwd | default('evs123') }}"
 #one or more swarm networks will be created (currently only one, called phoenix_network)
 docker_swarm_networks:
@@ -19,4 +15,3 @@ docker_swarm_networks:
     name: phoenix_network
     driver: overlay
     state: present
-

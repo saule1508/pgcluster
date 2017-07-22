@@ -1,16 +1,3 @@
 [phoenix]
-px01 ansible_host=10.143.9.45  ansible_connection=ssh ansible_user=evsadmin ansible_become_user=root
-px02 ansible_host=10.143.9.46  ansible_connection=ssh ansible_user=evsadmin ansible_become_user=root
-
-
-#[madweb]
-#10.143.8.60 ansible_connection=ssh ansible_user=evsadmin ansible_become_user=root
-
-[postgres]
-#172.21.21.10 ansible_connection=ssh ansible_user=vagrant ansible_become_user=root
-#10.143.9.45  ansible_connection=ssh ansible_user=evsadmin ansible_become_user=root
-#10.143.9.46  ansible_connection=ssh ansible_user=evsadmin ansible_become_user=root
-
-[cluster]
-px01 ansible_host=10.143.9.45  ansible_connection=ssh ansible_user=evsadmin ansible_become_user=root
-px02 ansible_host=10.143.9.46  ansible_connection=ssh ansible_user=evsadmin ansible_become_user=root
+px01 ansible_host=172.22.1.22  ansible_connection=ssh ansible_user=vagrant ansible_become_user=root
+px02 ansible_host=172.22.1.23  ansible_connection=ssh ansible_user=vagrant ansible_become_user=root
