@@ -1,7 +1,22 @@
-# VG docker will be created with sdb
-docker_disk: sdb
-#  disk for postgres
-pg_disk: sdc
+
+# =======================================================
+storage:
+  docker:
+    disk: 'sdb'
+    #if the volume group does not exist, it will be created otherwise it will expanded with the disk above
+    vg: vg_01
+    #this is the size of the lv volume that will be created
+    size_gb: "20"
+  postgres:
+    data:
+      disk: "sdb"
+      vg: vg_01
+      size_gb: "10"
+    backup:
+      disk: "sdb"
+      vg: vg_01
+      size_gb: "10"
+
 
 #following variables will inserted in /etc/evs/config
 #those variables can be injected from the commandline, for example via a config file (i.e with the param extra-vars="@<file.yml>")

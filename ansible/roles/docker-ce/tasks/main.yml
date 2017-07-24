@@ -8,48 +8,49 @@
       gpgkey: https://download.docker.com/linux/centos/gpg
       state: present
 
-  - name: install docker-ce-stable yum package
+  - name: install docker-ce
     yum:
       name: docker-ce
       state: latest
 
+  - set_fact:
+      docker_pv: "{{ storage['docker'].disk }}"
+
   - name: create docker volume group
     lvg: 
-      vg: docker 
-      pvs: "/dev/{{ docker_disk }}"
+      vg: "{{storage['docker'].vg}}"
+      pvs: "/dev/{{ storage['docker'].disk }}"
       state: present
+    when: >
+     (hostvars[inventory_hostname]['ansible_lvm']['vgs'] is defined 
+     and hostvars[inventory_hostname]['ansible_lvm']['vgs']['{{storage['docker'].vg}}'] is not defined)
 
   - name : create thinpool for docker
     lvol: 
-      vg: docker
+      vg: "{{storage['docker'].vg}}"
       lv: thinpool
-      size: 90%VG
+      size: "{{ ((storage['docker'].size_gb|int) * 0.9 * 1024) | int }}"
       opts: --wipesignatures y
       state: present
-
-#  - name : check thinpoolmeta exists
-#    command: lvdisplay /dev/docker/thinpoolmeta
-#    ignore_errors: yes
-#    register: thinpoolmeta_exists
+    when: hostvars[inventory_hostname]['ansible_lvm']['lvs']['thinpool'] is not defined
 
   - name : create meta for docker
     lvol: 
-      vg: docker
+      vg: "{{ storage['docker'].vg }}"
       lv: thinpoolmeta
-      size: 5%VG
+      size: "{{ ((storage['docker'].size_gb|int) * 0.1 * 1024) | int }}"
       opts: --wipesignatures y
-    when:  hostvars[inventory_hostname]['ansible_lvm']['lvs']['thinpool'] is not defined
+    when:  hostvars[inventory_hostname]['ansible_lvm']['lvs']['thinpoolmeta'] is not defined
       
   - name: test if pool is already converted to thinpool
-    shell: lvs -o lv_attr docker/thinpool | tail -1 | awk '{print $1}' | cut -c1
+    shell: "lvs -o lv_attr {{ storage['docker'].vg }}/thinpool | tail -1 | awk '{print $1}' | cut -c1"
     register: thinpool_converted
 
   - debug: var=thinpool_converted
       
   - name: convert pool to a thinpool
-    command: lvconvert -y --zero n -c 512K --thinpool docker/thinpool --poolmetadata docker/thinpoolmeta
+    command: lvconvert -y --zero n -c 512K --thinpool {{ storage['docker'].vg}}/thinpool --poolmetadata {{ storage['docker'].vg }}/thinpoolmeta
     when: thinpool_converted.stdout != "t"
-      
 
   - name: Configure autoextension of thin pools via an lvm profile
     copy:
@@ -57,17 +58,27 @@
       dest: /etc/lvm/profile/docker-thinpool.profile
 
   - name: Apply your new lvm profile
-    command: lvchange --metadataprofile docker-thinpool docker/thinpool
+    command: lvchange --metadataprofile docker-thinpool {{ storage['docker'].vg }}/thinpool
 
   - name: create directory /etc/docker
     file: path=/etc/docker state=directory
 
   - name: configure docker daemon
-    copy:
-      src: daemon.json
+    template:
+      src: daemon.json.j2
       dest: /etc/docker/daemon.json
-    notify:
-      - start docker
+
+  - name: add group docker to evs
+    user:
+      name: evs
+      groups: "docker"
+      append: yes
+
+  - name: restart firewalld
+    systemd:
+      name: firewalld
+      enabled: true
+      state: restarted
 
   - name: start and enable docker
     systemd:

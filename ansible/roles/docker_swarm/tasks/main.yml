@@ -1,0 +1,220 @@
+---
+
+  - debug: var=swarm_interface
+  - debug: var=swarm_advertise_addr
+  - assert:
+      that:
+        - swarm_interface is defined
+        - swarm_advertise_addr is defined
+
+  - add_host:
+      name: "{{ item }}"
+      groups: swarm
+    with_items: "{{ groups.all }}"
+    when: groups.swarm is undefined
+    changed_when: false
+
+  - add_host:
+      name: "{{ item }}"
+      groups: swarm_manager
+    with_items: "{{ groups.swarm }}"
+    when: >
+      groups['swarm'].index(item) <= 2
+      and groups.swarm_manager is undefined
+    changed_when: false
+
+  - add_host:
+      name: "{{ item }}"
+      groups: swarm_worker
+    with_items: "{{ groups.swarm }}"
+    when: >
+      groups['swarm'].index(item) > 2
+      and groups.swarm_worker is undefined
+    changed_when: false
+
+  
+  - debug: msg="test"
+    with_items: "{{ groups.swarm_worker }}"
+    when: groups.swarm_worker is defined
+
+  - debug: var=groups.swarm
+  - debug: var=groups.swarm_manager
+  - debug: var=groups.swarm_worker
+
+  - name: Add IP address of all hosts in /etc/hosts 
+    lineinfile:
+      dest: /etc/hosts
+      line: "{{ hostvars[item].ansible_host }} {{ hostvars[item].inventory_hostname }} {{ hostvars[item].inventory_hostname_short }}"
+      state: present
+    with_items: "{{ groups.cluster }}"
+
+  - name: fetch postgres public ssh key
+    shell: cat /home/postgres/.ssh/id_rsa.pub
+    register: postgres_ssh_keys
+    changed_when: false
+
+  # this is needed for when we are kickstarting a server
+  # and so ansible will run on the local machine => copy authorize key locally first:
+  - name: add postgres public key to postgres authorized keys file
+    authorized_key: 
+      user: postgres
+      key: "{{ postgres_ssh_keys.stdout }}" 
+      state: present
+
+  - name: deploy postgres public key to all servers
+    authorized_key: user=postgres key="{{ item[0] }}" state=present
+    delegate_to: "{{ item[1] }}"
+    with_nested:
+      - "{{ postgres_ssh_keys.stdout }}"
+      - "{{ groups['cluster'] }}"
+    when: ( (groups['cluster'] | length) > 1)
+
+  - name: generate host key file
+    command: "ssh-keyscan -t ecdsa-sha2-nistp256 {{ ansible_hostname }}"
+    register: host_pub_key
+    changed_when: false
+
+
+  - name: add to know_hosts of other servers
+    known_hosts:
+      path: /home/postgres/.ssh/known_hosts
+      name: "{{ ansible_hostname }}"
+      key: "{{ host_pub_key.stdout }}"
+    delegate_to: "{{ item }}"
+    when: item != inventory_hostname
+    with_items:
+      - "{{ groups['cluster'] }}"
+
+  - name: fix ownership of known_hosts
+    file:
+      group: postgres
+      owner: postgres
+      path: /home/postgres/.ssh/known_hosts
+      state: touch
+      mode: 0644
+
+  - name: start firewalld
+    systemd:
+      service: firewalld
+      state: started
+      enabled: yes
+
+  - name: firewall ports for swarm
+    firewalld:
+      zone: evs-lan
+      service: evs-docker-swarm
+      permanent: true
+      state: enabled
+      immediate: yes
+
+  - name: determine swarm status on all nodes
+    #shell: docker info -f '{{ "{{" }} json .Swarm.LocalNodeState {{ "}}" }}'
+    shell: docker info | grep Swarm | cut -f2 -d" "
+    register: swarm_status
+    when: inventory_hostname in groups.swarm
+    changed_when: false
+
+  # this is a bit convulated. If the IP has changed, then all nodes will
+  # leave the swarm and the swarm will be re-initialized.
+  # to see if the IP has changed, I check the output of the join-token command
+  - name: retrieve swarm join token worker on first manager
+    shell: docker swarm join-token worker
+    register: swarm_join_token_worker
+    changed_when: false
+    when: inventory_hostname == groups.swarm_manager[0] and 'active' == swarm_status.stdout
+
+#  - debug: msg="{{ swarm_test }} is in {{ swarm_join_token_worker.stdout }}"
+#    when:  >
+#      inventory_hostname == groups.swarm_manager[0]
+#      and swarm_join_token_worker is defined 
+#      and swarm_test in (swarm_join_token_worker.stdout|default('dummy'))
+#
+#  - debug: msg="{{ swarm_test }} is not in {{ swarm_join_token_worker.stdout }}"
+#    when:  >
+#      inventory_hostname == groups.swarm_manager[0]
+#      and swarm_join_token_worker is defined 
+#      and swarm_test not in (swarm_join_token_worker.stdout|default('dummy'))
+
+  - name: leave swarm on managers node when IP is changed
+    shell: docker swarm leave --force
+    with_items: groups.swarm_manager 
+    when: >
+      hostvars[groups['swarm_manager'][0]].swarm_join_token_worker is defined 
+      and 'active' == swarm_status.stdout
+      and swarm_advertise_addr not in (hostvars[groups.swarm_manager[0]].swarm_join_token_worker.stdout_lines|default('dummy'))
+
+  - name: leave swarm on workers node when IP is changed
+    shell: docker swarm leave 
+    changed_when: false
+    with_items: "{{ groups.swarm_worker }}"
+    when: >
+      groups.swarm_worker is defined
+      and hostvars[groups.swarm_manager[0]].swarm_join_token_worker is defined 
+      and 'active' == swarm_status.stdout
+      and swarm_advertise_addr not in (hostvars[groups.swarm_manager[0]].swarm_join_token_worker.stdout_lines|default('dummy'))
+
+  - name: determine swarm status 
+    shell: >
+      docker info | egrep '^Swarm: ' | cut -d ' ' -f2
+    register: swarm_status
+    changed_when: false
+
+  - name: init swarm
+    shell: >
+      docker swarm init --advertise-addr "{{ swarm_advertise_addr }}:2377"
+    register: swarm_init
+    when: inventory_hostname == groups['swarm_manager'][0] and 'active' != swarm_status.stdout
+
+  - name: Get the worker join-token.
+    shell: docker swarm join-token -q worker
+    changed_when: False
+    register: swarm_worker_join_token
+    delegate_to: "{{ groups.swarm_manager[0] }}"
+    delegate_facts: false
+    when: >
+      groups.swarm_worker is defined
+      and inventory_hostname in groups.swarm_worker
+    tags:
+      - skip_ansible_lint # Suppressing the linter
+
+  - name: Get the manager join-token.
+    shell: docker swarm join-token -q manager
+    changed_when: False
+    register: swarm_manager_join_token
+    delegate_to: "{{ groups.swarm_manager[0] }}"
+    delegate_facts: false
+    when: >
+      inventory_hostname != groups.swarm_manager[0] 
+      and inventory_hostname in groups.swarm_manager
+    tags:
+      - skip_ansible_lint # Suppressing the linter
+
+  - name: join swarm on manager nodes 
+    shell: >
+      docker swarm join --token {{ swarm_manager_join_token.stdout }} {{  swarm_advertise_addr }}:2377
+    with_items: groups.swarm_manager
+    when: >
+      inventory_hostname != groups.swarm_manager[0] 
+      and swarm_status.stdout != 'active'
+
+  - name: join swarm on worker nodes 
+    shell: >
+      docker swarm join --token {{ swarm_worker_join_token.stdout }} {{  swarm_advertise_addr }}:2377
+    when: swarm_status.stdout != 'active' and groups.swarm_worker is defined
+    with_items: groups.swarm_worker
+
+  - name: Capturing Docker Swarm Networks
+    command: "docker network ls"
+    changed_when: false
+    register: "docker_networks"
+    when: inventory_hostname == groups.swarm_manager[0]
+
+  - name: Creating Docker Swarm Networks
+    command: "docker network create --attachable --driver {{ item.value.driver }} {{ item.value.name }}"
+    with_dict: "{{ docker_swarm_networks }}"
+    when: >
+          inventory_hostname == groups.swarm_manager[0] and
+          item.value.state|lower == "present" and
+          item.value.name not in docker_networks.stdout
+
+...

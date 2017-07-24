@@ -8,54 +8,31 @@
     when: groups.cluster is undefined
 
   #- debug: var=groups['cluster']
+  - name: get docker node id for the first node (it will become pg master)
+    # not working # shell: docker info -f "{% raw %}{{.ID}}{% endraw %}"
+    shell: docker node inspect self -f \{\{.ID\}\}
+    register: docker_node_1
+    when: (inventory_hostname == groups.cluster[0])
 
-  - name: add config NODE_ID
-    lineinfile: 
-      dest: /etc/critlib/config
-      state: present
-      regexp: '^NODE_ID='
-      line: NODE_ID={{ groups.cluster.index(inventory_hostname)+1 }}
+  - name: ensure directory /opt/pgcluster/bin exists
+    file:
+      path: /opt/pgcluster/bin
+      state: directory
+      owner: pgcluster
+      group: pgcluster
+      mode: 0755
 
-  - name: add config PG_NODE_NAME
-    lineinfile: 
-      dest: /etc/critlib/config
-      state: present
-      regexp: '^PG_NODE_NAME='
-      line: PG_NODE_NAME=pg0{{ groups.cluster.index(inventory_hostname)+1 }}
-  
-  - name: remove config PG_BACKEND_NODE_LIST
-    lineinfile:
-      dest: /etc/critlib/config
-      state: absent
-      regexp: '^PG_BACKEND_NODE_LIST'
 
-  - name: add config PG_BACKEND_NODE_LIST
-    lineinfile:
-      dest: /etc/critlib/config
-      # Comma-separated string of all postgres backends
-      line: |
-        {% set comma = joiner(",") %}
-        PG_BACKEND_NODE_LIST={% for item in groups.cluster -%}
-            {{ comma() }}{{loop.index-1}}:pg0{{ loop.index }}:5432:1:/u01/pg96/data:ALLOW_TO_FAILOVER
-        {%- endfor %}
-      state: present
+  - name: install pgcluster.conf
+    template:
+      src: pgcluster.conf.j2
+      dest: /etc/pgcluster/pgcluster.conf
+      owner: pgcluster
+      group: pgcluster
+      mode: 0550
+    vars:
+      initial_node_type: "{{ (inventory_hostname == groups.cluster[0]) | ternary('master','slave') }}"
 
-  - name: remove config NODE_LIST
-    lineinfile:
-      dest: /etc/critlib/config
-      state: absent
-      regexp: '^NODE_LIST'
-
-  - name: add config NODE_LIST
-    lineinfile:
-      dest: /etc/critlib/config
-      # Comma-separated string of all nodename
-      line: |
-        {% set comma = joiner(",") %}
-        NODE_LIST={% for item in groups.cluster -%}
-            {{ comma() }}{{ hostvars[item].inventory_hostname }}
-        {%- endfor %}
-      state: present
 
   - name: Add IP address of all hosts in /etc/hosts 
     lineinfile:
@@ -96,17 +73,6 @@
 
 #  - debug: var=groups['cluster'][0]
 
-  - lineinfile:
-      dest: /etc/critlib/config
-      state: present
-      line: 'PG_INITIAL_NODE_TYPE=master'
-    when: inventory_hostname == groups.cluster[0] 
-
-  - lineinfile:
-      dest: /etc/critlib/config
-      state: present
-      line: 'PG_INITIAL_NODE_TYPE=slave'
-    when: inventory_hostname != groups.cluster[0] 
 
   - name: determine swarm status on manager node
     shell: >
@@ -172,10 +138,25 @@
   - name: install docker-compose.yml
     template: 
       src: "docker-compose.yml"
-      dest: "/opt/critlib/docker-compose.yml"
-      owner: critlib
-      group: critlib
+      dest: "/opt/pgcluster/docker-compose.yml"
+      owner: pgcluster
+      group: pgcluster
       mode: "u=rw,g=r,o=r"
     
+
+ - name: copy start script
+    copy:
+      src: start_pgcluster.sh
+      dest: /opt/pgcluster/start_pgcluster.sh
+      owner: evs
+      group: evs
+      mode: 0754
+
  
+   - name: authorized key for manager
+     authorized_key:
+       key: "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAqi1qAUEbO43hrxvi8TCVqGope3LMFhY7OQy+5QpBYsO0Vsz4FIu8qtXiXiX1pLe+5efrc+AJpP/skchnb/IBm7Czi9Gft8jOFRzCZy/CIVL6tocrPhTEr++q3CQ86UjFPtaQDOJGZK2bzfv6MfKy5KeGOevxa8KBEW54SdjSR528LveohqHRj98hoDbVf0+IK2e3zlp9Tp0Q/SrxCAg6CiHGEh8PmL9SshHccLVvX1qsjZbJBBkAtCkuzAju7B4lcxZ/XKqd8BrH9AVcE7X4QgNvXzBDx1ZZghloQKhSjsILzahHAHxesiONJ5C4YtWo0MWJLHDduqod0ZV7l61QCQ== postgres@docker-image"
+       user: root
+       state: present
+
 ...

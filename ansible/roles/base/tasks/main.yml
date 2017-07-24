@@ -3,7 +3,7 @@
 ---
 
   - user:
-      name: cladmin
+      name: pgadmin
       uid: 1000
       generate_ssh_key: yes
       ssh_key_bits: 2048
@@ -12,25 +12,25 @@
       state: present
 
   - group:
-      name: critlib
+      name: pgcluster
       gid: 2000
 
   - user:
-      name: critlib
+      name: pgcluster
       uid: 2000
       groups: "wheel,evs"
       generate_ssh_key: yes
       ssh_key_bits: 2048
       ssh_key_file: .ssh/id_rsa      
-      comment: "critlib user, for running docker containers"
+      comment: "user for running docker containers"
       state: present
 
-  - name: Allow evs critlib to have passwordless sudo
+  - name: Allow passwordless sudo
     lineinfile:
       dest: /etc/sudoers
       state: present
-      regexp: '^critlib'
-      line: 'critlib ALL=(ALL) NOPASSWD: ALL'
+      regexp: '^pgcluster'
+      line: 'pgcluster ALL=(ALL) NOPASSWD: ALL'
 
   - name: set hostname to value from inventory
     hostname:
@@ -56,21 +56,21 @@
       name: "*"
       state: latest
 
-  - name: create directory /opt/critlib
-    file: path=/opt/critlib state=directory owner=critlib group=critlib mode=0755
+  - name: create directory /opt/pgcluster
+    file: path=/opt/pgcluster state=directory owner=pgcluster group=pgcluster mode=0755
 
   - name: create log directory for evs applications
-    file: path=/var/log/critlib state=directory owner=critlib group=critlib mode=0755
+    file: path=/var/log/pgcluster state=directory owner=pgcluster group=pgcluster mode=0755
 
-  - name: create directory /etc/critlib
-    file: path=/etc/critlib state=directory owner=critlib group=critlib mode=0750
+  - name: create directory /etc/pgcluster
+    file: path=/etc/pgcluster state=directory owner=pgcluster group=pgcluster mode=0750
 
   - name: install config file
-    copy:
-      src: config
-      dest: /etc/critlib/config
-      owner: critlib
-      group: critlib
+    template:
+      src: config.j2
+      dest: /etc/pgcluster/config
+      owner: pgcluster
+      group: pgcluster
       mode: "u=rw,g=r"
 
 ...

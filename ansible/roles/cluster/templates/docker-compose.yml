@@ -13,10 +13,24 @@ services:
       PG_BACKEND_NODE_LIST: ${PG_BACKEND_NODE_LIST}
       PGP_NODE_NAME: pgpool01
       REPMGRPWD: ${REPMGRPDW:-rep123}
+      NUM_INIT_CHILDREN: 70
+      MAX_POOL: 4
+      LOG_STATEMENT: "off"
+      DEBUG_LEVEL: 0
+      #LOG_STATEMENT: "off"
+      #DEBUG_LEVEL: 0
+      #FAIL_OVER_ON_BACKEND_ERROR: "off"
+      #CONNECTION_CACHE: "on"
+    volumes:
+      - /etc/localtime:/etc/localtime
     ports:
       - 9999:9999
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
 
-  #POSTGRESQL
   pg01:
     image: {{ images.postgres.name }}:{{ images.postgres.tag }}
     environment:
@@ -32,11 +46,12 @@ services:
     deploy:
       placement:
         constraints:
-          - node.id == {{ swarm_first_master }}
+          - node.id == {{ docker_node_1.stdout }}
     volumes:
       - /u01/pg96/data:/u01/pg96/data
       - /u02/archive:/u02/archive
       - /u02/backup:/u02/backup
+      - /etc/localtime:/etc/localtime
     ports:
       - 5432:5432
 
@@ -55,11 +70,41 @@ services:
     deploy:
       placement:
         constraints:
-          - node.id != {{ swarm_first_manager }}
+          - node.id != {{ docker_node_1.stdout }}
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
     volumes:
       - /u01/pg96/data:/u01/pg96/data
       - /u02/archive:/u02/archive
       - /u02/backup:/u02/backup
+      - /etc/localtime:/etc/localtime
     ports:
       - 5432:5432
+
+  #console
+  manager:
+    image: {{ images.manager.name }}:{{ images_manager.tag }}
+    ports:
+      - 8081:8080
+    environment:
+      - DOCKERHOST=${DOCKERHOST}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /u02/backup:/u02/backup
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    logging:
+      driver: journald
+      options:
+        tag: manager
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
 

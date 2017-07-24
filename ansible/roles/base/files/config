@@ -1,7 +1,0 @@
-NODE_NAME=pg01
-NODE_ID=1
-PG_INITIAL_NODE_TYPE=master
-MSLIST=asset,ingest,playout
-MSOWNERPWDLIST=asset_owner,ingest_owner,playout_owner
-MSUSERPWDLIST=asset_user,ingest_user,playout_user
-REPMGRPWD=evs123

@@ -1,0 +1,1 @@
+swarm_interface: "{{ hostvars[inventory_hostname]['ansible_default_ipv4'].alias }}"

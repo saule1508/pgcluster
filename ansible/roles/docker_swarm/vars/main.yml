@@ -1,0 +1,1 @@
+swarm_advertise_addr: "{{ hostvars[groups['cluster'][0]]['ansible_' + swarm_interface].ipv4.address }}"
