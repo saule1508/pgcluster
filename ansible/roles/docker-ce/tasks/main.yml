@@ -40,7 +40,7 @@
       lv: thinpoolmeta
       size: "{{ ((storage['docker'].size_gb|int) * 0.1 * 1024) | int }}"
       opts: --wipesignatures y
-    when:  hostvars[inventory_hostname]['ansible_lvm']['lvs']['thinpoolmeta'] is not defined
+    when:  hostvars[inventory_hostname]['ansible_lvm']['lvs']['thinpool'] is not defined
       
   - name: test if pool is already converted to thinpool
     shell: "lvs -o lv_attr {{ storage['docker'].vg }}/thinpool | tail -1 | awk '{print $1}' | cut -c1"
@@ -70,7 +70,7 @@
 
   - name: add group docker to evs
     user:
-      name: evs
+      name: pgadmin
       groups: "docker"
       append: yes
 

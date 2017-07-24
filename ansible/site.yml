@@ -7,9 +7,36 @@
   become: yes
   become_method: sudo
 
+  pre_tasks:
+
+  - assert:
+      that:
+        - stage_dir is defined
+
+  # let us use a group called cluster if it is not explicitly defined in the inventory file
+  - add_host:
+      name: "{{ item }}"
+      groups: cluster
+    with_items: "{{ groups.all }}"
+    when: groups.cluster is undefined
+    changed_when: false
+    tags: ['init']
+
+  # load the manifest.yml. This file contains one dict for each images to upload with the filename, the tag and the id of the image
+  - name: load content file
+    include_vars:
+      name: images
+      file: "{{ stage_dir }}/content.yml"
+
+  - assert:
+      that:
+        - images is defined
+
   roles:
-    - { role: base, tags: ['init'] }
-    - { role: docker-ce, tags: ['init'] }
-    - { role: postgres, tags: ['init'] }
+#    - { role: base, tags: ['init'] }
+#    - { role: docker-ce, tags: ['init'] }
+#    - { role: postgres, tags: ['init'] }
+    - { role: docker_swarm, tags: ['init'] }
+    - { role: cluster, tags: ['init'] }
 
 ...

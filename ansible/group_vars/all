@@ -6,16 +6,16 @@ storage:
     #if the volume group does not exist, it will be created otherwise it will expanded with the disk above
     vg: vg_01
     #this is the size of the lv volume that will be created
-    size_gb: "20"
+    size_gb: "16"
   postgres:
     data:
       disk: "sdb"
       vg: vg_01
-      size_gb: "10"
+      size_gb: "3"
     backup:
       disk: "sdb"
       vg: vg_01
-      size_gb: "10"
+      size_gb: "3"
 
 
 #following variables will inserted in /etc/evs/config

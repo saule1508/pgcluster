@@ -1,7 +1,9 @@
 ---
 
   - debug: var=swarm_interface
+  - debug: var=master_swarm_interface
   - debug: var=swarm_advertise_addr
+
   - assert:
       that:
         - swarm_interface is defined
@@ -101,11 +103,22 @@
 
   - name: firewall ports for swarm
     firewalld:
-      zone: evs-lan
-      service: evs-docker-swarm
+      port: "{{ item }}/tcp"
       permanent: true
       state: enabled
-      immediate: yes
+    with_items:
+      - 2376
+      - 2377
+      - 7946
+
+  - name: firewall ports for swarm
+    firewalld:
+      port: "{{ item }}/udp"
+      permanent: true
+      state: enabled
+    with_items:
+      - 7946
+      - 4789
 
   - name: determine swarm status on all nodes
     #shell: docker info -f '{{ "{{" }} json .Swarm.LocalNodeState {{ "}}" }}'
@@ -210,11 +223,9 @@
     when: inventory_hostname == groups.swarm_manager[0]
 
   - name: Creating Docker Swarm Networks
-    command: "docker network create --attachable --driver {{ item.value.driver }} {{ item.value.name }}"
-    with_dict: "{{ docker_swarm_networks }}"
+    command: "docker network create --attachable --driver overlay phoenix_network"
     when: >
           inventory_hostname == groups.swarm_manager[0] and
-          item.value.state|lower == "present" and
-          item.value.name not in docker_networks.stdout
+          'phoenix_network' not in docker_networks.stdout
 
 ...

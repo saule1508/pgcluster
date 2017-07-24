@@ -1,9 +1,9 @@
-version: '3'
+version: '3.2'
 
 networks:
   default:
     external:
-      name: ${INFRA_NETWORK_NAME}
+      name: phoenix_network
 
 services:
   pgpool01:
@@ -46,7 +46,7 @@ services:
     deploy:
       placement:
         constraints:
-          - node.id == {{ docker_node_1.stdout }}
+          - node.id == "{{ hostvars[groups['cluster'][0]].docker_node_1.stdout }}"
     volumes:
       - /u01/pg96/data:/u01/pg96/data
       - /u02/archive:/u02/archive
@@ -70,7 +70,7 @@ services:
     deploy:
       placement:
         constraints:
-          - node.id != {{ docker_node_1.stdout }}
+          - node.id == "{{ hostvars[groups['cluster'][1]].docker_node_2.stdout }}"
       mode: replicated
       replicas: 1
       restart_policy:
@@ -85,7 +85,7 @@ services:
 
   #console
   manager:
-    image: {{ images.manager.name }}:{{ images_manager.tag }}
+    image: {{ images.manager.name }}:{{ images.manager.tag }}
     ports:
       - 8081:8080
     environment:

@@ -9,17 +9,21 @@
 
   #- debug: var=groups['cluster']
   - name: get docker node id for the first node (it will become pg master)
-    # not working # shell: docker info -f "{% raw %}{{.ID}}{% endraw %}"
     shell: docker node inspect self -f \{\{.ID\}\}
     register: docker_node_1
     when: (inventory_hostname == groups.cluster[0])
+
+  - name: get docker node id for the second node (it will become pg slave)
+    shell: docker node inspect self -f \{\{.ID\}\}
+    register: docker_node_2
+    when: (inventory_hostname == groups.cluster[1])
 
   - name: ensure directory /opt/pgcluster/bin exists
     file:
       path: /opt/pgcluster/bin
       state: directory
-      owner: pgcluster
-      group: pgcluster
+      owner: pgadmin
+      group: pgadmin
       mode: 0755
 
 
@@ -27,8 +31,8 @@
     template:
       src: pgcluster.conf.j2
       dest: /etc/pgcluster/pgcluster.conf
-      owner: pgcluster
-      group: pgcluster
+      owner: pgadmin
+      group: pgadmin
       mode: 0550
     vars:
       initial_node_type: "{{ (inventory_hostname == groups.cluster[0]) | ternary('master','slave') }}"
@@ -74,89 +78,27 @@
 #  - debug: var=groups['cluster'][0]
 
 
-  - name: determine swarm status on manager node
-    shell: >
-      docker info | egrep '^Swarm: ' | cut -d ' ' -f2
-    register: swarm_manager_status
-    when: "inventory_hostname == groups.cluster[0]"
-
-  - debug: var=swarm_manager_status.stdout_lines
-    when: inventory_hostname == groups.cluster[0]
-
-  - name: firewall ports for swarm
-    firewalld:
-      port: "{{ item }}"
-      permanent: true
-      state: enabled
-      immediate: yes
-    with_items:
-      - 2376/tcp
-      - 2377/tcp
-      - 7946/tcp
-      - 7946/udp
-      - 4789/udp
-
-  - name: init swarm
-    shell: >
-      docker swarm init --advertise-addr "{{ swarm_iface | default(hostvars[groups['cluster'][0]]['ansible_default_ipv4']['address']) }}"
-    register: swarm_init
-    when: inventory_hostname == groups['cluster'][0] and 'active' not in swarm_manager_status.stdout_lines
-
-  - debug: var=swarm_init.stdout_lines
-
-  - name: retrieve swarm token on manager needed by worker nodes
-    shell: >
-      docker swarm join-token -q worker
-    register: swarm_worker_join_token
-    when: inventory_hostname == groups.cluster[0]
-
-  - name: worker nodes join swarm cluster
-    shell: >
-      docker swarm join --token {{ swarm_worker_join_token.stdout }} {{  swarm_iface | default(hostvars[groups['cluster'][0]]['ansible_default_ipv4']['address']) }}:2377
-    ignore_errors: true
-    delegate_to: "{{ item }}"
-    when: inventory_hostname == groups.cluster[0] and item != groups.cluster[0]
-    with_items: 
-      - "{{ groups['cluster'] }}"
-
-  - name: docker_swarm | Capturing Docker Swarm Networks
-    command: "docker network ls"
-    changed_when: false
-    register: "docker_networks"
-    when: inventory_hostname == groups.cluster[0]
-
-  - debug: var=docker_swarm_networks
-
-  - name: docker_swarm | Creating Docker Swarm Networks
-    command: "docker network create --driver {{ item.driver }} {{ item.name }}"
-    with_items: '{{ docker_swarm_networks }}'
-    when: >
-          inventory_hostname == groups.cluster[0] and
-          item.state|lower == "present" and
-          item.name not in docker_networks.stdout
-
   - name: install docker-compose.yml
     template: 
       src: "docker-compose.yml"
       dest: "/opt/pgcluster/docker-compose.yml"
-      owner: pgcluster
-      group: pgcluster
+      owner: pgadmin
+      group: pgadmin
       mode: "u=rw,g=r,o=r"
-    
 
- - name: copy start script
+  - name: copy start script
     copy:
       src: start_pgcluster.sh
       dest: /opt/pgcluster/start_pgcluster.sh
-      owner: evs
-      group: evs
+      owner: pgadmin
+      group: pgadmin
       mode: 0754
 
  
-   - name: authorized key for manager
-     authorized_key:
-       key: "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAqi1qAUEbO43hrxvi8TCVqGope3LMFhY7OQy+5QpBYsO0Vsz4FIu8qtXiXiX1pLe+5efrc+AJpP/skchnb/IBm7Czi9Gft8jOFRzCZy/CIVL6tocrPhTEr++q3CQ86UjFPtaQDOJGZK2bzfv6MfKy5KeGOevxa8KBEW54SdjSR528LveohqHRj98hoDbVf0+IK2e3zlp9Tp0Q/SrxCAg6CiHGEh8PmL9SshHccLVvX1qsjZbJBBkAtCkuzAju7B4lcxZ/XKqd8BrH9AVcE7X4QgNvXzBDx1ZZghloQKhSjsILzahHAHxesiONJ5C4YtWo0MWJLHDduqod0ZV7l61QCQ== postgres@docker-image"
-       user: root
-       state: present
+  - name: authorized key for manager
+    authorized_key:
+      key: "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAqi1qAUEbO43hrxvi8TCVqGope3LMFhY7OQy+5QpBYsO0Vsz4FIu8qtXiXiX1pLe+5efrc+AJpP/skchnb/IBm7Czi9Gft8jOFRzCZy/CIVL6tocrPhTEr++q3CQ86UjFPtaQDOJGZK2bzfv6MfKy5KeGOevxa8KBEW54SdjSR528LveohqHRj98hoDbVf0+IK2e3zlp9Tp0Q/SrxCAg6CiHGEh8PmL9SshHccLVvX1qsjZbJBBkAtCkuzAju7B4lcxZ/XKqd8BrH9AVcE7X4QgNvXzBDx1ZZghloQKhSjsILzahHAHxesiONJ5C4YtWo0MWJLHDduqod0ZV7l61QCQ== postgres@docker-image"
+      user: root
+      state: present
 
 ...
