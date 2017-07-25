@@ -8,9 +8,15 @@
     when: groups.cluster is undefined
 
   #- debug: var=groups['cluster']
-  - name: get docker node id for the first node (it will become pg master)
+  - name: get docker node id 
     shell: docker node inspect self -f \{\{.ID\}\}
-    register: docker_node_id
+    register: docker_node_id_1
+    when: inventory_hostname == groups.cluster[0]
+
+  - name: get docker node id 
+    shell: docker node inspect self -f \{\{.ID\}\}
+    register: docker_node_id_2
+    when: inventory_hostname == groups.cluster[1]
 
   - name: ensure directory /opt/pgcluster/bin exists
     file:

@@ -46,7 +46,7 @@ services:
     deploy:
       placement:
         constraints:
-          - node.id == {{ hostvars[groups['cluster'][0]].docker_node_id.stdout }}
+          - node.id == {{ hostvars[groups['cluster'][0]].docker_node_id_1.stdout }}
     volumes:
       - /u01/pg96/data:/u01/pg96/data
       - /u02/archive:/u02/archive
@@ -73,7 +73,7 @@ services:
     deploy:
       placement:
         constraints:
-          - node.id == {{ hostvars[groups['cluster'][1]].docker_node_id.stdout }}
+          - node.id == {{ hostvars[groups['cluster'][1]].docker_node_id_2.stdout }}
       mode: replicated
       replicas: 1
       restart_policy:
