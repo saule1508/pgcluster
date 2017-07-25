@@ -61,12 +61,4 @@
   - name: create directory /etc/pgcluster
     file: path=/etc/pgcluster state=directory owner=pgadmin group=pgadmin mode=0750
 
-  - name: install config file
-    template:
-      src: config.j2
-      dest: /etc/pgcluster/config
-      owner: pgadmin
-      group: pgadmin
-      mode: "u=rw,g=r"
-
 ...

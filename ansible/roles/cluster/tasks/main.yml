@@ -10,13 +10,7 @@
   #- debug: var=groups['cluster']
   - name: get docker node id for the first node (it will become pg master)
     shell: docker node inspect self -f \{\{.ID\}\}
-    register: docker_node_1
-    when: (inventory_hostname == groups.cluster[0])
-
-  - name: get docker node id for the second node (it will become pg slave)
-    shell: docker node inspect self -f \{\{.ID\}\}
-    register: docker_node_2
-    when: (inventory_hostname == groups.cluster[1])
+    register: docker_node_id
 
   - name: ensure directory /opt/pgcluster/bin exists
     file:
@@ -101,7 +95,7 @@
 
   - name: firewall port for the manager
     firewalld:
-      port: 8080
+      port: 8080/tcp
       permanent: true
       state: enabled
 

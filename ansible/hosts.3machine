@@ -1,0 +1,4 @@
+[phoenix]
+px01 ansible_host=172.22.1.22  ansible_connection=ssh ansible_user=vagrant ansible_become_user=root
+px02 ansible_host=172.22.1.23  ansible_connection=ssh ansible_user=vagrant ansible_become_user=root
+px03 ansible_host=172.22.1.24  ansible_connection=ssh ansible_user=vagrant ansible_become_user=root

@@ -8,6 +8,15 @@
       gpgkey: https://download.docker.com/linux/centos/gpg
       state: present
 
+  - name: add repository
+    yum_repository:
+      name: docker-ce-edge
+      description: Docker CE Stable - $basearch
+      baseurl: https://download.docker.com/linux/centos/7/$basearch/edge
+      gpgkey: https://download.docker.com/linux/centos/gpg
+      enabled: yes
+      state: present
+
   - name: install docker-ce
     yum:
       name: docker-ce
