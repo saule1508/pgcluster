@@ -37,6 +37,11 @@
       name: python
       state: latest
 
+  - name: install jq
+    yum:
+      name: jq
+      state: latest
+
   - name: install docker-python
     yum:
       name: docker-python

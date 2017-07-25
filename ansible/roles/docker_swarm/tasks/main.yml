@@ -223,9 +223,9 @@
     when: inventory_hostname == groups.swarm_manager[0]
 
   - name: Creating Docker Swarm Networks
-    command: "docker network create --attachable --driver overlay phoenix_network"
+    command: "docker network create --attachable --driver overlay pgcluster_network"
     when: >
           inventory_hostname == groups.swarm_manager[0] and
-          'phoenix_network' not in docker_networks.stdout
+          ('pgcluster_network' not in docker_networks.stdout)
 
 ...

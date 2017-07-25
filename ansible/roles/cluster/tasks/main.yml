@@ -77,7 +77,6 @@
 
 #  - debug: var=groups['cluster'][0]
 
-
   - name: install docker-compose.yml
     template: 
       src: "docker-compose.yml"
@@ -94,11 +93,17 @@
       group: pgadmin
       mode: 0754
 
- 
   - name: authorized key for manager
     authorized_key:
       key: "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAqi1qAUEbO43hrxvi8TCVqGope3LMFhY7OQy+5QpBYsO0Vsz4FIu8qtXiXiX1pLe+5efrc+AJpP/skchnb/IBm7Czi9Gft8jOFRzCZy/CIVL6tocrPhTEr++q3CQ86UjFPtaQDOJGZK2bzfv6MfKy5KeGOevxa8KBEW54SdjSR528LveohqHRj98hoDbVf0+IK2e3zlp9Tp0Q/SrxCAg6CiHGEh8PmL9SshHccLVvX1qsjZbJBBkAtCkuzAju7B4lcxZ/XKqd8BrH9AVcE7X4QgNvXzBDx1ZZghloQKhSjsILzahHAHxesiONJ5C4YtWo0MWJLHDduqod0ZV7l61QCQ== postgres@docker-image"
       user: root
       state: present
+
+  - name: firewall port for the manager
+    firewalld:
+      port: 8080
+      permanent: true
+      state: enabled
+
 
 ...

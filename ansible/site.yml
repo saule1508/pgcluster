@@ -33,9 +33,9 @@
         - images is defined
 
   roles:
-#    - { role: base, tags: ['init'] }
-#    - { role: docker-ce, tags: ['init'] }
-#    - { role: postgres, tags: ['init'] }
+    - { role: base, tags: ['init'] }
+    - { role: docker-ce, tags: ['init'] }
+    - { role: postgres, tags: ['init'] }
     - { role: docker_swarm, tags: ['init'] }
     - { role: cluster, tags: ['init'] }
 

@@ -3,7 +3,7 @@ version: '3.2'
 networks:
   default:
     external:
-      name: phoenix_network
+      name: pgcluster_network
 
 services:
   pgpool01:
@@ -46,14 +46,17 @@ services:
     deploy:
       placement:
         constraints:
-          - node.id == "{{ hostvars[groups['cluster'][0]].docker_node_1.stdout }}"
+          - node.id == {{ hostvars[groups['cluster'][0]].docker_node_id.stdout }}
     volumes:
       - /u01/pg96/data:/u01/pg96/data
       - /u02/archive:/u02/archive
       - /u02/backup:/u02/backup
       - /etc/localtime:/etc/localtime
     ports:
-      - 5432:5432
+      - target: 5432
+        published: 5432
+        protocol: tcp
+        mode: host
 
   pg02:
     image: {{ images.postgres.name }}:{{ images.postgres.tag }}
@@ -70,7 +73,7 @@ services:
     deploy:
       placement:
         constraints:
-          - node.id == "{{ hostvars[groups['cluster'][1]].docker_node_2.stdout }}"
+          - node.id == {{ hostvars[groups['cluster'][1]].docker_node_id.stdout }}
       mode: replicated
       replicas: 1
       restart_policy:
@@ -81,13 +84,17 @@ services:
       - /u02/backup:/u02/backup
       - /etc/localtime:/etc/localtime
     ports:
-      - 5432:5432
+      - target: 5432
+        published: 5432
+        protocol: tcp
+        mode: host
+
 
   #console
   manager:
     image: {{ images.manager.name }}:{{ images.manager.tag }}
     ports:
-      - 8081:8080
+      - 8080:8080
     environment:
       - DOCKERHOST=${DOCKERHOST}
     volumes:
