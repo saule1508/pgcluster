@@ -1,7 +1,0 @@
----
-
-  - name: start docker
-    systemd: state=started name=docker
-
-  - name: restart docker
-    systemd: state=restarted name=docker
