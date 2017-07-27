@@ -3,7 +3,7 @@ const SQL_REPL_NODES = 'select * from repl_nodes;'
 const SQL_SHOW_POOL_NODES = 'show pool_nodes;'
 
 const getStatActivity = () => {
-	let pool = require('./pgppool.js');
+	let pool = require('../config/pgppool.js');
 	let q = new Promise((resolve,reject)=>{
 		pool.query(SQL_ACTIVITY_STAT, [], (error,result)=>{
 			if (error){
@@ -17,7 +17,7 @@ const getStatActivity = () => {
 }
 
 const getReplNodes = () => {
-	let pgpool = require('./pgppool').pool;
+	let pgpool = require('../config/pgppool').pool;
 	let q = new Promise((resolve,reject)=>{
 		pgpool.connect().
 			then((client)=>{
@@ -40,7 +40,7 @@ const getReplNodes = () => {
 }
 
 const getPoolNodes = () => {
-	let pgppool = require('./pgppool').pool;
+	let pgppool = require('../config/pgppool').pool;
 	let q = new Promise((resolve,reject)=>{
 		pgppool.connect().
 			then((client)=>{
@@ -63,9 +63,9 @@ const getPoolNodes = () => {
 }
 
 const dbStates = () => {
-	let pools = require('./pgpool').pools;
+	let pools = require('../config/pgpool').pools;
 
-	let pool = require('./pgpool');
+	let pool = require('../config/pgpool');
 	let states = [];
 	return new Promise((resolve,reject)=>{
 		pools.forEach((el,idx)=>{

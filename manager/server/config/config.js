@@ -9,22 +9,14 @@ systemctl daemon-reload
  firewall-cmd --add-port 2375/tcp 
 
 */
+const dbs=process.env.PG_BACKEND_NODE_LIST.split(',');
+let pg = dbs.map((el)=>{
+ let elem = el.split(':');
+ return {host: elem[1], port: 5432,user: 'repmgr',password: process.env.REPMGRPWD,database:'repmgr'}
+});
+
 module.exports = {
-	pg: [{
-		'host': 'pg01',
-		'port': 5432,
-		'user': 'repmgr',
-		'password': 'rep123',
-		'database': 'repmgr'
-	},
-	{
-		'host': 'pg02',
-		'port': 5432,
-		'user': 'repmgr',
-		'password': 'rep123',
-		'database': 'repmgr'
-	}
-	],
+	pg: pg, 
 	pgp: {
 		'host': 'pgpool01',
 		'port': 9999,

@@ -72,13 +72,14 @@ class DBStates extends Component{
   }
 
 	renderContent(){
+    let { rows } = this.props;
 		if (this.props.error){
 			return (<div className="alert alert-danger">{this.props.error}</div>);
 		}
     if (! this.state.connected){
       return (<div className="alert alert-danger">Disconnected from server</div>)
     }
-		if (this.props.rows.length === 0){
+		if (rows.length === 0){
 			return (<div className="loader"></div>);
 		}
 
