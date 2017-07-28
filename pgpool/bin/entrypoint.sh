@@ -14,15 +14,15 @@ wait_for_master(){
     echo waiting for one node to be pingable
     while [ $found -eq 0 -a $i -lt ${#PG_HOSTS[@]} ] ; do
       echo trying with ${PG_HOSTS[$i]}
-      h=$( echo ${PG_HOSTS[$i]} | cut -f2 -d":" )
+      DBHOST=$( echo ${PG_HOSTS[$i]} | cut -f2 -d":" )
       port=$( echo ${PG_HOSTS[$i]} | cut -f3 -d":" )
-      echo trying to ping $h
-      ping -c 1 $h
+      echo trying to ping $DBHOST
+      ping -c 1 $DBHOST
       if [ $? -eq 0 ] ; then
-        echo "found node: $h"
+        echo "found node: $DBHOST"
         found=1
       else
-        echo cannot ping node $h
+        echo cannot ping node $DBHOST
       fi
       i=$((i+1))
     done
@@ -31,10 +31,10 @@ wait_for_master(){
   if [ -z $port ] ; then
    port=5432
   fi
-  echo "pg backend found at host $h and port $port"
+  echo "pg backend found at host $DBHOST and port $port"
 
   sleep $SLEEP_TIME
-  ssh ${h} "psql --username=repmgr -p ${port} repmgr -c \"select 1;\"" 
+  ssh ${DBHOST} "psql --username=repmgr -p ${port} repmgr -c \"select 1;\"" 
   ret=$?
   echo "ret of ssh is $ret"
   if [ $ret -eq 0 ] ; then
@@ -45,10 +45,10 @@ wait_for_master(){
     echo "$(date) - waiting for postgres..."
     sleep $SLEEP_TIME
     MAX_TRIES=`expr "$MAX_TRIES" - 1`
-    ssh ${h} "psql --username=repmgr -p ${port} repmgr -c \"select 1;\"" > /dev/null
+    ssh ${DBHOST} "psql --username=repmgr -p ${port} repmgr -c \"select 1;\"" > /dev/null
     ret=$?
   done
-  ssh ${h} "psql --username=repmgr -p ${port} repmgr -c \"select 1;\"" > /dev/null
+  ssh ${DBHOST} "psql --username=repmgr -p ${port} repmgr -c \"select 1;\"" > /dev/null
   return $?
 }
 
@@ -81,12 +81,12 @@ echo "Checking backend databases state in repl_nodes table"
 # if the cluster is initializing it is possible that repl_nodes does not contain
 # all backend yet
 # we might need to wait a bit...
-ssh ${h} "psql -U repmgr repmgr -t -c 'select name,active from repl_nodes;'" > /tmp/repl_nodes
+ssh ${DBHOST} "psql -U repmgr repmgr -t -c 'select name,active from repl_nodes;'" > /tmp/repl_nodes
 if [ $? -ne 0 ] ; then
-  echo "error connecting to $h, try again in 10 seconds"
+  echo "error connecting to $DBHOST, try again in 10 seconds"
   sleep 10
 fi
-ssh ${h} "psql -U repmgr repmgr -t -c 'select name,active from repl_nodes;'" > /tmp/repl_nodes
+ssh ${DBHOST} "psql -U repmgr repmgr -t -c 'select name,active from repl_nodes;'" > /tmp/repl_nodes
 if [ $? -ne 0 ] ; then
   echo "error connecting to $h, try again in 10 seconds"
   sleep 10
@@ -95,7 +95,7 @@ nbrlines=$( grep -v "^$" /tmp/repl_nodes | wc -l )
 NBRTRY=30
 while [ $nbrlines -lt $nbrbackend -a $NBRTRY -gt 0 ] ; do
   echo "waiting for repl_nodes to be initialized: currently $nbrlines in repl_node, there must be one line per back-end ($nbrbackend)"
-  ssh ${h} "psql -U repmgr repmgr -t -c 'select name,active from repl_nodes;'" > /tmp/repl_nodes
+  ssh ${DBHOST} "psql -U repmgr repmgr -t -c 'select name,active from repl_nodes;'" > /tmp/repl_nodes
   nbrlines=$( grep -v "^$" /tmp/repl_nodes | wc -l )
   NBRTRY=$((NBRTRY-1))
   echo "Sleep 10 seconds, still $NBRTRY to go..."
@@ -126,10 +126,10 @@ done
 echo ">>> pgpool_status file"
 cat /tmp/pgpool_status
 echo "Create user hcuser (fails if the hcuser already exists, which is ok)"
-ssh ${PG_MASTER_NODE_NAME} "psql -c \"create user hcuser with login password 'hcuser';\""
-echo "Generate pool_passwd file from ${h}"
+ssh ${DBHOST} "psql -c \"create user hcuser with login password 'hcuser';\""
+echo "Generate pool_passwd file from ${DBHOST}"
 touch /etc/pgpool-II/pool_passwd
-ssh postgres@${PG_MASTER_NODE_NAME} "psql -c \"select rolname,rolpassword from pg_authid;\"" | awk 'BEGIN {FS="|"}{print $1" "$2}' | grep md5 | while read f1 f2
+ssh postgres@${DBHOST} "psql -c \"select rolname,rolpassword from pg_authid;\"" | awk 'BEGIN {FS="|"}{print $1" "$2}' | grep md5 | while read f1 f2
 do
  # delete the line and recreate it
  echo "setting passwd of $f1 in /etc/pgpool-II/pool_passwd"
