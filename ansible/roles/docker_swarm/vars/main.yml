@@ -1,3 +1,2 @@
-master_swarm_interface: "eth1"
-#master_swarm_interface: "{{ hostvars[groups['cluster'][0]]['swarm_interface'] }}"
+master_swarm_interface: "{{ hostvars[groups['cluster'][0]]['ansible_default_ipv4'].alias }}"
 swarm_advertise_addr: "{{ hostvars[groups['cluster'][0]]['ansible_' + master_swarm_interface].ipv4.address }}"

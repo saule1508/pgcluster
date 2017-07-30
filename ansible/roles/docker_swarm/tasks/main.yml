@@ -106,6 +106,7 @@
       port: "{{ item }}/tcp"
       permanent: true
       state: enabled
+      immediate: yes
     with_items:
       - 2376
       - 2377
@@ -116,6 +117,7 @@
       port: "{{ item }}/udp"
       permanent: true
       state: enabled
+      immediate: yes
     with_items:
       - 7946
       - 4789
