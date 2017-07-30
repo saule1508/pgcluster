@@ -9,7 +9,7 @@ let pg = dbs.map((el)=>{
 });
 
 module.exports = {
-	pg: pg 
+	pg: pg,
 	pgp: {
 		'host': 'pgpool01',
 		'port': 9999,

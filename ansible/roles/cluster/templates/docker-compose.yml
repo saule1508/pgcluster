@@ -96,7 +96,7 @@ services:
     ports:
       - 8080:8080
     environment:
-      DOCKERHOST=${DOCKERHOST}
+      DOCKERHOST: ${DOCKERHOST}
       PG_BACKEND_NODE_LIST: ${PG_BACKEND_NODE_LIST}
       REPMGRPWD: ${REPMGRPDW:-rep123}
     volumes:
