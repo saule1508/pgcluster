@@ -36,8 +36,8 @@ services:
     environment:
       SERVICE_NAME: pg01
       INITIAL_NODE_TYPE: master
-      NODE_ID: ${NODE_ID}
-      NODE_NAME: ${PG_NODE_NAME}
+      NODE_ID: 1
+      NODE_NAME: pg01
       ARCHIVELOG: 1
       MSLIST: ${MSLIST}
       MSOWNERPWDLIST: ${MSOWNERPWDLIST}
@@ -46,7 +46,7 @@ services:
     deploy:
       placement:
         constraints:
-          - node.id == {{ hostvars[groups['cluster'][0]].docker_node_id_1.stdout }}
+          - node.id == {{ hostvars[groups['cluster'][0]].docker_node_id.stdout }}
     volumes:
       - /u01/pg96/data:/u01/pg96/data
       - /u02/archive:/u02/archive
@@ -73,7 +73,7 @@ services:
     deploy:
       placement:
         constraints:
-          - node.id == {{ hostvars[groups['cluster'][1]].docker_node_id_2.stdout }}
+          - node.id == {{ hostvars[groups['cluster'][1]].docker_node_id.stdout }}
       mode: replicated
       replicas: 1
       restart_policy:
