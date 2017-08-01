@@ -39,4 +39,21 @@ router.get('/pool_nodes', (req, res) => {
 	;  
 })
 
+router.get('/dbstates', (req,res)=>{
+
+   pg.dbStates()
+      .then((data)=>{
+        return res.status(200).send({'result': data, 'timestamp': new Date()});    
+      })
+      .catch((err)=>{
+        console.log(err);
+        let msg = err.detail ? err.detail : null;
+        if (! msg){
+          msg = 'server error ' + (err.code ? err.code + ' - ' : ' - ' ) + (err.errno ? err.errno : '');
+        }
+        res.status(500).send({'message': msg,'error': err } );
+      })
+
+})
+
 module.exports = router

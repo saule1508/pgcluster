@@ -23,7 +23,7 @@ class Home extends Component {
             <PgpoolContainer />
           </div>
         </div>
-        {/*
+        
         <div className="row" style={{'marginBottom': 20}} >
           <div className="col-md-12">
             <NodesContainer />
@@ -35,7 +35,7 @@ class Home extends Component {
             <ServicesContainer />
           </div>
         </div>
-        */}
+        
       
       </div>
     )

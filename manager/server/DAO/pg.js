@@ -69,10 +69,10 @@ const dbStates = () => {
 	let states = [];
 	return new Promise((resolve,reject)=>{
 		pools.forEach((el,idx)=>{
-			console.log('query in idx ' + idx);
 			
 			pool.query(idx,'select pg_is_in_recovery() as in_recovery',{},(err,result)=>{
 				if (err){
+					console.log(err);
 					states.push({idx: idx, host: el.host, status:'red'});
 				} else {
 					console.log(result.rows[0]);
