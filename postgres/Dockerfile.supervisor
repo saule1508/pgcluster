@@ -5,7 +5,7 @@ ENV MINORVER=3
 ENV PGVER=96
 ENV docker=yes
 RUN yum update -y ; yum clean all
-RUN yum install -y http://www.pgpool.net/yum/rpms/3.6/redhat/rhel-7-x86_64/pgpool-II-release-3.6-1.noarch.rpm; yum clean all
+RUN yum install -y http://www.pgpool.net/yum/rpms/3.6/redhat/rhel-7-x86_64/pgpool-II-release-3.6.5-1.noarch.rpm; yum clean all
 RUN yum install -y pgpool-II-pg${PGVER}-extensions; yum clean all
 RUN yum install -y epel-release libxslt sudo openssh-server openssh-clients jq passwd rsync && \
     yum install -y systemd-sysv iproute python-setuptools hostname inotify-tools yum-utils which rsync && \
@@ -48,6 +48,7 @@ RUN echo "alias pool_nodes='psql --username=repmgr -h pgpool01 -p 9999 repmgr -c
 # this localedef command is needed because of bug in centos docker image?
 #
 RUN localedef -i en_US -f UTF-8 en_US.UTF-8
+RUN echo "postgres:postgres:*.*" > /home/postgres/.pcppass && chmod 600 /home/postgres/.pcppass
 ADD scripts /opt/scripts
 ADD pgconfig /opt/pgconfig
 RUN chown -R postgres:postgres /opt/scripts && find /opt/scripts -name ".sh" -exec chmod +x {} \;

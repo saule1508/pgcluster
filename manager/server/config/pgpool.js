@@ -3,7 +3,12 @@ let config = require('./config.js').pg;
 
 let pools = [];
 config.map((el,idx)=>{
-  pools.push({pool: new Pool(el), host: el.host});
+	let p = new Pool(el);
+	p.on('error',(err)=>{
+		console.log('pool %d emitted error',idx);
+		console.log(err);
+	})
+  pools.push({pool: p, host: el.host});
 })
 
 const query = (idx = 0,text, values, callback) => {
