@@ -16,6 +16,7 @@ class Home extends Component {
           <div className="col-md-6 col-lg-4">
             <DBStatesContainer  />
           </div>
+          
           <div className="col-md-6 col-lg-4">
             <ReplContainer /> 
           </div>
@@ -23,7 +24,7 @@ class Home extends Component {
             <PgpoolContainer />
           </div>
         </div>
-        
+        {/*        
         <div className="row" style={{'marginBottom': 20}} >
           <div className="col-md-12">
             <NodesContainer />
@@ -35,7 +36,7 @@ class Home extends Component {
             <ServicesContainer />
           </div>
         </div>
-        
+        */}
       
       </div>
     )

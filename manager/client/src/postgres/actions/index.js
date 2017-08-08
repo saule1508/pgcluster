@@ -1,4 +1,4 @@
-import { getDBStates, getPgpool, getRepl, getStatActivity } from '../api/index.js'
+import { getDBStates, getReplicationStats, getPgpool, getRepl, getStatActivity } from '../api/index.js'
 
 export const FETCH_DBSTATES_REQUEST = 'FETCH_DBSTATES_REQUEST';
 export const FETCH_DBSTATES_FAILURE = 'FETCH_DBSTATES_FAILURE';
@@ -12,9 +12,17 @@ export const FETCH_REPL_REQUEST = 'FETCH_REPL_REQUEST';
 export const FETCH_REPL_FAILURE = 'FETCH_REPL_FAILURE';
 export const FETCH_REPL_SUCCESS = 'FETCH_REPL_SUCCESS';
 
+export const FETCH_REPLICATION_STATS_REQUEST = 'FETCH_REPLICATION_STATS_REQUEST';
+export const FETCH_REPLICATION_STATS_FAILURE = 'FETCH_REPLICATION_STATS_FAILURE';
+export const FETCH_REPLICATION_STATS_SUCCESS = 'FETCH_REPLICATION_STATS_SUCCESS';
+
+
 export const FETCH_STAT_ACTIVITY_REQUEST = 'FETCH_STAT_ACTIVITY_REQUEST';
 export const FETCH_STAT_ACTIVITY_FAILURE = 'FETCH_STAT_ACTIVITY_FAILURE';
 export const FETCH_STAT_ACTIVITY_SUCCESS = 'FETCH_STAT_ACTIVITY_SUCCESS';
+
+
+
 
 const fetchDBStatesRequest = () => ({
 	'type': FETCH_DBSTATES_REQUEST
@@ -43,6 +51,37 @@ export const fetchDBStates = () => {
 					errorStr += ' (hint: ' + error.hint + ')';
 				}
 				dispatch(fetchDBStatesFailure(errorStr));
+			})
+	}
+};
+
+const fetchReplicationStatsRequest = () => ({
+	'type': FETCH_REPLICATION_STATS_REQUEST
+});
+
+export const fetchReplicationStatsFailure = (error) => ({
+	'type': FETCH_REPLICATION_STATS_FAILURE,
+	'payload': error
+});
+
+export const fetchReplicationStatsSuccess = (data) => ({
+	'type': FETCH_REPLICATION_STATS_SUCCESS,
+	'payload': {data: data, timeStamp: new Date()}
+});
+
+export const fetchReplicationStats = () => {
+	return (dispatch,getStore) => {
+		dispatch(fetchReplicationStatsRequest());
+		getReplicationStats()
+			.then((result)=>{
+				dispatch(fetchReplicationStatsSuccess(result));
+			})
+			.catch((error)=>{
+				let errorStr = (error && error.detail) ? error.detail : 'Internal error';
+				if (error && error.hint){
+					errorStr += ' (hint: ' + error.hint + ')';
+				}
+				dispatch(fetchReplicationStatsFailure(errorStr));
 			})
 	}
 };

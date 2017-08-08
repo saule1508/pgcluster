@@ -1,6 +1,5 @@
 import React, { Component } from 'react'
 import ConnectedStatus from '../../shared/components/ConnectedStatus'
-import { getDBStatesSorted } from '../reducers/index.js'
 
 
 const Backend = ( {backend} ) => {

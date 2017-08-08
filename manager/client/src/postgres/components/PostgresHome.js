@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { Route, Link } from 'react-router-dom'
 import StatActivityContainer from './StatActivityContainer'
+import Replication from './Replication'
 import Backup from './backup'
 
 
@@ -19,6 +20,7 @@ const Header = () => {
     <ul className="nav nav-tabs">
       <NavItem exact to="/postgres">Stat activity</NavItem>
       <NavItem to="/postgres/backup">Backup</NavItem>
+      <NavItem to="/postgres/replication">Replication</NavItem>
     </ul>
   )
 
@@ -33,7 +35,7 @@ class PostgresHome extends Component{
         <Route exact path='/postgres' component={StatActivityContainer} />
         <Route path='/postgres/stat_activity' component={StatActivityContainer} /> 
         <Route path='/postgres/backup' exact={false} component={Backup} />
-      
+        <Route path='/postgres/replication' exact={false} component={Replication} />      
       </div>
     )
   }
