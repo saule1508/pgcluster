@@ -2,6 +2,7 @@ import { combineReducers } from 'redux'
 
 import {
   FETCH_DBSTATES_REQUEST, FETCH_DBSTATES_FAILURE, FETCH_DBSTATES_SUCCESS,
+  FETCH_REPLICATION_STATS_REQUEST, FETCH_REPLICATION_STATS_FAILURE, FETCH_REPLICATION_STATS_SUCCESS,
   FETCH_PGPOOL_REQUEST, FETCH_PGPOOL_FAILURE, FETCH_PGPOOL_SUCCESS,
   FETCH_REPL_REQUEST, FETCH_REPL_FAILURE, FETCH_REPL_SUCCESS,
   FETCH_STAT_ACTIVITY_REQUEST,FETCH_STAT_ACTIVITY_FAILURE,FETCH_STAT_ACTIVITY_SUCCESS } from '../actions'
@@ -23,6 +24,13 @@ const STAT_ACTIVITY_INITIAL_STATE = {
   rows: []
 }
 
+const REPLICATION_STATS_INITIAL_STATE = {
+  loading: false,
+  rows: [],
+  error: null,
+  timeStamp: null
+}
+
 export const getDBStatesSorted = ( state ) => {
   return state.postgres.dbstates.rows.sort((el1,el2)=>{
     return el1.idx - el2.idx
@@ -37,6 +45,26 @@ const dbstates = (state = {loading: false, error: null, rows: []}, action) => {
       return Object.assign({},state, {'loading': false, 'error': action.payload});
     case FETCH_DBSTATES_SUCCESS:
       return Object.assign({},state, {'loading': false, 'error': null, 'rows': action.payload});
+    default:
+      return state;
+  }
+}
+
+export const getReplicationStatsSorted = ( state ) => {
+  return state.postgres.replication_stats.rows.sort((el1,el2)=>{
+    return el1.idx - el2.idx
+  })
+}
+
+const replication_stats = (state = REPLICATION_STATS_INITIAL_STATE, action) => {
+  switch (action.type) {
+    case FETCH_REPLICATION_STATS_REQUEST:
+      return Object.assign({},state, {'loading': true});
+    case FETCH_REPLICATION_STATS_FAILURE:
+      return Object.assign({},state, {'loading': false, 'error': action.payload});
+    case FETCH_REPLICATION_STATS_SUCCESS:
+      return Object.assign({},state, 
+        {loading: false, error: null, rows: action.payload.data, timeStamp: action.payload.timeStamp});
     default:
       return state;
   }
@@ -88,5 +116,6 @@ export default combineReducers({
   pool_nodes: pool_nodes,
   repl_nodes: repl_nodes,
   stat_activity: stat_activity,
+  replication_stats: replication_stats,
   dbstates: dbstates
 })

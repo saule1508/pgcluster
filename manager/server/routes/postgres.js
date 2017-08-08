@@ -39,4 +39,16 @@ router.get('/pool_nodes', (req, res) => {
 	;  
 })
 
+router.get('/replication_stats', (req, res) => {
+	pg.replicationStats()
+		.then((data)=>{
+			return res.status(200).send(data);
+		})
+		.catch((err)=>{
+			res.status(500).send(err);
+		})
+	;  
+})
+
+
 module.exports = router

@@ -86,11 +86,55 @@ const dbStates = () => {
 	})
 }
 
+const replicationStats = () => {
+	let pools = require('../config/pgpool').pools;
+
+	let pool = require('../config/pgpool');
+	let states = [];
+	return new Promise((resolve,reject)=>{
+		pools.forEach((el,idx)=>{
+			console.log('query in idx ' + idx);
+			let res ;
+			pool.query(idx,'select pg_is_in_recovery() as in_recovery',{},(err,result)=>{
+				if (err){
+					states.push({idx: idx, host: el.host, status:'red'});
+					if (states.length === pools.length){
+						return resolve(states);
+					}			
+				} else {
+					let in_recovery = result.rows[0].in_recovery;
+					let SQL = `select * from ${in_recovery ? 'pg_stat_replication' : 'pg_stat_wal_receiver'}`;
+					pool.query(idx,SQL,{},(err,result) => {
+						if (err){
+							states.push({idx: idx, 
+								host: el.host,
+								status: 'green', 
+								in_recovery: in_recovery,
+								error: err})
+
+						} else {
+							states.push({idx: idx, 
+								host: el.host,
+								status: 'green', 
+								in_recovery: in_recovery,
+								data: result.rows[0]})
+						}
+						if (states.length === pools.length){
+							return resolve(states);
+						}			
+					})
+				}
+			})
+		})
+	})
+}
+
 
 module.exports = {
 	'getStatActivity': getStatActivity,
 	'getReplNodes': getReplNodes,
 	'getPoolNodes': getPoolNodes,
-	dbStates: dbStates
+	dbStates: dbStates,
+	replicationStates: replicationStates
 }
 

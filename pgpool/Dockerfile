@@ -4,7 +4,7 @@ ENV MAJORVER=9.6
 ENV MINORVER=2
 ENV PGVER=96
 RUN yum update -y ; yum clean all
-RUN yum install -y http://www.pgpool.net/yum/rpms/3.6/redhat/rhel-7-x86_64/pgpool-II-release-3.6.5-1.noarch.rpm; yum clean all
+RUN yum install -y http://www.pgpool.net/yum/rpms/3.6/redhat/rhel-7-x86_64/pgpool-II-release-3.6-1.noarch.rpm; yum clean all
 RUN yum install -y pgpool-II-pg${PGVER} pgpool-II-pg${PGVER}-extensions pgpool-II-pg${PGVER}-debuginfo epel-release sudo vi openssh openssh-clients iproute; yum clean all
 RUN groupadd -g 50010 postgres && useradd -u 50010 -g postgres postgres 
 RUN usermod -G wheel -a postgres && echo "postgres" | passwd --stdin postgres
