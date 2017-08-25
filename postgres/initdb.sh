@@ -136,7 +136,7 @@ create_microservices(){
 if [ ! -z ${REPMGRPWD} ] ; then
   log_info "repmgr password set via env"
 else
-  REPMGRPWD=evs123
+  REPMGRPWD=rep123
   log_info "repmgr password default to evs123"
 fi
 log_info "setup .pgpass for replication and for repmgr"

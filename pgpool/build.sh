@@ -1,2 +1,2 @@
 VER=`cat version.txt`
-docker build -t pgpool:$VER .
+sudo docker build -t pgpool:$VER .
