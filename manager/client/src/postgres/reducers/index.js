@@ -56,6 +56,34 @@ export const getReplicationStatsSorted = ( state ) => {
   })
 }
 
+export const getReplication = ( state ) => {
+  let data = {}
+  let rows = getPoolNodesSorted(state);
+  rows.forEach((el)=>{
+    data[el.hostname] = {pgpool_status: el.status, 
+      pgpool_role: el.role, 
+      pgpool_replication_delay: el.replication_delay,
+      pgpool_node_id: el.node_id}
+  })
+  state.postgres.replication_stats.rows.forEach((el)=>{
+    if (! data[el.host]){
+      data[el.host] = {}
+    }
+    data[el.host].status = el.status;
+    data[el.host].in_recovery = el.in_recovery;
+    data[el.host].replication_stats = el.data;
+  })
+  state.postgres.repl_nodes.rows.forEach((el)=>{
+    if (! data[el.name]){
+      data[el.name] = {}
+    }
+    data[el.name].repl_nodes_active = el.active;
+    data[el.name].repl_nodes_type = el.type;
+    data[el.name].upstream_node_id = el.upstream_node_id; 
+  })
+  return data;
+}
+
 const replication_stats = (state = REPLICATION_STATS_INITIAL_STATE, action) => {
   switch (action.type) {
     case FETCH_REPLICATION_STATS_REQUEST:
@@ -70,6 +98,12 @@ const replication_stats = (state = REPLICATION_STATS_INITIAL_STATE, action) => {
   }
 }
 
+export const getReplNodesSorted  = (state) => {
+  return state.postgres.repl_nodes.rows.sort((el1,el2)=>{
+    return el1.id - el2.id 
+  })
+}
+
 
 const repl_nodes = (state = REPL_NODES_INITIAL_STATE, action) => {
   switch (action.type) {
@@ -82,6 +116,12 @@ const repl_nodes = (state = REPL_NODES_INITIAL_STATE, action) => {
     default:
       return state;
   }
+}
+
+export const getPoolNodesSorted  = (state) => {
+  return state.postgres.pool_nodes.rows.sort((el1,el2)=>{
+    return parseInt(el1.node_id) - parseInt(el2.node_id) 
+  })
 }
 
 const pool_nodes = (state = POOL_NODES_INITIAL_STATE, action) => {
