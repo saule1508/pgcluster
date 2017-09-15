@@ -59,32 +59,39 @@ export const getReplicationStatsSorted = ( state ) => {
   })
 }
 
-export const getReplication = ( state ) => {
-  let data = {}
-  let rows = getPoolNodesSorted(state);
-  rows.forEach((el)=>{
-    data[el.hostname] = {pgpool_status: el.status, 
-      pgpool_role: el.role, 
-      pgpool_replication_delay: el.replication_delay,
-      pgpool_node_id: el.node_id}
-  })
-  state.postgres.replication_stats.rows.forEach((el)=>{
-    if (! data[el.host]){
-      data[el.host] = {}
+
+export const getReplicationStatus = ( state ) => {
+  let backends = {};
+  let repl_nodes = getReplNodesSorted(state);
+  repl_nodes.forEach((el)=>{
+    if (! backends[el.name]){
+      backends[el.name] = {}
     }
-    data[el.host].status = el.status;
-    data[el.host].in_recovery = el.in_recovery;
-    data[el.host].replication_stats = el.data;
-  })
-  state.postgres.repl_nodes.rows.forEach((el)=>{
-    if (! data[el.name]){
-      data[el.name] = {}
+    backends[el.name].id = el.id;
+    backends[el.name].role = el.type;
+    backends[el.name].slot_name = el.slot_name;
+    backends[el.name].active = el.active;
+  });
+  let stats = getReplicationStatsSorted(state);
+  stats.forEach((el)=>{
+    if (! backends[el.host]){
+      backends[el.host] = {}
     }
-    data[el.name].repl_nodes_active = el.active;
-    data[el.name].repl_nodes_type = el.type;
-    data[el.name].upstream_node_id = el.upstream_node_id; 
+    backends[el.host].data = el.data || null;
+    backends[el.host].status = el.status;
+    backends[el.host].status = el.status;
+    backends[el.host].in_recovery = el.in_recovery;
   })
-  return data;
+  state.postgres.pool_nodes.rows.forEach((el)=>{
+    if (! backends[el.hostname]){
+      backends[el.hostname] = {}
+    }
+    backends[el.hostname].pgpool_node_id = el.node_id;
+    backends[el.hostname].pgpool_status = el.status;
+    backends[el.hostname].pgpool_role = el.role;
+    backends[el.hostname].pgpool_replication_delay = el.replication_delay;
+  })
+  return backends;
 }
 
 const replication_stats = (state = REPLICATION_STATS_INITIAL_STATE, action) => {
