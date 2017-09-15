@@ -1,4 +1,4 @@
-import { getDBStates, getReplicationStats, getPgpool, getRepl, getStatActivity } from '../api/index.js'
+import { getDBStates, getReplicationStats, getPgpool, getRepl, getStatActivity,getBackups } from '../api/index.js'
 
 export const FETCH_DBSTATES_REQUEST = 'FETCH_DBSTATES_REQUEST';
 export const FETCH_DBSTATES_FAILURE = 'FETCH_DBSTATES_FAILURE';
@@ -16,12 +16,13 @@ export const FETCH_REPLICATION_STATS_REQUEST = 'FETCH_REPLICATION_STATS_REQUEST'
 export const FETCH_REPLICATION_STATS_FAILURE = 'FETCH_REPLICATION_STATS_FAILURE';
 export const FETCH_REPLICATION_STATS_SUCCESS = 'FETCH_REPLICATION_STATS_SUCCESS';
 
-
 export const FETCH_STAT_ACTIVITY_REQUEST = 'FETCH_STAT_ACTIVITY_REQUEST';
 export const FETCH_STAT_ACTIVITY_FAILURE = 'FETCH_STAT_ACTIVITY_FAILURE';
 export const FETCH_STAT_ACTIVITY_SUCCESS = 'FETCH_STAT_ACTIVITY_SUCCESS';
 
-
+export const FETCH_BACKUPS_REQUEST = 'FETCH_BACKUPS_REQUEST';
+export const FETCH_BACKUPS_FAILURE = 'FETCH_BACKUPS_FAILURE';
+export const FETCH_BACKUPS_SUCCESS = 'FETCH_BACKUPS_SUCCESS';
 
 
 const fetchDBStatesRequest = () => ({
@@ -173,4 +174,31 @@ export const fetchStatActivity = () => {
 				dispatch(fetchStatActivityFailure(errorStr));
 			})
 	}
+};
+
+const fetchBackupsRequest = () => ({
+                'type': FETCH_BACKUPS_REQUEST
+})
+
+const fetchBackupsFailure = (error) => ({
+                'type': FETCH_BACKUPS_FAILURE,
+                'payload': error
+})
+
+const fetchBackupsSuccess = (rows) => ({
+                'type': FETCH_BACKUPS_SUCCESS,
+                'payload': rows
+})
+
+export const fetchBackups = () => {
+        return (dispatch,getStore) => {
+                dispatch(fetchBackupsRequest());
+                getBackups()
+                        .then((result)=>{
+                                dispatch(fetchBackupsSuccess(result));
+                        })
+                        .catch((error)=>{
+                                dispatch(fetchBackupsFailure(error));
+                        })
+        }
 };

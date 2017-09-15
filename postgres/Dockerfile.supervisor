@@ -1,7 +1,7 @@
 FROM centos:7
 MAINTAINER p.timmermans@evs.com
 ENV MAJORVER=9.6
-ENV MINORVER=3
+ENV MINORVER=5
 ENV PGVER=96
 ENV docker=yes
 RUN yum update -y ; yum clean all
@@ -49,9 +49,9 @@ RUN echo "alias pool_nodes='psql --username=repmgr -h pgpool01 -p 9999 repmgr -c
 #
 RUN localedef -i en_US -f UTF-8 en_US.UTF-8
 RUN echo "postgres:postgres:*.*" > /home/postgres/.pcppass && chmod 600 /home/postgres/.pcppass
-ADD scripts /opt/scripts
+ADD scripts /scripts
 ADD pgconfig /opt/pgconfig
-RUN chown -R postgres:postgres /opt/scripts && find /opt/scripts -name ".sh" -exec chmod +x {} \;
+RUN chown -R postgres:postgres /scripts 
 ADD ./bin/entrypoint.supervisor /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 ADD get_master.sh /home/postgres/get_master.sh
@@ -64,8 +64,8 @@ RUN echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config && \
 ADD ssh_keys /home/postgres/.ssh 
 RUN chown -R postgres:postgres /home/postgres/.ssh && chmod 700 /home/postgres/.ssh && chmod 644 /home/postgres/.ssh/* && chmod 600 /home/postgres/.ssh/id_rsa
 ENV PATH=$PATH:/usr/pgsql-${MAJORVER}/bin
-ADD initdb.sh /opt/scripts/initdb.sh
-ADD start_repmgr.sh /opt/scripts/start_repmgr.sh
+ADD initdb.sh /scripts/initdb.sh
+ADD start_repmgr.sh /scripts/start_repmgr.sh
 EXPOSE 5432
 EXPOSE 22
 VOLUME ["/u01/pg${PGVER}/data","/u02/archive","/u02/backup"]

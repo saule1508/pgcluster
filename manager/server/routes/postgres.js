@@ -66,5 +66,16 @@ router.get('/replication_stats', (req, res) => {
 	;  
 })
 
+router.get('/backups', (req, res) => {
+  const getBackups = require('../business/backup.js').getBackups;
+  getBackups().then((result)=>{
+    return res.status(200).send(result);
+  })
+  .catch((error)=>{
+    return res.status(501).send(error);
+  });
+})
+
+
 
 module.exports = router

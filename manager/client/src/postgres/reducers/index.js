@@ -7,6 +7,9 @@ import {
   FETCH_REPL_REQUEST, FETCH_REPL_FAILURE, FETCH_REPL_SUCCESS,
   FETCH_STAT_ACTIVITY_REQUEST,FETCH_STAT_ACTIVITY_FAILURE,FETCH_STAT_ACTIVITY_SUCCESS } from '../actions'
 
+import {FETCH_BACKUPS_REQUEST, FETCH_BACKUPS_FAILURE, FETCH_BACKUPS_SUCCESS } from '../actions'
+
+
 const REPL_NODES_INITIAL_STATE = {
   loading: false, 
   error: null, 
@@ -152,10 +155,33 @@ const stat_activity = (state = STAT_ACTIVITY_INITIAL_STATE, action) => {
   }
 };
 
+export const getHostsFromBackups = (state) => {
+  let hosts = [];
+  for (var h in state.postgres.backups.data){
+    hosts.push(h);
+  }
+  return hosts.sort((el1,el2)=>{ return (el1 < el2) ? -1 : ( (el1 === el2) ? 0 : 1)});
+}
+
+let backups = (state = {loading: false, error: null, data: {}}, action) => {
+  switch (action.type) {
+    case FETCH_BACKUPS_REQUEST:
+      return Object.assign({},state, {'loading': true});
+    case FETCH_BACKUPS_FAILURE:
+      return Object.assign({},state, {'loading': false, 'error': action.payload});
+    case FETCH_BACKUPS_SUCCESS:
+      return Object.assign({},state, {'loading': false, 'error': null, data: action.payload});
+    default:
+      return state;
+  }
+}
+
+
 export default combineReducers({
   pool_nodes: pool_nodes,
   repl_nodes: repl_nodes,
   stat_activity: stat_activity,
   replication_stats: replication_stats,
-  dbstates: dbstates
+  dbstates: dbstates,
+  backups: backups
 })

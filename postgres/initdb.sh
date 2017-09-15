@@ -137,7 +137,7 @@ if [ ! -z ${REPMGRPWD} ] ; then
   log_info "repmgr password set via env"
 else
   REPMGRPWD=rep123
-  log_info "repmgr password default to evs123"
+  log_info "repmgr password default to rep123"
 fi
 log_info "setup .pgpass for replication and for repmgr"
 echo "*:*:repmgr:repmgr:${REPMGRPWD}" > /home/postgres/.pgpass

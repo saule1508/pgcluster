@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import { Route, Link } from 'react-router-dom'
 import StatActivityContainer from './StatActivityContainer'
 import Replication from './Replication'
-import Backup from './backup'
+import Backup from './backup/backupscontainer'
 
 
 const NavItem = ({children, to, exact}) => {

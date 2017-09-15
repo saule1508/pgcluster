@@ -181,34 +181,118 @@ wsrouter.ws('/bus_health', function(ws, req) {
 
 });
 
-wsrouter.ws('/backup', function(ws, req) {
 
-  const spawn = require('child_process').spawn;
-
+wsrouter.ws('/shell', (ws,req) => {
+  const { spawn } = require('child_process');
   ws.on('message', (msg)=>{
-    console.log('message %s',msg);
-    let bu = spawn('ls', ['-alrt','/']);
-    bu.stdout.on('data', (data)=>{
-      console.log('on data',data.toString());
-      ws.send(data.toString());
-    })    
-    bu.stderr.on('data', (data) => {
-      console.log('on data on stderr',data.toString());
-      ws.send(data.toString());
-    });
-
-    bu.on('close',()=>{
-      console.log('close');
-      ws.close();
+    console.log('shell message is %s', msg);
+    let myargs = msg.split(',');
+    let args = {};
+    myargs.forEach((e,idx)=>{
+      let kv = e.split(':');
+      args[kv[0].trim()] = kv[1].trim();
     })
+    console.log(args);
+    ws.send(`about to call ${args.action} on host ${args.pcp_host} for node id ${args.pcp_node_id}`)
+    let cmd = spawn('ssh',
+        ['-o','StrictHostKeyChecking=no','-o','UserKnownHostsFile=/dev/null', 
+          `postgres@${args.pcp_host}`,'-C', `/scripts/${args.action}.sh`,`${args.pcp_node_id}`]);
+
+    cmd.stdout.on('data',(data)=>{
+      ws.send(data.toString());
+    })
+    cmd.stderr.on('data',(data)=>{
+      ws.send(data.toString());
+    })
+    cmd.on('close',(code)=>{
+      console.log(`shell command exited with code ${code}`);
+      ws.send(`shell exited with code ${code}`);
+    })
+    cmd.on('error',(code)=>{
+      console.log(`shell on error with code ${code}`);
+      ws.send(`shell on error with code ${code}`);
+    })
+    
+      
   });
 
   ws.on('close', function(msg) {
-    console.log('close with ' + msg);
+    console.log('client close with ' + msg);
   });
-  
+
+  ws.on('error', (err)=>{
+    console.log('web socker error in /shell');
+    console.log(err);
+  })
+
 
 });
 
+
+wsrouter.ws('/backup', function(ws, req) {
+
+  const { spawn } = require('child_process');
+  const getArgsFromString = require('../business/utils.js').getArgsFromString;
+  console.log('in /backup');
+  ws.on('message', (msg)=>{
+    let args = getArgsFromString(msg);
+    console.log(args);
+    let cmdArgs = ['-o','StrictHostKeyChecking=no','-o','UserKnownHostsFile=/dev/null', `postgres@${args.host}`,'-C'];
+    switch (args.action){
+      case 'backup': 
+        cmdArgs.push('/scripts/backup.sh');
+	break;
+      case 'restore':
+        cmdArgs.push('/scripts/restore.sh');
+	break;
+      case 'delete':
+        cmdArgs.push('/scripts/delete_backup.sh');
+	break;
+      default:
+        ws.send('Invalid backup action '+ args.action);
+        return ws.close();
+    }
+    if (args.name){
+      cmdArgs.push('-n',args.name);
+    }
+    if (args.butype && args.action !== 'delete'){
+      cmdArgs.push('-t',args.butype);
+    }
+    if (args.force === 'yes'){
+      cmdArgs.push('-f');
+    }
+    console.log(cmdArgs);
+
+    const bu = spawn('ssh',cmdArgs);
+    
+    bu.stdout.on('data',(data)=>{
+      ws.send(data.toString());
+    })
+    bu.stderr.on('data',(data)=>{
+      ws.send(data.toString());
+    })
+    bu.on('close',(code)=>{
+      console.log(`bu exited with code ${code}`);
+      ws.send(`bu exited with code ${code}`);
+      ws.close();
+    })
+    bu.on('error',(error)=>{
+      console.log(`spawn error ${error}`);
+      ws.send('bu error');
+      ws.close();
+    })
+    
+  })
+
+  ws.on('close', function(msg) {
+  	console.log('client close with ' + msg);
+  });
+  
+  ws.on('error', (err)=>{
+    console.log('web socker error in /backup');
+    console.log(err);
+  })
+
+});
 
 module.exports = wsrouter

@@ -21,7 +21,7 @@ module.exports = {
 		'host': 'pgpool01',
 		'port': 9999,
 		'user': 'repmgr',
-		'password': 'rep123',
+		'password': process.env.REPMGRPWD || 'rep123',
 		'database': 'repmgr'		
 	},
 	docker: {
