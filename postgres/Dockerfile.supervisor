@@ -38,8 +38,8 @@ RUN sed -i -e "s/^%wheel/#%wheel/" -e "/^#.*%wheel.*NOPASSWD/s/^#.*%wheel/%wheel
 RUN echo postgres:postgres | chpasswd
 RUN echo root:postgres | chpasswd
 RUN  echo "export PATH=\$PATH:/usr/pgsql-${MAJORVER}/bin" >  /etc/profile.d/postgres.sh
-RUN  echo "[ -f /etc/profile ] && source /etc/profile" >> /home/postgres/.bash_profile && \
-     echo "export PGDATA=/u01/pg${PGVER}/data" >> /home/postgres/.bash_profile
+RUN  echo "[ -f /etc/profile ] && source /etc/profile" >> /home/postgres/.bashrc && \
+     echo "export PGDATA=/u01/pg${PGVER}/data" >> /home/postgres/.bashrc
 #Some useful aliases for replication
 RUN echo "alias pool_nodes='psql --username=repmgr -h pgpool01 -p 9999 repmgr -c \"show pool_nodes;\"'" >> /home/postgres/.bashrc && \
     echo "alias cluster_show='repmgr -f /etc/repmgr/${MAJORVER}/repmgr.conf cluster show'" >> /home/postgres/.bashrc && \
