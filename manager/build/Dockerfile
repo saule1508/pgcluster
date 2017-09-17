@@ -15,7 +15,7 @@ ADD client /tmp/client
 RUN cd /tmp/client && yarn install
 RUN find /tmp/client/src -name "*.js" -exec sed -i -e "s/ console.log/ \/\/console.log/" {} \; && \
     find /tmp/client/src -name "*.js" -exec sed -i -e "s/^console.log/\/\/console.log/" {} \;
-RUN cd /tmp/client && npm run build
+RUN cd /tmp/client && yarn run build
 RUN mv /tmp/client/build /opt/manager/app
 RUN cp /opt/manager/config/config.prod.js /opt/manager/config/config.js
 WORKDIR /opt/manager
