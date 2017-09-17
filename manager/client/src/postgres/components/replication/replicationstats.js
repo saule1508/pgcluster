@@ -22,10 +22,28 @@ const Stats = ( data ) => {
 	)
 }
 
+
+const StateStatus = ({color}) => {
+	/*
+	return (
+		<svg width="40" height="30">
+   			<circle cx="20" cy="20" r="10" fill={color} />		
+			</svg>
+	) 
+	*/
+	if (color === 'green'){
+		return <span style={{color: 'green', fontWeight: 'bold'}}>V</span>
+	}
+	if (color === 'red'){
+		return <span style={{color: 'red'}}>X</span>
+	}
+}
+
+
+
 const Backend = ( {host,backend, onConsoleAction } ) => {
-	let statusClass = backend.status === 'red' ? "danger" : backend.status === 'green' ? "success" : "";
-	let repMgrClass = backend.active ? "success" : "danger";
-	let pgpoolClass = (backend.pgpool_status === 'up' || backend.pgpool_status === 'waiting') ? "success" : "danger";
+	
+	let pgpoolColor = (backend.pgpool_status === 'up' || backend.pgpool_status === 'waiting') ? "success" : "danger";
 	let pcpAttachClass = backend.pgpool_status === 'down' ? 'btn btn-primary enabled' : 'btn btn-primary disabled' ;
 	let pcpDetachClass = backend.pgpool_status === 'up' || backend.pgpool_status === 'waiting' ? 'btn btn-primary enabled' : 'btn btn-primary disabled' ;
 	
@@ -36,19 +54,25 @@ const Backend = ( {host,backend, onConsoleAction } ) => {
 				</thead>
 				<tbody>
 					<tr >
-						<td>{host}</td><td className={statusClass}>{backend.status}</td><td></td>
+						<td><StateStatus color={backend.status} /></td>
+						<td>{host}</td><td>{backend.status}</td><td></td>
 					</tr>
 					<tr>
+						<td></td>
 						<td>Repmgr role</td><td>{backend.role}</td><td></td>
 					</tr>
 					<tr>
-						<td>Repmgr active</td><td className={repMgrClass}>{backend.active ? 'yes': 'no'}</td><td></td>
+						<td><StateStatus color={backend.active ? 'green' : 'red'} /></td>
+						<td>Repmgr active</td><td>{backend.active ? 'yes': 'no'}</td>
+						<td></td>
 					</tr>
 					<tr>
+						<td></td>
 						<td>In recovery</td><td>{backend.in_recovery && backend.in_recovery.toString()}</td><td></td>
 					</tr>
 					<tr >
-						<td>PGPool status</td><td className={pgpoolClass}>{backend.pgpool_status}</td>
+						<td><StateStatus color={backend.pgpool_status === 'up' || backend.pgpool_status === 'waiting' ? 'green' : 'red'} /></td>
+						<td>PGPool status</td><td>{backend.pgpool_status}</td>
 						<td>
 							<div className="btn-group" role="group" aria-label="pgpool actions">
 								<button className={pcpAttachClass} style={{marginRight: 5}}
@@ -61,10 +85,12 @@ const Backend = ( {host,backend, onConsoleAction } ) => {
 						</td>
 					</tr>
 					<tr >
+						<td></td>
 						<td>PGPool role</td><td>{backend.pgpool_role}</td>
 						<td></td>
 					</tr>
 					<tr >
+						<td></td>
 						<td>PGPool replication delay</td><td>{backend.pgpool_replication_delay}</td>
 						<td></td>
 					</tr>
