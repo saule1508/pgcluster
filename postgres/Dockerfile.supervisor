@@ -5,10 +5,10 @@ ENV MINORVER=5
 ENV PGVER=96
 ENV docker=yes
 RUN yum update -y ; yum clean all
-RUN yum install -y http://www.pgpool.net/yum/rpms/3.6/redhat/rhel-7-x86_64/pgpool-II-release-3.6.5-1.noarch.rpm; yum clean all
+RUN yum install -y http://www.pgpool.net/yum/rpms/3.6/redhat/rhel-7-x86_64/pgpool-II-release-3.6-1.noarch.rpm; yum clean all
 RUN yum install -y pgpool-II-pg${PGVER}-extensions; yum clean all
 RUN yum install -y epel-release libxslt sudo openssh-server openssh-clients jq passwd rsync && \
-    yum install -y systemd-sysv iproute python-setuptools hostname inotify-tools yum-utils which rsync && \
+    yum install -y systemd-sysv iproute python-setuptools hostname inotify-tools yum-utils which && \
     yum clean all
 RUN easy_install supervisor
 RUN mkdir /var/run/sshd

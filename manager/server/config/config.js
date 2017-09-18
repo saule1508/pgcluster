@@ -12,7 +12,7 @@ systemctl daemon-reload
 const dbs=process.env.PG_BACKEND_NODE_LIST.split(',');
 let pg = dbs.map((el)=>{
  let elem = el.split(':');
- return {host: elem[1], port: 5432,user: 'repmgr',password: process.env.REPMGRPWD,database:'repmgr'}
+ return {host: elem[1], port: 5432,user: 'repmgr',password: process.env.REPMGRPWD || 'rep123',database:'repmgr'}
 });
 
 module.exports = {

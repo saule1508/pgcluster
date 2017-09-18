@@ -34,7 +34,7 @@ class BackupForm extends Component{
   }
 
   render(){
-
+    let btnClass = this.props.enabled ? "btn btn-primary" : "btn btn-primary disabled"
     return (
       <div className="panel panel-default">
         <div className="panel-heading"> 
@@ -42,17 +42,17 @@ class BackupForm extends Component{
         </div>
         <div className="panel-body">
           <div className="row">
-            <div className="col-md-12" style={{margin: 10}}>
+            <div className="col-md-6" style={{margin: 10}}>
               <form >
                 <div className="row">
                   <div className="col-group">
-                    <div className="col-md-4" style={{'maxWidth': '380px'}}>
+                    <div className="col-md-4" style={{'maxWidth': '280px'}}>
                       <label htmlFor="buname">Name: </label>
                       <input className="form-control" type="text" 
                         placeholder="<current date time>"
                         id="buname" ref={(input)=>{this._buname = input}} />
                     </div>
-                    <div className="col-md-4" style={{'maxWidth': '280px'}}>
+                    <div className="col-md-4" style={{'maxWidth': '180px'}}>
                       <label htmlFor="host">Host</label>
                       <select name="host" className="form-control" onChange={this.handleHostChange}
                         defaultValue={this.state.selectedHost} >
@@ -63,7 +63,7 @@ class BackupForm extends Component{
                         })}
                       </select>
                     </div>
-                    <div className="col-md-4" style={{'maxWidth': '280px'}}>
+                    <div className="col-md-4" style={{'maxWidth': '180px'}}>
                       <label htmlFor="host">Type</label>
                       <select name="butype" className="form-control" onChange={this.handleTypeChange}
                         defaultValue={this.state.butype} >
@@ -76,7 +76,7 @@ class BackupForm extends Component{
                 </div>
                 <div className="row">
                   <div className="col-md-4" style={{marginTop: 10}}>
-                    <button className="form-control" type="submit" className="btn btn-primary" onClick={this.onSubmit}>Go</button>
+                    <button type="submit" className={btnClass} onClick={this.onSubmit}>Go</button>
                   </div>
                 </div>
               </form>
@@ -90,7 +90,8 @@ class BackupForm extends Component{
 
 BackupForm.propTypes = {
   hosts: PropTypes.array,
-  onSubmit: PropTypes.func.isRequired
+  onSubmit: PropTypes.func.isRequired,
+  enabled: PropTypes.bool.isRequired
 }
 
 export default BackupForm

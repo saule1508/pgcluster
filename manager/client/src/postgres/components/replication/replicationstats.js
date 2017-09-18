@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
-import PCPConsole from './pcpconsole.js'
+import ShellConsole from '../../../shared/components/shellconsole.js'
+import StateUpDown from '../../../shared/components/stateupdown'
 
 const Stats = ( data ) => {
 	let rows = [];
@@ -23,9 +24,6 @@ const Stats = ( data ) => {
 }
 
 const Backend = ( {host,backend, onConsoleAction } ) => {
-	let statusClass = backend.status === 'red' ? "danger" : backend.status === 'green' ? "success" : "";
-	let repMgrClass = backend.active ? "success" : "danger";
-	let pgpoolClass = (backend.pgpool_status === 'up' || backend.pgpool_status === 'waiting') ? "success" : "danger";
 	let pcpAttachClass = backend.pgpool_status === 'down' ? 'btn btn-primary enabled' : 'btn btn-primary disabled' ;
 	let pcpDetachClass = backend.pgpool_status === 'up' || backend.pgpool_status === 'waiting' ? 'btn btn-primary enabled' : 'btn btn-primary disabled' ;
 	
@@ -36,35 +34,43 @@ const Backend = ( {host,backend, onConsoleAction } ) => {
 				</thead>
 				<tbody>
 					<tr >
-						<td>{host}</td><td className={statusClass}>{backend.status}</td><td></td>
+						<td><StateUpDown color={backend.status} /></td>
+						<td>{host}</td><td>{backend.status}</td>
+						<td></td>
 					</tr>
 					<tr>
-						<td>Repmgr role</td><td>{backend.role}</td><td></td>
+						<td></td>
+						<td>Repmgr role</td><td>{backend.role}</td>
+						<td></td>
 					</tr>
 					<tr>
-						<td>Repmgr active</td><td className={repMgrClass}>{backend.active ? 'yes': 'no'}</td><td></td>
+						<td><StateUpDown color={backend.active ? 'green': 'red'} /></td>
+						<td>Repmgr active</td><td>{backend.active ? 'yes': 'no'}</td>
+						<td></td>
 					</tr>
 					<tr>
+						<td></td>
 						<td>In recovery</td><td>{backend.in_recovery && backend.in_recovery.toString()}</td><td></td>
 					</tr>
 					<tr >
-						<td>PGPool status</td><td className={pgpoolClass}>{backend.pgpool_status}</td>
+						<td><StateUpDown color={(backend.pgpool_status === 'up' || backend.pgpool_status === 'waiting') ? "green" : "red"} /></td>
+						<td>PGPool status</td><td>{backend.pgpool_status}</td>
 						<td>
 							<div className="btn-group" role="group" aria-label="pgpool actions">
 								<button className={pcpAttachClass} style={{marginRight: 5}}
-									onClick={onConsoleAction.bind(null,host,'pcp_attach')}>Attach</button>
-								
-								
+									onClick={onConsoleAction.bind(null,host,'pcp_attach')}>Attach</button>		
 								<button className={pcpDetachClass} 
 									onClick={onConsoleAction.bind(null,host,'pcp_detach')}>Detach</button>
 							</div>
 						</td>
 					</tr>
 					<tr >
+						<td></td>					
 						<td>PGPool role</td><td>{backend.pgpool_role}</td>
 						<td></td>
 					</tr>
 					<tr >
+						<td></td>
 						<td>PGPool replication delay</td><td>{backend.pgpool_replication_delay}</td>
 						<td></td>
 					</tr>
@@ -135,11 +141,13 @@ class ReplicationStats extends Component{
 		*/
 		let content = [];
 		if (this.state.console_action){
+			let args = {pcp_node_id: this.state.pcp_node_id,host: this.state.pcp_host }
 			content.push(	
-			<div className="row">
+			<div className="row" key='console_row'>
 				<div className="col-md-12">		
-					<PCPConsole key='console' onClose={this.onCloseConsole} 
-						pcp_node_id={this.state.pcp_node_id} action={this.state.console_action} pcp_host={this.state.pcp_host} />
+					<ShellConsole key='console' action={this.state.console_action} 
+						onClose={this.onCloseConsole} onSuccess={this.onCloseConsole}
+						args={args} prompt={this.state.console_action === 'pcp_detach' ? 'Are you sure you want to detach' : null} />
 				</div>
 			</div>
 			)

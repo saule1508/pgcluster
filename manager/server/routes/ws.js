@@ -181,60 +181,13 @@ wsrouter.ws('/bus_health', function(ws, req) {
 
 });
 
-
-wsrouter.ws('/shell', (ws,req) => {
-  const { spawn } = require('child_process');
-  ws.on('message', (msg)=>{
-    console.log('shell message is %s', msg);
-    let myargs = msg.split(',');
-    let args = {};
-    myargs.forEach((e,idx)=>{
-      let kv = e.split(':');
-      args[kv[0].trim()] = kv[1].trim();
-    })
-    console.log(args);
-    ws.send(`about to call ${args.action} on host ${args.pcp_host} for node id ${args.pcp_node_id}`)
-    let cmd = spawn('ssh',
-        ['-o','StrictHostKeyChecking=no','-o','UserKnownHostsFile=/dev/null', 
-          `postgres@${args.pcp_host}`,'-C', `/scripts/${args.action}.sh`,`${args.pcp_node_id}`]);
-
-    cmd.stdout.on('data',(data)=>{
-      ws.send(data.toString());
-    })
-    cmd.stderr.on('data',(data)=>{
-      ws.send(data.toString());
-    })
-    cmd.on('close',(code)=>{
-      console.log(`shell command exited with code ${code}`);
-      ws.send(`shell exited with code ${code}`);
-    })
-    cmd.on('error',(code)=>{
-      console.log(`shell on error with code ${code}`);
-      ws.send(`shell on error with code ${code}`);
-    })
-    
-      
-  });
-
-  ws.on('close', function(msg) {
-    console.log('client close with ' + msg);
-  });
-
-  ws.on('error', (err)=>{
-    console.log('web socker error in /shell');
-    console.log(err);
-  })
-
-
-});
-
-
-wsrouter.ws('/backup', function(ws, req) {
+wsrouter.ws('/shell', function(ws, req) {
 
   const { spawn } = require('child_process');
   const getArgsFromString = require('../business/utils.js').getArgsFromString;
-  console.log('in /backup');
+  console.log('in /shell');
   ws.on('message', (msg)=>{
+    console.log(`message is ${msg}`);
     let args = getArgsFromString(msg);
     console.log(args);
     let cmdArgs = ['-o','StrictHostKeyChecking=no','-o','UserKnownHostsFile=/dev/null', `postgres@${args.host}`,'-C'];
@@ -248,8 +201,16 @@ wsrouter.ws('/backup', function(ws, req) {
       case 'delete':
         cmdArgs.push('/scripts/delete_backup.sh');
 	break;
+      case 'pcp_attach':
+        cmdArgs.push('/scripts/pcp_attach.sh');
+        cmdArgs.push(args.pcp_node_id);
+        break;
+      case 'pcp_detach':
+        cmdArgs.push('/scripts/pcp_detach.sh');
+        cmdArgs.push(args.pcp_node_id);
+        break;
       default:
-        ws.send('Invalid backup action '+ args.action);
+        ws.send('Invalid shell action '+ args.action);
         return ws.close();
     }
     if (args.name){
@@ -272,7 +233,7 @@ wsrouter.ws('/backup', function(ws, req) {
       ws.send(data.toString());
     })
     bu.on('close',(code)=>{
-      console.log(`bu exited with code ${code}`);
+      console.log(`shell exited with code ${code}`);
       ws.send(`bu exited with code ${code}`);
       ws.close();
     })
@@ -294,5 +255,6 @@ wsrouter.ws('/backup', function(ws, req) {
   })
 
 });
+
 
 module.exports = wsrouter

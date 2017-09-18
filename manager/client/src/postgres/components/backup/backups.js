@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import BackupConsole from './backupconsole.js'
+import ShellConsole from '../../../shared/components/shellconsole.js'
 import BackupForm from './backupform.js'
 import RestoreModal from './restoremodal.js'
 import PropTypes from 'prop-types'
@@ -110,7 +110,7 @@ class Backup extends Component {
 
   renderRestoreModal(){
 
-    if (! this.state.restoreModal){
+    if (! this.state.restoreModalVisible){
       return
     }
 
@@ -137,6 +137,16 @@ class Backup extends Component {
         )
       }
     })
+    // compute arguments for the shell console
+    let args = {
+      name: this.state.name,
+      host: this.state.host,
+      to_host: this.state.to_host,
+      force: this.state.force ? 'yes':'no',
+      butype:this.state.butype || ''
+    }
+    console.log(args);
+    let backupSubmitEnabled = (this.state.restoreModalVisible || this.state.processing) ? false : true;
     return (
       <div>
         <div className="row">
@@ -151,20 +161,19 @@ class Backup extends Component {
         <hr/>
         <div className="row">
           <div className="col-md-6">  
-            <BackupForm name={this.state.name} 
+            <BackupForm name={this.state.name} enabled={backupSubmitEnabled}
               setName={this.setName} hosts={hosts ? hosts : []} onSubmit={this.onSubmitBackup} />
+            
           </div>
         </div>
         <div className="row">
           <div className="col-md-6">
             {this.state.processing && (
-              <BackupConsole onClose={this.onBackupDone} 
+              <ShellConsole onClose={this.onBackupDone} 
                 onSuccess={this.props.fetchBackups} 
                 action={this.state.action} /* delete, backup, restore */
-                name={this.state.name} 
-                host={this.state.host} 
-                to_host={this.state.to_host} /* in case of restore: not use now */
-                butype={this.state.butype} />
+                args={ args }
+                />
               )}
           </div>
         </div>
