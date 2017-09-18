@@ -23,7 +23,28 @@ const Stats = ( data ) => {
 	)
 }
 
+
+const StateStatus = ({color}) => {
+	/*
+	return (
+		<svg width="40" height="30">
+   			<circle cx="20" cy="20" r="10" fill={color} />		
+			</svg>
+	) 
+	*/
+	if (color === 'green'){
+		return <span style={{color: 'green', fontWeight: 'bold'}}>V</span>
+	}
+	if (color === 'red'){
+		return <span style={{color: 'red'}}>X</span>
+	}
+}
+
+
+
 const Backend = ( {host,backend, onConsoleAction } ) => {
+	
+	let pgpoolColor = (backend.pgpool_status === 'up' || backend.pgpool_status === 'waiting') ? "success" : "danger";
 	let pcpAttachClass = backend.pgpool_status === 'down' ? 'btn btn-primary enabled' : 'btn btn-primary disabled' ;
 	let pcpDetachClass = backend.pgpool_status === 'up' || backend.pgpool_status === 'waiting' ? 'btn btn-primary enabled' : 'btn btn-primary disabled' ;
 	
@@ -44,7 +65,7 @@ const Backend = ( {host,backend, onConsoleAction } ) => {
 						<td></td>
 					</tr>
 					<tr>
-						<td><StateUpDown color={backend.active ? 'green': 'red'} /></td>
+						<td><StateStatus color={backend.active ? 'green' : 'red'} /></td>
 						<td>Repmgr active</td><td>{backend.active ? 'yes': 'no'}</td>
 						<td></td>
 					</tr>
@@ -53,7 +74,7 @@ const Backend = ( {host,backend, onConsoleAction } ) => {
 						<td>In recovery</td><td>{backend.in_recovery && backend.in_recovery.toString()}</td><td></td>
 					</tr>
 					<tr >
-						<td><StateUpDown color={(backend.pgpool_status === 'up' || backend.pgpool_status === 'waiting') ? "green" : "red"} /></td>
+						<td><StateStatus color={backend.pgpool_status === 'up' || backend.pgpool_status === 'waiting' ? 'green' : 'red'} /></td>
 						<td>PGPool status</td><td>{backend.pgpool_status}</td>
 						<td>
 							<div className="btn-group" role="group" aria-label="pgpool actions">
