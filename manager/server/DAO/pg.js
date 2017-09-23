@@ -105,7 +105,7 @@ const replicationStats = () => {
 				} else {
 					let in_recovery = result.rows[0].in_recovery;
 					let SQL = `select * from ${in_recovery ? 'pg_stat_wal_receiver' : 'pg_stat_replication'}`;
-					pool.query(idx,SQL,{},(err,result) => {
+					pool.query(idx,SQL,[],(err,result) => {
 						if (err){
 							states.push({idx: idx, 
 								host: el.host,
