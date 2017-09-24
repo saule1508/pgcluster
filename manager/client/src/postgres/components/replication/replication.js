@@ -29,8 +29,9 @@ class Replication extends Component {
             <ReplicationStatsContainer />
           </div>                
         </div>
-      
+        
       </div>
+
     )
   }
 }

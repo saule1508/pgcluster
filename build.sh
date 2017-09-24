@@ -1,7 +1,7 @@
 VER=`cat version.txt`
 # remove volumes so we start from scratch
-docker volume ls | grep pgcluster | awk '{print $2}' | xargs docker volume rm
-docker build -t pg:${VER} --no-cache=false -f postgres/Dockerfile.supervisor ./postgres
+sudo docker volume ls | grep pgcluster | awk '{print $2}' | xargs sudo docker volume rm
+sudo docker build -t pg:${VER} --no-cache=false -f postgres/Dockerfile.supervisor ./postgres
 #if [ $? -eq 0 ] ; then
 # echo pushing to local registry
 # sudo docker tag pg:$VER localhost:5000/pg:$VER

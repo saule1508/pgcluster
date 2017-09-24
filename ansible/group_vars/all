@@ -2,18 +2,18 @@
 # =======================================================
 storage:
   docker:
-    disk: 'sdb'
+    disk: 'vdb'
     #if the volume group does not exist, it will be created otherwise it will expanded with the disk above
     vg: vg_01
     #this is the size of the lv volume that will be created
     size_gb: "16"
   postgres:
     data:
-      disk: "sdb"
+      disk: "vdb"
       vg: vg_01
       size_gb: "3"
     backup:
-      disk: "sdb"
+      disk: "vdb"
       vg: vg_01
       size_gb: "3"
 
@@ -23,7 +23,7 @@ storage:
 ms_list: "{{ mslist | default('asset,ingest,playout') }}"
 ms_ownerpwdlist: "{{ msownerpwdlist | default('asset_owner,ingest_owner,playout_owner') }}"
 ms_userpwdlist: "{{ msuserpwdlist | default('asset_user,ingest_user,playout_user') }}"
-repmgr_pwd: "{{ repmgrpwd | default('evs123') }}"
+repmgr_pwd: "{{ repmgrpwd | default('rep123') }}"
 #one or more swarm networks will be created
 docker_swarm_networks:
   pgcluster:

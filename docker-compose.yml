@@ -1,7 +1,7 @@
-version: '3'
+version: '3.2'
 services:
   pg01:
-    image: pg:0.3.0
+    image: pg:0.3.2
     environment:
       INITIAL_NODE_TYPE: master
       NODE_ID: 1
@@ -18,7 +18,7 @@ services:
       - pg01db:/u01/pg96/data
       - pg01arc:/u02/archive
   pg02:
-    image: pg:0.3.0
+    image: pg:0.3.2
     environment:
       INITIAL_NODE_TYPE: slave
       NODE_ID: 2
@@ -37,7 +37,7 @@ services:
     depends_on:
       - pg01
   pgpool01:
-    image: pgpool:0.3.0
+    image: pgpool:0.3.2
     ports:
       - 9999:9999
     environment:
@@ -60,9 +60,12 @@ services:
       - pg01
       - pg02
   manager:
-    image: manager:0.1.1
+    image: manager:0.1.3
     ports:
       - 8080:8080
+    environment:
+      PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg96/data:ALLOW_TO_FAILOVER,1:pg02:5432:1:/u01/pg96/data:ALLOW_TO_FAILOVER
+      REPMGRPWD: rep123
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     restart: always

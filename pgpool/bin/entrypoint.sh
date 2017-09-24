@@ -2,54 +2,42 @@
 
 CONFIG_FILE=/etc/pgpool-II/pgpool.conf
 
-wait_for_master(){
+wait_for_db(){
   SLEEP_TIME=5
   MAX_TRIES=60
   IFS=',' read -ra PG_HOSTS <<< "$1"
-  found=0
-  i=0
-  echo "Using list of backend $1 to find a db to connect to"
-  while [ $found -eq 0 ] ; do
+  while [ 0 -eq 0 ] ; do
+    echo "Using list of backend $1 to find a db to connect to"
     i=0
-    echo waiting for one node to be pingable
-    while [ $found -eq 0 -a $i -lt ${#PG_HOSTS[@]} ] ; do
+    while [ $i -lt ${#PG_HOSTS[@]} ] ; do
       echo trying with ${PG_HOSTS[$i]}
       DBHOST=$( echo ${PG_HOSTS[$i]} | cut -f2 -d":" )
       port=$( echo ${PG_HOSTS[$i]} | cut -f3 -d":" )
-      echo trying to ping $DBHOST
-      ping -c 1 $DBHOST
-      if [ $? -eq 0 ] ; then
-        echo "found node: $DBHOST"
-        found=1
-      else
-        echo cannot ping node $DBHOST
+      if [ -z $port ] ; then
+        port=5432
       fi
-      i=$((i+1))
+      echo trying to connect to $DBHOST via ssh
+      ssh -oPasswordAuthentication=no ${DBHOST} uname
+      if [ $? -ne 0 ] ; then
+        echo Cannot ssh to $DBHOST
+        i=$((i+1))
+      else
+        echo Try psql connection on host $DBHOST
+        # we could use pg_is_ready also
+        ssh -oPasswordAuthentication=no $DBHOST "psql --username=repmgr -p ${port} repmgr -c \"select 1;\""
+        ret=$?
+        if [ $ret -eq 0 ] ; then
+          echo "server ${DBHOST} ready"
+          echo "pg backend found at host $DBHOST and port $port"
+          return 0
+        else
+          echo "Cannot connect to ${DBHOST} in psql, pg not ready ?"
+          i=$((i+1))
+        fi
+      fi
     done
     sleep $SLEEP_TIME
   done
-  if [ -z $port ] ; then
-   port=5432
-  fi
-  echo "pg backend found at host $DBHOST and port $port"
-
-  sleep $SLEEP_TIME
-  ssh ${DBHOST} "psql --username=repmgr -p ${port} repmgr -c \"select 1;\"" 
-  ret=$?
-  echo "ret of ssh is $ret"
-  if [ $ret -eq 0 ] ; then
-   echo "server ready"
-   return 0
-  fi
-  until [[ $ret -eq 0 ]] || [[ "$MAX_TRIES" == "0" ]]; do
-    echo "$(date) - waiting for postgres..."
-    sleep $SLEEP_TIME
-    MAX_TRIES=`expr "$MAX_TRIES" - 1`
-    ssh ${DBHOST} "psql --username=repmgr -p ${port} repmgr -c \"select 1;\"" > /dev/null
-    ret=$?
-  done
-  ssh ${DBHOST} "psql --username=repmgr -p ${port} repmgr -c \"select 1;\"" > /dev/null
-  return $?
 }
 
 PG_MASTER_NODE_NAME=${PG_MASTER_NODE_NAME:-pg01}
@@ -75,21 +63,14 @@ fi
 echo MASTER_SLAVE_MODE=$MASTER_SLAVE_MODE
 
 
-echo "Waiting for master pg database on ${PG_MASTER_NODE_NAME} to be ready"
-wait_for_master $PG_BACKEND_NODE_LIST
+echo "Waiting for one database to be ready"
+wait_for_db $PG_BACKEND_NODE_LIST
 echo "Checking backend databases state in repl_nodes table"
 # if the cluster is initializing it is possible that repl_nodes does not contain
-# all backend yet
-# we might need to wait a bit...
+# all backend yet and so we might need to wait a bit...
 ssh ${DBHOST} "psql -U repmgr repmgr -t -c 'select name,active from repl_nodes;'" > /tmp/repl_nodes
 if [ $? -ne 0 ] ; then
-  echo "error connecting to $DBHOST, try again in 10 seconds"
-  sleep 10
-fi
-ssh ${DBHOST} "psql -U repmgr repmgr -t -c 'select name,active from repl_nodes;'" > /tmp/repl_nodes
-if [ $? -ne 0 ] ; then
-  echo "error connecting to $h, try again in 10 seconds"
-  sleep 10
+  echo "error connecting to $DBHOST, this likely indicates an unexpected issue"
 fi
 nbrlines=$( grep -v "^$" /tmp/repl_nodes | wc -l )
 NBRTRY=30

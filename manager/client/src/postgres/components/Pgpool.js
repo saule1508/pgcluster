@@ -36,7 +36,7 @@ class Pgpool extends Component{
     const protocolPrefix = (window.location.protocol === 'https:') ? 'wss:' : 'ws:';
     let host = window.location.host;
     if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-      host = 'localhost:8080';
+      host = process.env.REACT_APP_SERVERIP ? process.env.REACT_APP_SERVERIP + ':8080' : 'localhost:8080';
     }
     this.ws = new WebSocket(protocolPrefix + '//' + host + '/ws/pool_nodes');
  	
