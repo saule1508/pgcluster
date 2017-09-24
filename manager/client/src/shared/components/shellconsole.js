@@ -70,7 +70,7 @@ class ShellConsole extends Component{
     const protocolPrefix = (window.location.protocol === 'https:') ? 'wss:' : 'ws:';
     let host = window.location.host;
     if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-      host = process.env.REACT_APP_SERVERIP + ':8080';
+      host = (process.env.REACT_APP_SERVERIP || 'localhost') + ':8080';
     }
     this.ws = new WebSocket(protocolPrefix + '//' + host + '/ws/shell');
 
@@ -132,7 +132,7 @@ class ShellConsole extends Component{
         <div className="col-md-12">
           <div className="panel panel-default">
             <div className="panel-heading">
-              {this.props.action} Backup 
+              {this.props.action} 
                 {this.props.prompt && ! this.state.confirmed ? '' : <ConnectedStatus connected={this.state.connected} /> }
             </div>
             <Prompt prompt={this.props.prompt} onClick={this.onConfirm} confirmed={this.state.confirmed} />

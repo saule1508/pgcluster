@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import ShellConsole from '../../../shared/components/shellconsole.js'
+import ShellConsoleModal from '../../../shared/components/shellconsolemodal.js'
 import StateUpDown from '../../../shared/components/stateupdown'
 
 const Stats = ( data ) => {
@@ -139,6 +139,7 @@ class ReplicationStats extends Component{
 	}
 
 	onCloseConsole(){
+		// console_action determines if the modal is showned or not
 		this.setState({console_action: null, pcp_node_id: null, pcp_host: null})
 	}
 
@@ -161,18 +162,19 @@ class ReplicationStats extends Component{
 		});
 		*/
 		let content = [];
-		if (this.state.console_action){
-			let args = {pcp_node_id: this.state.pcp_node_id,host: this.state.pcp_host }
-			content.push(	
-			<div className="row" key='console_row'>
-				<div className="col-md-12">		
-					<ShellConsole key='console' action={this.state.console_action} 
-						onClose={this.onCloseConsole} onSuccess={this.onCloseConsole}
-						args={args} prompt={this.state.console_action === 'pcp_detach' ? 'Are you sure you want to detach' : null} />
-				</div>
-			</div>
+
+		let args = {pcp_node_id: this.state.pcp_node_id,host: this.state.pcp_host }
+		
+		content.push(	
+					<ShellConsoleModal key='console' action={this.state.console_action} 
+						modalActive={this.state.console_action}
+						handleHideModal={this.onCloseConsole}
+						onClose={this.onCloseConsole} 
+						onSuccess={this.onCloseConsole}
+						args={args} 
+						prompt={this.state.console_action === 'pcp_detach' ? 'Are you sure you want to detach' : null} />
 			)
-		}
+		
 
 		for (var e in this.props.replication_status){
 			if (this.props.replication_status.hasOwnProperty(e)){
