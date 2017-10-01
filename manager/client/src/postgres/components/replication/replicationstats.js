@@ -47,27 +47,46 @@ const Backend = ( {host,backend, onConsoleAction } ) => {
 	let pgpoolColor = (backend.pgpool_status === 'up' || backend.pgpool_status === 'waiting') ? "success" : "danger";
 	let pcpAttachClass = backend.pgpool_status === 'down' ? 'btn btn-primary enabled' : 'btn btn-primary disabled' ;
 	let pcpDetachClass = backend.pgpool_status === 'up' || backend.pgpool_status === 'waiting' ? 'btn btn-primary enabled' : 'btn btn-primary disabled' ;
-	
+	let pgStopClass = backend.status === 'green' ? 'btn btn-primary enabled' : 'btn btn-primary disabled' ;
+	let pgStartClass = backend.status === 'green' ? 'btn btn-primary disabled' : 'btn btn-primary  enabled' ;
+	let repmgrUnregisterClass = backend.active && backend.role === 'standby' ? 'btn btn-primary  enabled' : 'btn btn-primary disabled'
+	let masterClass = backend.role === 'master' ? 'alert success' : 'alert warning'
+	let tabStyleMaster = {border: 'solid 2px green'}
+	let tabStyleStandby = {}
+
 	return (
 		<div className="col-md-4">
-			<table className="table table-bordered table-condensed">
+			<table className="table table-bordered table-condensed" style={backend.role==='master' ? tabStyleMaster : tabStyleStandby} >
 				<thead>
 				</thead>
 				<tbody>
 					<tr >
 						<td><StateUpDown color={backend.status} /></td>
 						<td>{host}</td><td>{backend.status}</td>
-						<td></td>
+						<td>
+							<div className="btn-group" role="group" aria-label="pgpool actions">
+								<button className={pgStopClass} style={{marginRight: 5}}
+									onClick={onConsoleAction.bind(null,host,'pg_stop')}>Stop DB</button>		
+								<button className={pgStartClass} 
+									onClick={onConsoleAction.bind(null,host,'pg_start')}>Start DB</button>
+							</div>							
+						</td>
 					</tr>
 					<tr>
 						<td></td>
-						<td>Repmgr role</td><td>{backend.role}</td>
+						<td>Repmgr role</td><td>{backend.role === 'master' ? '** master **' : backend.role}</td>
 						<td></td>
 					</tr>
 					<tr>
 						<td><StateStatus color={backend.active ? 'green' : 'red'} /></td>
 						<td>Repmgr active</td><td>{backend.active ? 'yes': 'no'}</td>
-						<td></td>
+						<td>
+							<div className="btn-group" role="group" aria-label="pgpool actions">
+								<button className={repmgrUnregisterClass} style={{marginRight: 5}}
+									onClick={onConsoleAction.bind(null,host,'repmgr_unregister')}>Unregister</button>		
+							</div>							
+							
+						</td>
 					</tr>
 					<tr>
 						<td></td>
@@ -114,7 +133,7 @@ class ReplicationStats extends Component{
 		this.state = {
 			console_action: null,
 			pcp_node_id: null,
-			pcp_host: null
+			host: null
 		}
 	}
 
@@ -133,14 +152,14 @@ class ReplicationStats extends Component{
 		let node_info = this.props.replication_status[host];
 		console.log(node_info);
 		if (! this.state.console_action){
-				this.setState({console_action: action, pcp_node_id: node_info.pgpool_node_id, pcp_host: host});
+				this.setState({console_action: action, pcp_node_id: node_info.pgpool_node_id, host: host});
 		}
 
 	}
 
 	onCloseConsole(){
 		// console_action determines if the modal is showned or not
-		this.setState({console_action: null, pcp_node_id: null, pcp_host: null})
+		this.setState({console_action: null, pcp_node_id: null, host: null})
 	}
 
 	renderContent(){
@@ -163,7 +182,7 @@ class ReplicationStats extends Component{
 		*/
 		let content = [];
 
-		let args = {pcp_node_id: this.state.pcp_node_id,host: this.state.pcp_host }
+		let args = {pcp_node_id: this.state.pcp_node_id,host: this.state.host }
 		
 		content.push(	
 					<ShellConsoleModal key='console' action={this.state.console_action} 

@@ -209,6 +209,15 @@ wsrouter.ws('/shell', function(ws, req) {
         cmdArgs.push('/scripts/pcp_detach.sh');
         cmdArgs.push(args.pcp_node_id);
         break;
+      case 'pg_stop':
+        cmdArgs.push('/scripts/pg_stop.sh');
+        break;
+      case 'pg_start':
+        cmdArgs.push('/scripts/pg_start.sh');
+        break;
+      case 'repmgr_unregister':
+        cmdArgs.push('/scripts/repmgr_unregister.sh');
+        break;
       default:
         ws.send('Invalid shell action '+ args.action);
         return ws.close();

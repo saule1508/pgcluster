@@ -5,7 +5,7 @@
 # Author: PTI
 #########################################
 
-source /opt/evs/pg-utils/lib/evs_pg_utils_lib.sh
+source /scripts/lib/pg_utils.sh
 
 #############################
 # Functions

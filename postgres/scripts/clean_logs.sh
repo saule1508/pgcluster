@@ -2,7 +2,7 @@
 #Description: clean-up postgres log files
 #Author: Me
 
-source /opt/cl-pg-utils/lib/evs_pg_utils.sh
+source /scripts/lib/pg_utils.sh
 
 PGDATA=${PGDATA:-/u01/pg96/data}
 if [ -z $EVSPGLOG ] ; then
