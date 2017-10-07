@@ -1,17 +1,15 @@
-FROM centos:7
+FROM centos:latest
 MAINTAINER ptim007@yahoo.com
-ENV MAJORVER=9.6
-ENV MINORVER=2
-ENV PGVER=96
+ENV PGVER=10
 RUN yum update -y ; yum clean all
-RUN yum install -y http://www.pgpool.net/yum/rpms/3.6/redhat/rhel-7-x86_64/pgpool-II-release-3.6-1.noarch.rpm; yum clean all
-RUN yum install -y pgpool-II-pg${PGVER} pgpool-II-pg${PGVER}-extensions pgpool-II-pg${PGVER}-debuginfo epel-release sudo vi openssh openssh-clients iproute; yum clean all
 RUN groupadd -g 50010 postgres && useradd -u 50010 -g postgres postgres 
 RUN usermod -G wheel -a postgres && echo "postgres" | passwd --stdin postgres
-RUN echo "Defaults:postgres !requiretty" > /etc/sudoers.d/postgres && \
+RUN mkdir /etc/sudoers.d && echo "Defaults:postgres !requiretty" > /etc/sudoers.d/postgres && \
     echo "postgres ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/postgres
 RUN sed -i -e "s/^%wheel/#%wheel/" -e "/^#.*%wheel.*NOPASSWD/s/^#.*%wheel/%wheel/" /etc/sudoers
 RUN echo root:postgres | chpasswd
+RUN yum install -y https://download.postgresql.org/pub/repos/yum/10/redhat/rhel-7-x86_64/pgdg-centos10-10-1.noarch.rpm
+RUN yum install -y pgpool-II-${PGVER} pgpool-II-${PGVER}-extensions pgpool-II-${PGVER}-debuginfo epel-release sudo vi openssh openssh-clients iproute; yum clean all
 # Make ssh connection easier
 RUN echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config && \
     echo "UserKnownHostsFile /dev/null" >> /etc/ssh/ssh_config && \

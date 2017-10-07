@@ -20,7 +20,7 @@ PORT_NUMBER=$4
 NEW_MASTER_HOST=$5
 OLD_MASTER_ID=$6
 OLD_PRIMARY_ID=$7
-PGDATA=${PGDATA:-/u01/pg96/data}
+PGDATA=${PGDATA:-/u01/pg10/data}
 
 
 (
@@ -37,6 +37,6 @@ if [ $NODEID -eq $OLD_PRIMARY_ID ] ; then
 else
   ssh_options="ssh -n -T -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
   set -x
-  $ssh_options postgres@${HOSTNAME} "/usr/pgsql-9.6/bin/repmgr --log-to-file -f /etc/repmgr/9.6/repmgr.conf -h ${NEW_MASTER_HOST} -D ${PGDATA} -U repmgr -d repmgr standby follow -v "
+  $ssh_options postgres@${HOSTNAME} "/usr/pgsql-10/bin/repmgr --log-to-file -f /etc/repmgr/10/repmgr.conf -h ${NEW_MASTER_HOST} -D ${PGDATA} -U repmgr -d repmgr standby follow -v "
 fi
 ) 2>&1 | tee -a $LOGFILE

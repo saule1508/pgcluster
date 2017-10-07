@@ -10,7 +10,7 @@
 # Be sure to set up public SSH keys and authorized_keys files.
 # this script must be in PGDATA
 
-PATH=$PATH:/usr/pgsql-9.6/bin
+PATH=$PATH:/usr/pgsql-10/bin
 
 if [ ! -d /var/log/pg ] ; then
  sudo mkdir -p /var/log/pg
@@ -41,19 +41,19 @@ echo "replicat_path: ${replica_path}"
 
 ssh_copy="ssh postgres@$replica_host -T -n -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 echo "Stopping postgres on ${replica_host}"
-$ssh_copy "/usr/pgsql-9.6/bin/pg_ctl -D ${replica_path} stop"
+$ssh_copy "/usr/pgsql-10/bin/pg_ctl -D ${replica_path} stop"
 echo sleeping 20
 sleep 20
 echo "delete database directory on ${replica_host}"
 $ssh_copy "rm -Rf $replica_path/*"
 echo let us use repmgr on the replica host to force it to sync again
-$ssh_copy "/usr/pgsql-9.6/bin/repmgr -h ${primary_host} --username=repmgr -d repmgr -D ${replica_path} -f /etc/repmgr/9.6/repmgr.conf standby clone -v"
+$ssh_copy "/usr/pgsql-10/bin/repmgr -h ${primary_host} --username=repmgr -d repmgr -D ${replica_path} -f /etc/repmgr/10/repmgr.conf standby clone -v"
 echo "Start database on ${replica_host} "
 # -s -l /dev/null is needed otherwise ssh hangs
-$ssh_copy "/usr/pgsql-9.6/bin/pg_ctl -s -l /dev/null -D ${replica_path} start"
+$ssh_copy "/usr/pgsql-10/bin/pg_ctl -s -l /dev/null -D ${replica_path} start"
 echo sleeping 20
 sleep 20
 echo "Register standby database"
-$ssh_copy "/usr/pgsql-9.6/bin/repmgr -f /etc/repmgr/9.6/repmgr.conf standby register -F -v"
+$ssh_copy "/usr/pgsql-10/bin/repmgr -f /etc/repmgr/10/repmgr.conf standby register -F -v"
 $ssh_copy "ps -ef"
 ) 2>&1 | tee -a ${LOGFILE}

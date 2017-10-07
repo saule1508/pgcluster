@@ -4,7 +4,7 @@
 
 source /scripts/lib/pg_utils.sh
 
-PGDATA=${PGDATA:-/u01/pg96/data}
+PGDATA=${PGDATA:-/u01/pg10/data}
 if [ -z $EVSPGLOG ] ; then
  EVSPGLOG=${PGDATA}/pg_log
 fi

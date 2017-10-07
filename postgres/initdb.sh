@@ -96,7 +96,7 @@ log_info "MSUSERPWDLIST: ${MSUSERPWDLIST}"
 log_info "PGDATA: ${PGDATA}" 
 INITIAL_NODE_TYPE=${INITIAL_NODE_TYPE:-single} 
 log_info "INITIAL_NODE_TYPE: ${INITIAL_NODE_TYPE}" 
-export PATH=$PATH:/usr/pgsql-9.6/bin
+export PATH=$PATH:/usr/pgsql-10/bin
 MSLIST=${MSLIST-"keycloak,apiman,asset,ingest,playout"}
 NODE_ID=${NODE_ID:-1}
 NODE_NAME=${NODE_NAME:-"pg0${NODE_ID}"}
@@ -145,8 +145,8 @@ echo "*:*:replication:repmgr:${REPMGRPWD}" >> /home/postgres/.pgpass
 chmod 600 /home/postgres/.pgpass
 
 #build repmgr.conf
-sudo touch /etc/repmgr/9.6/repmgr.conf && sudo chown postgres:postgres /etc/repmgr/9.6/repmgr.conf
-cat <<EOF > /etc/repmgr/9.6/repmgr.conf
+sudo touch /etc/repmgr/10/repmgr.conf && sudo chown postgres:postgres /etc/repmgr/10/repmgr.conf
+cat <<EOF > /etc/repmgr/10/repmgr.conf
 cluster=phoenix
 node=${NODE_ID}
 node_name=${NODE_NAME}
@@ -158,7 +158,7 @@ logfile='/var/log/repmgr/repmgr.log'
 failover=manual
 monitor_interval_secs=30
 
-pg_bindir='/usr/pgsql-9.6/bin'
+pg_bindir='/usr/pgsql-10/bin'
 
 service_start_command = pg_ctl start
 service_stop_command = pg_ctl stop
@@ -207,11 +207,11 @@ EOF
     psql --command "create database repmgr with owner=repmgr ENCODING='UTF8' LC_COLLATE='en_US.UTF8';"
     #if [ "a$INITIAL_NODE_TYPE" = "amaster" ] ; then
       log_info "Register master in repmgr"
-      repmgr -f /etc/repmgr/9.6/repmgr.conf -v master register
+      repmgr -f /etc/repmgr/10/repmgr.conf -v master register
     #fi
-    if [ -f /usr/pgsql-9.6/share/extension/pgpool-recovery.sql ] ; then
+    if [ -f /usr/pgsql-10/share/extension/pgpool-recovery.sql ] ; then
       log_info "pgpool extensions"
-      psql -f /usr/pgsql-9.6/share/extension/pgpool-recovery.sql -d template1
+      psql -f /usr/pgsql-10/share/extension/pgpool-recovery.sql -d template1
       psql -c "create extension pgpool_adm;"
     else
       log_info "pgpool-recovery.sql extension not found"
@@ -228,9 +228,9 @@ EOF
      log_info "Master ready, sleep 10 seconds before cloning slave"
      sleep 10
      sudo rm -rf ${PGDATA}/*
-     repmgr -h ${PG_MASTER_NODE_NAME} -U repmgr -d repmgr -D ${PGDATA} -f /etc/repmgr/9.6/repmgr.conf standby clone
+     repmgr -h ${PG_MASTER_NODE_NAME} -U repmgr -d repmgr -D ${PGDATA} -f /etc/repmgr/10/repmgr.conf standby clone
      pg_ctl -D ${PGDATA} start -w
-     repmgr -f /etc/repmgr/9.6/repmgr.conf standby register
+     repmgr -f /etc/repmgr/10/repmgr.conf standby register
     else
      log_info "Master is not ready, standby will not be initialized"
     fi

@@ -75,7 +75,7 @@ if [ $? -eq 1 ] ; then
    exit 1
  fi
 fi
-rm -rf /u01/pg96/data/*
-tar -xf ${BUDIR}/${BUNAME}/base.tar.gz --directory=/u01/pg96/data
+rm -rf /u01/pg10/data/*
+tar -xf ${BUDIR}/${BUNAME}/base.tar.gz --directory=/u01/pg10/data
 echo You may restart postgres now. Edit the recovery file if you want to roll forward
 exit $?

@@ -48,7 +48,7 @@ ssh_options="ssh -n -T -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=
 set -x
  
 if [ $FALLING_NODE = $OLD_PRIMARY_ID ] ; then
-  $ssh_options postgres@${NEW_PRIMARY_HOST} "/usr/pgsql-9.6/bin/repmgr --log-to-file -f /etc/repmgr/9.6/repmgr.conf standby promote -v "
+  $ssh_options postgres@${NEW_PRIMARY_HOST} "/usr/pgsql-10/bin/repmgr --log-to-file -f /etc/repmgr/10/repmgr.conf standby promote -v "
 fi
 exit 0;
 ) 2>&1 | tee -a ${LOGFILE}
