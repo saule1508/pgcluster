@@ -1,6 +1,7 @@
 #!/bin/bash
 
-CONFIG_FILE=/etc/pgpool-II/pgpool.conf
+CONFIG_DIR=/etc/pgpool-II-10
+CONFIG_FILE=${CONFIG_DIR}/pgpool.conf
 
 wait_for_db(){
   SLEEP_TIME=5
@@ -109,13 +110,13 @@ cat /tmp/pgpool_status
 echo "Create user hcuser (fails if the hcuser already exists, which is ok)"
 ssh ${DBHOST} "psql -c \"create user hcuser with login password 'hcuser';\""
 echo "Generate pool_passwd file from ${DBHOST}"
-touch /etc/pgpool-II/pool_passwd
+touch ${CONFIG_DIR}/pool_passwd
 ssh postgres@${DBHOST} "psql -c \"select rolname,rolpassword from pg_authid;\"" | awk 'BEGIN {FS="|"}{print $1" "$2}' | grep md5 | while read f1 f2
 do
  # delete the line and recreate it
- echo "setting passwd of $f1 in /etc/pgpool-II/pool_passwd"
- sed -i -e "/^${f1}:/d" /etc/pgpool-II/pool_passwd
- echo $f1:$f2 >> /etc/pgpool-II/pool_passwd
+ echo "setting passwd of $f1 in ${CONFIG_DIR}/pool_passwd"
+ sed -i -e "/^${f1}:/d" ${CONFIG_DIR}/pool_passwd
+ echo $f1:$f2 >> ${CONFIG_DIR}/pool_passwd
 done
 echo "Builing the configuration in $CONFIG_FILE"
 
@@ -622,4 +623,4 @@ EOF
 
 rm -f /var/run/pgpool/pgpool.pid 2>/dev/null
 echo "Start pgpool in foreground"
-/usr/bin/pgpool -f /etc/pgpool-II/pgpool.conf -n
+/usr/bin/pgpool -f ${CONFIG_FILE} -n

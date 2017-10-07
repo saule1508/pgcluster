@@ -37,7 +37,7 @@ services:
     depends_on:
       - pg01
   pgpool01:
-    image: pgpool:0.3.2
+    image: pgpool:0.4.0
     ports:
       - 9999:9999
     environment:

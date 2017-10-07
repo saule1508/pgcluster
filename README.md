@@ -30,15 +30,23 @@ The entrypoint of the docker image is entrypoint.sh. This script calls initdb.sh
 ## develop
 
 To develop the manager application, one should first run pg01, pg02 and pgpool01 via a docker-compose (remove the manager from docker-compose.yml).
+```
+docker-compose -f docker-compose-nomanager.yml up
+```
 
 Then start a nodejs container linked to the network of the compose above and with the sources host mounted, for example on my set-up
 
 ```
-docker run -ti --network=pgcluster_default -v /Users/pierre/git/pgcluster/manager:/sources -p 8080:8080 manager:0.3.0 /bin/bash 
+docker run -ti -v /Users/pierre/git/pgcluster/manager:/sources -v /var/run/docker.sock:/var/run/docker.sock \
+  -p 8080:8080 --network=pgcluster_default --name manager manager:0.1.2 /bin/bash
 ```
+
 once in the container
 
 ```
+export PG_BACKEND_NODE_LIST=0:pg01:5432:1:/u01/pg96/data:ALLOW_TO_FAILOVER,1:pg02:5432:1:/u01/pg96/data:ALLOW_TO_FAILOVER
+export REPMGRPWD=rep123
+
 cd /sources/server
 npm start
 ```

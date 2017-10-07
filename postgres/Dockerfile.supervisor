@@ -15,7 +15,7 @@ RUN useradd -u 50010 postgres
 RUN yum install -y https://download.postgresql.org/pub/repos/yum/10/redhat/rhel-7-x86_64/pgdg-centos10-10-1.noarch.rpm
 RUN yum install -y postgresql${MAJORVER} postgresql${MAJORVER}-server  postgresql${MAJORVER}-contrib ; yum clean all
 # pgpool extensions
-RUN yum install -y pgpool-II-pg10-extensions; yum clean all
+RUN yum install -y pgpool-II-${MAJORVER} pgpool-II-${MAJORVER}-extensions; yum clean all
 # repmgr
 #RUN yum install -y http://packages.2ndquadrant.com/repmgr/yum-repo-rpms/repmgr-rhel-1.0-1.noarch.rpm ; yum clean all
 RUN yum install -y repmgr10 ; yum clean all
@@ -41,7 +41,7 @@ RUN echo "alias pool_nodes='psql --username=repmgr -h pgpool01 -p 9999 repmgr -c
 # this localedef command is needed because of bug in centos docker image?
 #
 RUN localedef -i en_US -f UTF-8 en_US.UTF-8
-RUN echo "*:*:postgres:postgres" > /home/postgres/.pcppass && chmod 600 /home/postgres/.pcppass
+RUN echo "*:*:postgres:postgres" > /home/postgres/.pcppass && chown postgres:postgres /home/postgres/.pcppass && chmod 600 /home/postgres/.pcppass
 ADD scripts /scripts
 ADD pgconfig /opt/pgconfig
 RUN chown -R postgres:postgres /scripts 

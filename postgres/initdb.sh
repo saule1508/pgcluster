@@ -216,7 +216,7 @@ EOF
     else
       log_info "pgpool-recovery.sql extension not found"
     fi
-    cp /opt/scripts/pgpool/pgpool_recovery.sh /opt/scripts/pgpool/pgpool_remote_start ${PGDATA}/
+    cp /scripts/pgpool/pgpool_recovery.sh /scripts/pgpool/pgpool_remote_start ${PGDATA}/
     chmod 700 ${PGDATA}/pgpool_remote_start ${PGDATA}/pgpool_recovery.sh
     log_info "Create hcuser"
     psql -c "create user hcuser with login password 'hcuser';"
