@@ -66,9 +66,9 @@ const Backend = ( {host,backend, onConsoleAction } ) => {
 						<td>
 							<div className="btn-group" role="group" aria-label="pgpool actions">
 								<button className={pgStopClass} style={{marginRight: 5}}
-									onClick={onConsoleAction.bind(null,host,'pg_stop')}>Stop DB</button>		
+									onClick={onConsoleAction.bind(null,host,'pg_stop')}>Stop</button>		
 								<button className={pgStartClass} 
-									onClick={onConsoleAction.bind(null,host,'pg_start')}>Start DB</button>
+									onClick={onConsoleAction.bind(null,host,'pg_start')}>Start</button>
 							</div>							
 						</td>
 					</tr>
@@ -111,7 +111,7 @@ const Backend = ( {host,backend, onConsoleAction } ) => {
 					</tr>
 					<tr >
 						<td></td>
-						<td>PGPool replication delay</td><td>{backend.pgpool_replication_delay}</td>
+						<td>PGPool rep. delay</td><td>{backend.pgpool_replication_delay}</td>
 						<td></td>
 					</tr>
 				</tbody>

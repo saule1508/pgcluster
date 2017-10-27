@@ -2,4 +2,4 @@
 
 source /scripts/lib/pg_utils.sh
 
-pg_ctl stop fast
+pg_ctl stop --mode=fast

@@ -12,11 +12,4 @@
     100% { transform: rotate(360deg); }
 }
 
-a.brand  {
-    background-image: url(../evs_logo.png);
-    background-repeat: no-repeat;
-    background-size: contain;
-    width: 50px;
-    height: 32px;
-    margin-top: 10px;
-}
+

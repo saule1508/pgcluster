@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
 //import logo from './logo.svg';
 import 'bootstrap/dist/css/bootstrap.css';
-//import '../node_modules/evs-themes-web-bootstrap3/dist/css/bootstrap-light-evs.css';
-import './styles/bootstrap-light-evs.css';
 import './styles/styles.css'
 import Header from './Header'
 import Home from './dash/components/Home.js'
@@ -25,9 +23,11 @@ class App extends Component {
 
   render() {
     return (
-      <div className="container-fluid">
+      <div>
         <Header />
-        <Main />
+        <div className="container-fluid">
+          <Main />
+        </div>
       </div>
     );
   }

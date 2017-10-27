@@ -1,7 +1,7 @@
 version: '3'
 services:
   pg01:
-    image: pg:0.3.1
+    image: pg:0.4.0
     environment:
       INITIAL_NODE_TYPE: master
       NODE_ID: 1
@@ -15,11 +15,11 @@ services:
     ports:
       - 15432:5432 # postgres port
     volumes:
-      - pg01db:/u01/pg96/data
+      - pg01db:/u01/pg10/data
       - pg01arc:/u02/archive
       - pg01bu:/u02/backup
   pg02:
-    image: pg:0.3.1
+    image: pg:0.4.0
     environment:
       INITIAL_NODE_TYPE: slave
       NODE_ID: 2
@@ -33,20 +33,20 @@ services:
     ports:
       - 25432:5432 # postgres port
     volumes:
-      - pg02db:/u01/pg96/data
+      - pg02db:/u01/pg10/data
       - pg02arc:/u02/archive
       - pg02bu:/u02/backup
     depends_on:
       - pg01
   pgpool01:
-    image: pgpool:0.3.1
+    image: pgpool:0.4.0
     ports:
       - 9999:9999
     environment:
       PGMASTER_NODE_NAME: pg01
-      PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg96/data:ALLOW_TO_FAILOVER,1:pg02:5432:1:/u01/pg96/data:ALLOW_TO_FAILOVER
+      PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER,1:pg02:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER
                 # csv list of backend postgres databases, each backend db contains (separated by :)
-                # number (start with 0):host name:pgpool port (default 9999):data dir (default /u01/pg96/data):flag ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
+                # number (start with 0):host name:pgpool port (default 9999):data dir (default /u01/pg10/data):flag ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
                 # not needed when there is a single postgres DB
       PGP_NODE_NAME: pgpool01
       REPMGRPWD: rep123

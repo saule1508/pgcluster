@@ -13,6 +13,11 @@ app.use(express.static('app'));
 app.use('/api/docker', routes_docker);
 app.use('/api/postgres', routes_postgres);
 app.use("/ws", routes_ws);
+app.use('*', (req, res) => {
+  if ( !(req.path.startsWith('/api') || req.path.startsWith('/ws')) ){
+    res.sendfile(__dirname + '/app/index.html');
+  }
+});
 
 
 app.listen(8080);

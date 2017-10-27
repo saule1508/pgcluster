@@ -4,14 +4,14 @@
 # Author: PTI
 # Date : 28-Feb-2017
 
-source /opt/cl-pg-utils/lib/cl_pg_utils.env
+source /scripts/lib/pg_utils.env
 
-if [ ! -d /var/log/cl-pg-utils ] ; then
- sudo mkdir /var/log/cl-pg-utils
- sudo chown postgres:postgres /var/log/cl-pg-utils
+if [ ! -d /var/log/pg-utils ] ; then
+ sudo mkdir /var/log/pg-utils
+ sudo chown postgres:postgres /var/log/pg-utils
 fi
 
-LOGFILE=/var/log/cl-pg-utils/cl_pg_utils.log
+LOGFILE=/var/log/pg-utils/pg_utils.log
 
 log_info(){
  str="INFO - $1 - `date +\"%Y-%m-%d %H:%M\"` - $2"
