@@ -114,8 +114,16 @@ const Backend = ( {host,backend, onConsoleAction } ) => {
 						<td>PGPool rep. delay</td><td>{backend.pgpool_replication_delay}</td>
 						<td></td>
 					</tr>
+					<tr>
+						<td colSpan={4}>
+							<button className="btn center-block" 
+								onClick={onConsoleAction.bind(null,host,'pcp_recovery_node')}>Node recovery
+							</button>
+						</td>
+					</tr>
 				</tbody>
 			</table>
+
 			<Stats {...backend.data} /> 
 		</div>
 		
@@ -183,7 +191,20 @@ class ReplicationStats extends Component{
 		let content = [];
 
 		let args = {pcp_node_id: this.state.pcp_node_id,host: this.state.host }
-		
+		let prompt ;
+		switch (this.state.console_action){
+			case 'pcp_detach':
+				prompt = `detach node ${this.state.pcp_node_id} ?`;
+				break;
+			case 'pg_stop':
+				prompt = `Stop database on node ${this.state.pcp_node_id} ?`;
+				break;
+			case 'pcp_recovery_node':
+				prompt = `Perform node recovery of node ${this.state.pcp_node_id} ?`;
+			default:
+				prompt=null;
+		}
+
 		content.push(	
 					<ShellConsoleModal key='console' action={this.state.console_action} 
 						modalActive={this.state.console_action}
@@ -191,7 +212,7 @@ class ReplicationStats extends Component{
 						onClose={this.onCloseConsole} 
 						onSuccess={this.onCloseConsole}
 						args={args} 
-						prompt={this.state.console_action === 'pcp_detach' ? 'Are you sure you want to detach' : null} />
+						prompt={prompt} />
 			)
 		
 

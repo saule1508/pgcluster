@@ -194,19 +194,23 @@ wsrouter.ws('/shell', function(ws, req) {
     switch (args.action){
       case 'backup': 
         cmdArgs.push('/scripts/backup.sh');
-	break;
+      	break;
       case 'restore':
         cmdArgs.push('/scripts/restore.sh');
-	break;
+	      break;
       case 'delete':
         cmdArgs.push('/scripts/delete_backup.sh');
-	break;
+	      break;
       case 'pcp_attach':
         cmdArgs.push('/scripts/pcp_attach.sh');
         cmdArgs.push(args.pcp_node_id);
         break;
       case 'pcp_detach':
         cmdArgs.push('/scripts/pcp_detach.sh');
+        cmdArgs.push(args.pcp_node_id);
+        break;
+      case 'pcp_recovery_node':
+        cmdArgs.push('/scripts/pcp_recovery_node.sh');
         cmdArgs.push(args.pcp_node_id);
         break;
       case 'pg_stop':
