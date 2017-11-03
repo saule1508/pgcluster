@@ -2,6 +2,11 @@ let Pool = require('pg').Pool;
 let config = require('./config.js').pgp;
 
 let pool=new Pool(config);
+pool.on('error',(err)=>{
+  console.log('pgpool emitted error');
+  console.log(err);
+})
+
 
 module.exports.query = function (text, values, callback) {
   console.log('query:', text, values);

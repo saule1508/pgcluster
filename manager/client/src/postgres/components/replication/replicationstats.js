@@ -53,6 +53,7 @@ const Backend = ( {host,backend, onConsoleAction } ) => {
 	let masterClass = backend.role === 'master' ? 'alert success' : 'alert warning'
 	let tabStyleMaster = {border: 'solid 2px green'}
 	let tabStyleStandby = {}
+	let recoveryNodeBtnClass = backend.pgpool_status === 'down' ? 'btn btn-block' : 'btn btn-block disabled';
 
 	return (
 		<div className="col-md-4">
@@ -116,7 +117,7 @@ const Backend = ( {host,backend, onConsoleAction } ) => {
 					</tr>
 					<tr>
 						<td colSpan={4}>
-							<button className="btn center-block" 
+							<button className={recoveryNodeBtnClass} 
 								onClick={onConsoleAction.bind(null,host,'pcp_recovery_node')}>Node recovery
 							</button>
 						</td>
