@@ -198,17 +198,26 @@ class ReplicationStats extends Component{
 				prompt = `detach node ${this.state.pcp_node_id} ?`;
 				break;
 			case 'pg_stop':
-				prompt = `Stop database on node ${this.state.pcp_node_id} ?`;
+				let repl_node = this.props.repl_nodes.filter( (el) => {
+					return el.name === this.state.host;
+				})
+				console.log(repl_node);
+				if (repl_node[0].type === 'master'){
+					prompt = `Stop active master database on node ${this.state.pcp_node_id} ? !! It will cause a failover.`;
+				} else {
+					prompt = `Stop database on node ${this.state.pcp_node_id} ?`;
+				}
 				break;
 			case 'pcp_recovery_node':
 				prompt = `Perform node recovery of node ${this.state.pcp_node_id} ?`;
+				break;
 			default:
 				prompt=null;
 		}
 
 		content.push(	
 					<ShellConsoleModal key='console' action={this.state.console_action} 
-						modalActive={this.state.console_action}
+						modalActive={this.state.console_action ? true : false}
 						handleHideModal={this.onCloseConsole}
 						onClose={this.onCloseConsole} 
 						onSuccess={this.onCloseConsole}

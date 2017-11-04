@@ -14,7 +14,7 @@ const STYLES = {
   }
 }
 
-let Prompt = ({prompt, onClick, confirmed})=>{
+let Prompt = ({prompt, onClick, confirmed}) => {
   if (! prompt || confirmed){
     return (<div></div>)
   }
@@ -132,7 +132,6 @@ class ShellConsole extends Component{
         <div className="col-md-12">
           <div className="panel panel-default">
             <div className="panel-heading">
-              {this.props.action} 
                 {this.props.prompt && ! this.state.confirmed ? '' : <ConnectedStatus connected={this.state.connected} /> }
             </div>
             <Prompt prompt={this.props.prompt} onClick={this.onConfirm} confirmed={this.state.confirmed} />

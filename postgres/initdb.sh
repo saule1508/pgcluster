@@ -177,7 +177,7 @@ if [ ! -f ${PGDATA}/postgresql.conf ] ; then
     pg_ctl initdb -D ${PGDATA} -o "--encoding='UTF8' --locale='en_US.UTF8'"
     log_info "Adding include_dir in $PGDATA/postgresql.conf"
     mkdir $PGDATA/conf.d
-    cp /opt/pgconfig/01evs.conf $PGDATA/conf.d
+    cp /opt/pgconfig/01custom.conf $PGDATA/conf.d
     echo "include_dir = './conf.d'" >> $PGDATA/postgresql.conf
     cat <<-EOF >> $PGDATA/pg_hba.conf
 # replication manager
