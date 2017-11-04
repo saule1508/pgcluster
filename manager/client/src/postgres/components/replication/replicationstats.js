@@ -5,11 +5,17 @@ import StateUpDown from '../../../shared/components/stateupdown'
 const Stats = ( data ) => {
 	let rows = [];
 	for (var prop in data){
+		let val ;
+		if (typeof data[prop] === 'object' && data[prop]){
+			val = data[prop]['milliseconds'] ? data[prop]['milliseconds'] + ' ms' : 'Object'; 
+		} else {
+			val = data[prop];
+		}
 		rows.push(
-							<tr key={prop} >
-								<td>{prop}</td><td>{data[prop]}</td>
-							</tr>
-						)
+			<tr key={prop} >
+				<td>{prop}</td><td>{val}</td>
+			</tr>
+			)
 	}
 	return (
 		<table className="table table-bordered table-condensed">

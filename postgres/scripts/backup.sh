@@ -37,7 +37,7 @@ DIR=${BUNAME}_${BUTYPE}
 rm -rf /u02/backup/${DIR}
 if [ ${BUTYPE} == 'backup' ] ; then
   echo Doing base backup in /u02/backup/${DIR}
-  pg_basebackup -D /u02/backup/${DIR} --username=repmgr --format=tar --write-recovery-conf --wal-method=stream --gzip --label ${BUNAME} --verbose
+  pg_basebackup -D /u02/backup/${DIR} --username=repmgr --checkpoint=fast --format=tar --write-recovery-conf --wal-method=stream --gzip --label ${BUNAME} --verbose
   exit $?
 elif [ ${BUTYPE} == 'dump' ] ; then
   echo Doing pg_dump in /u02/backup/${DIR}

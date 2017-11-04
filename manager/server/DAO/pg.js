@@ -94,7 +94,6 @@ const replicationStats = () => {
 	let states = [];
 	return new Promise((resolve,reject)=>{
 		pools.forEach((el,idx)=>{
-			console.log('query in idx ' + idx);
 			let res ;
 			pool.query(idx,'select pg_is_in_recovery() as in_recovery',[],(err,result)=>{
 				if (err){
@@ -105,8 +104,11 @@ const replicationStats = () => {
 				} else {
 					let in_recovery = result.rows[0].in_recovery;
 					let SQL = `select * from ${in_recovery ? 'pg_stat_wal_receiver' : 'pg_stat_replication'}`;
+					console.log(SQL);
 					pool.query(idx,SQL,[],(err,result) => {
 						if (err){
+							console.log('error in ' + SQL);
+                                                        console.log(err);
 							states.push({idx: idx, 
 								host: el.host,
 								status: 'green', 

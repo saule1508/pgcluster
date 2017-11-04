@@ -43,9 +43,9 @@ class DBStates extends Component{
       this.setState({'connected': true});
       this.ws.send('I just connected');
       this.ws.onmessage = e => {
-        console.log('on message');
+        //console.log('on message');
       	let result = JSON.parse(e.data);
-        console.log(result);
+        //console.log(result);
         this.setState({'serverTimeStamp': result.timestamp});
         if (result && result.error ){
           this.props.fetchDBStatesFailure(result.message || 'server error');

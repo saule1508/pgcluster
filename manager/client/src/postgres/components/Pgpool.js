@@ -45,7 +45,7 @@ class Pgpool extends Component{
       this.setState({'connected': true});
       this.ws.send('I just connected');
       this.ws.onmessage = e => {
-        console.log('on message');
+        //console.log('on message');
       	let result = JSON.parse(e.data);
         this.setState({'serverTimeStamp': result.timestamp});
         if (result && result.error ){

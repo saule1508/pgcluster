@@ -61,6 +61,8 @@ router.get('/replication_stats', (req, res) => {
 			return res.status(200).send(data);
 		})
 		.catch((err)=>{
+			console.log('error from replicationStats');
+			console.log(err);
 			res.status(500).send(err);
 		})
 	;  

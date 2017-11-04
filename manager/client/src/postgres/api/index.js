@@ -26,6 +26,7 @@ export const getReplicationStats = () => {
         return response.json();
       })
      .catch((err)=>{
+        console.log('got error in fetch ' + URL);
         throw err;
      });
 }

@@ -78,6 +78,8 @@ export const fetchReplicationStats = () => {
 				dispatch(fetchReplicationStatsSuccess(result));
 			})
 			.catch((error)=>{
+				console.log('got error from getReplicationStats');
+				console.log(error);
 				let errorStr = (error && error.detail) ? error.detail : 'Internal error';
 				if (error && error.hint){
 					errorStr += ' (hint: ' + error.hint + ')';

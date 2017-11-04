@@ -12,7 +12,7 @@ wsrouter.ws('/dbstates', function(ws, req) {
     pg.dbStates()
       .then((data)=>{
         let response = {'result': data, 'timestamp': new Date()};    
-        console.log(response);
+        //console.log(response);
         ws.send(JSON.stringify(response));
       })
       .catch((err)=>{
