@@ -21,35 +21,47 @@
     failed_when: false
     ignore_errors: yes
     changed_when: false
+    when: docker_url is not defined
 
   - name: see file_present
     debug: var=file_present
+    when: docker_url is not defined
 
   - name: copy file
     copy:
       src: "{{stage_dir}}/{{ image.file }}"
       dest: /tmp
     when:
+      - docker_url is not defined
       - file_present.rc != 0
       - docker_image.stdout != "{{ image.id }}"
 
   - name: load docker image
     shell: docker load --input=/tmp/{{ image.file }}
-    when: docker_image.stdout != "{{ image.id }}"
+    when: docker_url is not defined and docker_image.stdout != "{{ image.id }}"
 
   - name: check image id on the server
     shell: docker images -q {{image.name}}:{{image.tag}}
     register: docker_image
+    when: docker_url is not defined
 
   - assert:
       that:
         - image.id in docker_image.stdout
       msg : "loaded image id must match"
+    when: docker_url is not defined
+
+  - name: load docker image
+    docker_image:
+      name: "{{ docker_url}}{{ image.name }}"
+      tag: "{{ image.tag }}"
+    when: docker_url is defined
 
   - name: remove image from /tmp
     file: 
       path: "/tmp/{{ image.file }}"
       state: absent
+    when: docker_url is not defined
 
 ...
 

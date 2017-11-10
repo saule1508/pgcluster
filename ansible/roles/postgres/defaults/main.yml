@@ -1,0 +1,18 @@
+default_images:
+  manager:
+    tag: "0.1.4"
+    id: 41aa6c801612
+    file: "manager.0.1.2.tar"
+    name: "manager"
+
+  pgpool:
+    tag: "0.4.0"
+    id: "956f1b2dfa2f"
+    file: "pgpool.0.3.0.tar"
+    name: "pgpool"
+
+  postgres:
+    tag: "0.4.0"
+    id: "bc8a2e178e5e"
+    file: "pg.0.4.0.tar"
+    name: "pg"

@@ -1,5 +1,8 @@
 ---
 
+  - debug:
+      var=images
+
   - group:
       name: postgres
       gid: 50010

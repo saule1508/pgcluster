@@ -20,7 +20,11 @@
 
   - name: get docker node id 
     shell: docker node inspect self -f \{\{.ID\}\}
+    delegate_to: "{{ item }}"
     register: docker_node_id
+    with_items:
+      - "{{ groups['cluster'] }}"
+
 
   - name: ensure directory /opt/pgcluster/bin exists
     file:
@@ -80,6 +84,16 @@
 #    with_items: "{{ groups['cluster'] }}"
 
 #  - debug: var=groups['cluster'][0]
+
+  - set_fact:
+      docker_node_1: "{{ hostvars[groups['cluster'][0]].docker_node_id.results[0].stdout }}"
+      docker_node_2: "{{ hostvars[groups['cluster'][0]].docker_node_id.results[1].stdout }}"
+
+  - debug:
+      var: docker_node_1
+
+  - debug:
+      var: docker_node_2
 
   - name: install docker-compose.yml
     template: 
