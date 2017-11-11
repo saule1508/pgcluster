@@ -1,19 +1,19 @@
 # cl-pg-cluster
 Postgres database 10 on Centos 7.4 with streaming replication. The postgres image contains a ssh server, repmgr and supervisord. Postgres is replicated with streaming replication and repmgr on top of it.
 
-There is one pgpool; since this set-up is targeted at a docker swarm cluster so that there is one pgpool service and it is made HA by swarm. When pgpool starts (for example if it was restarted on another node), it will rebuild the node availability (file /tmp/pgpool_status) by looking at repmgr repl_nodes table. One hedge case is the one when both the master and pgpool are running on the same swarm node: if this node goes down pgpool will be restarted on another node while the old master will not be restarted (it is sticky to its node). When pgpool starts it must then manually promote the surviving postgres node.
+This set-up is designed for a docker swarm: therefore there is one pgpool instance running (no watchdog) and it is made high available via swarm. When pgpool starts it rebuilds the node availability (file /tmp/pgpool_status) by looking at repmgr's repl_nodes table. 
 
-There is a manager application, written in nodejs (the front-end is written in react). this small web application on top of pgpool let visualize the cluster state and will to allow fail-over, switch-over, etc. 
+One hedge case is when both the master and pgpool are running on the same swarm node: if this node goes down then pgpool will be restarted on another node but the old master will not be restarted (it is sticky to its node). To take care of this case, the entrypoint of pgpool will inspect the repl_nodes table and promote a standby if the master (as indicated by repmgr) is not reachable.
 
-What's worth mentioning that is specific to docker is that everytime the container is started (postgres container or pgpool container), it is configured again based on the environment variables (i.e. /etc/repmgr/9.6/repmgr.conf and /etc/pgpool-II/pgpool.conf are rebuild, among others). Similarly the file /etc/pgpool-II/pool_passwd is rebuild again, by querying the postgres database).
+There is a manager application, written in nodejs (the front-end is written in react). This small web application on top of pgpool lets visualize the cluster state and will to allow fail-over, switch-over, etc. 
+
+What's worth mentioning and that is specific to docker is that everytime the container is started (postgres container or pgpool container), it is configured again based on the environment variables. So repmgr.conf and pgpool.conf are rebuild, among others. Similarly the file /etc/pgpool-II/pool_passwd is rebuild again, by querying the postgres database. Most important, the file /tmp/pgpool_status must also be re-created based on repmgr and based on if the db's are up or not.
 
 To test it is best to make a swarm, even with one single node, and use the docker-compose files provided.
 
 if one want to play with the pgpool container, to experiment, a good trick is to adapt the docker-compose and add in the pgpool definition a dummy command like
 
-```
 command: tail -f /etc/passwd
-```
 
 and then you can enter in the container (with docker exec -ti) and stop/start pgpool without having the container restarted by swarm.
 
@@ -24,7 +24,7 @@ see the script build.sh, it build the image postgres (pg) and the image pgpool a
 
 ## run 
 
-It is easy to start the containers with docker compose. For production one will need to use docker in swarm mode but to test on a single machine docker compose is perfect.
+It is easy to make a swarm and then start the containers with docker compose. To make a multi-nodes swarm one can use the ansible scripts in directory ansible (to be documented)
 
 ```
 docker network create --driver=overlay --attachable pgcluster_network
