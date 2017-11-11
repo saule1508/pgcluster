@@ -3,43 +3,132 @@
 CONFIG_DIR=/etc/pgpool-II-10
 CONFIG_FILE=${CONFIG_DIR}/pgpool.conf
 
-wait_for_db(){
+is_db_up(){
+  echo "Is DB up for host ${1} port ${2:-5432} ?"
+  ssh -oPasswordAuthentication=no ${1} uname
+  ret=$?
+  if [ $ret -ne 0 ] ; then
+    echo Cannot connect to host $1 via ssh
+    return 0
+  fi
+  echo Try psql connection on host $1 port ${2:-5432}
+  # we could use pg_is_ready also
+  ssh -oPasswordAuthentication=no $1 "psql --username=repmgr -p ${2:-5432} repmgr -c \"select 1;\""
+  ret=$?
+  if [ $ret -ne 0 ] ; then
+    return 0
+  fi
+  return 1
+}
+
+
+wait_for_any_db(){
   SLEEP_TIME=5
-  MAX_TRIES=60
-  IFS=',' read -ra PG_HOSTS <<< "$1"
   while [ 0 -eq 0 ] ; do
-    echo "Using list of backend $1 to find a db to connect to"
+    echo "Using list of backend $PG_BACKEND_NODE_LIST to find a db to connect to"
     i=0
     while [ $i -lt ${#PG_HOSTS[@]} ] ; do
       echo trying with ${PG_HOSTS[$i]}
       DBHOST=$( echo ${PG_HOSTS[$i]} | cut -f2 -d":" )
-      port=$( echo ${PG_HOSTS[$i]} | cut -f3 -d":" )
-      if [ -z $port ] ; then
-        port=5432
+      PORT=$( echo ${PG_HOSTS[$i]} | cut -f3 -d":" )
+      if [ -z $PORT ] ; then
+        PORT=5432
       fi
-      echo trying to connect to $DBHOST via ssh
-      ssh -oPasswordAuthentication=no ${DBHOST} uname
-      if [ $? -ne 0 ] ; then
-        echo Cannot ssh to $DBHOST
+      is_db_up $DBHOST $PORT
+      if [ $? -ne 1 ] ; then
         i=$((i+1))
       else
-        echo Try psql connection on host $DBHOST
-        # we could use pg_is_ready also
-        ssh -oPasswordAuthentication=no $DBHOST "psql --username=repmgr -p ${port} repmgr -c \"select 1;\""
-        ret=$?
-        if [ $ret -eq 0 ] ; then
-          echo "server ${DBHOST} ready"
-          echo "pg backend found at host $DBHOST and port $port"
-          return 0
-        else
-          echo "Cannot connect to ${DBHOST} in psql, pg not ready ?"
-          i=$((i+1))
-        fi
+        echo "server ${DBHOST} ready"
+        echo "pg backend found at host $DBHOST and port $PORT"
+        return 0
       fi
     done
     sleep $SLEEP_TIME
   done
 }
+
+wait_for_one_db(){
+  waitfor=$1
+  waitport=${2:5432}
+  maxtries=${3:-12}
+  i=0
+  while [ $i -lt $maxtries ] ; do
+    is_db_up $waitfor $waitport
+    if [ $? -eq 1 ] ; then
+      return 0
+    else
+      i=$((i+1))
+      sleep 5
+    fi
+    echo Waiting for $waitfor, tried $i times out of $maxtries
+  done
+  return 1
+}
+
+build_pgpool_status_file(){
+  h=${1}
+
+  psql -h ${h} -U repmgr repmgr -t -c 'select name,active,type from repl_nodes;'" > /tmp/repl_nodes
+  echo ">>>repl_nodes:"
+  cat /tmp/repl_nodes
+  > /tmp/pgpool_status
+  # Collect info on all backends: is it up, in_recovery and repmgr status
+  > /tmp/backendsinfo.txt
+  for i in ${PG_HOSTS[@]}
+  do
+    h=$( echo $i | cut -f2 -d":" )
+    p=$( echo $i | cut -f3 -d":" )
+    echo "check state of $h in repl_nodes"
+    repm_active=$( grep $h /tmp/repl_nodes | sed -e "s/ //g" | cut -f2 -d"|" )
+    repm_type=$( grep $h /tmp/repl_nodes | sed -e "s/ //g" | cut -f3 -d"|" )
+    echo "repm_active is $repm_active and repm_type is $repm_type for $h"
+    if [ "a$type" == "amaster" ] ; then
+      REPMGR_MASTER=$h
+      REPMGR_MASTER_PORT=$p
+    fi
+    is_db_up $h $p
+    if [ $? -eq 1 ] ; then
+      dbup=t
+      inreco=$( psql -h $h -p $p -U repmgr -t -c "select pg_is_in_recovery();")
+    else
+      dbup=f
+      inreco=?
+    fi
+    echo "${h}:dbup=${dbup}:repm_active=${repm_active}:repm_type=${repm_type}:inrecovery=${inreco}" | sed -e "s/ //g" >> /tmp/backendsinfo.txt
+    if [ "a$repm_active" == "at" ] ; then
+      echo $h is up in repl_nodes
+      echo up >> /tmp/pgpool_status
+    fi
+    if [ "a$repm_active" == "af" ] ; then
+      echo $h is down in repl_nodes
+      echo down >> /tmp/pgpool_status
+    fi
+    if [ "a$repm_active" == "a" ] ; then
+      (>&2 echo "backend $h is not found in repl_nodes, marking as up")
+      echo up >> /tmp/pgpool_status
+    fi
+  done
+  echo ">>> backendsinfo.txt"
+  cat /tmp/backendsinfo.txt
+
+  echo ">>> pgpool_status file"
+  cat /tmp/pgpool_status
+}
+
+
+getIdFromHost(){
+  echo $PG_BACKEND_NODE_LIST | tr ',' '\n' | while read line
+  do
+    #echo $line
+    n=$( echo $line | cut -d":" -f1 )
+    h=$( echo $line | cut -d":" -f2 )
+    if [ $h == $1 ] ; then
+      echo $n
+      return
+    fi
+  done
+}
+
 
 PG_MASTER_NODE_NAME=${PG_MASTER_NODE_NAME:-pg01}
 echo PG_MASTER_NODE_NAME=${PG_MASTER_NODE_NAME}
@@ -62,14 +151,17 @@ else
   MASTER_SLAVE_MODE=off
 fi
 echo MASTER_SLAVE_MODE=$MASTER_SLAVE_MODE
+# make connections via psql convenient
+echo "*:*:repmgr:repmgr:${REPMGRPWD}" > /home/postgres/.pgpass
+chmod 600 /home/postgres/.pgpass
 
 
-echo "Waiting for one database to be ready"
-wait_for_db $PG_BACKEND_NODE_LIST
+echo "Waiting for any of the database to be ready"
+wait_for_any_db
 echo "Checking backend databases state in repl_nodes table"
 # if the cluster is initializing it is possible that repl_nodes does not contain
 # all backend yet and so we might need to wait a bit...
-ssh ${DBHOST} "psql -U repmgr repmgr -t -c 'select name,active from repl_nodes;'" > /tmp/repl_nodes
+ssh ${DBHOST} "psql -U repmgr repmgr -t -c 'select name,active,type from repl_nodes;'" > /tmp/repl_nodes
 if [ $? -ne 0 ] ; then
   echo "error connecting to $DBHOST, this likely indicates an unexpected issue"
 fi
@@ -77,38 +169,50 @@ nbrlines=$( grep -v "^$" /tmp/repl_nodes | wc -l )
 NBRTRY=30
 while [ $nbrlines -lt $nbrbackend -a $NBRTRY -gt 0 ] ; do
   echo "waiting for repl_nodes to be initialized: currently $nbrlines in repl_node, there must be one line per back-end ($nbrbackend)"
-  ssh ${DBHOST} "psql -U repmgr repmgr -t -c 'select name,active from repl_nodes;'" > /tmp/repl_nodes
+  psql -h ${DBHOST} -U repmgr repmgr -t -c 'select name,active from repl_nodes;'" > /tmp/repl_nodes
   nbrlines=$( grep -v "^$" /tmp/repl_nodes | wc -l )
   NBRTRY=$((NBRTRY-1))
   echo "Sleep 10 seconds, still $NBRTRY to go..."
   sleep 10
 done
-echo ">>>repl_nodes:"
-cat /tmp/repl_nodes
-> /tmp/pgpool_status
-for i in ${PG_HOSTS[@]}
-do
-  h=$( echo $i | cut -f2 -d":" )
-  echo "check state of $h in repl_nodes"
-  active=$( grep $h /tmp/repl_nodes | sed -e "s/ //g" | cut -f2 -d"|" )
-  echo "active is $active for $h"
-  if [ "a$active" == "at" ] ; then
-    echo $h is up in repl_nodes
-    echo up >> /tmp/pgpool_status
+build_pgpool_status_file ${DBHOST}
+echo REPMGR_MASTER is ${REPMGR_MASTER}
+# issue: assume the master is pg02 and it was stopped outside the control of pgpool (after pgpool was stopped)
+# then pgpool will search for a master for search_primary_node_timeout then it will do a failover
+# however in the failover it will say : falling node = 1, old_primary = 0 and so the failover will do nothing
+echo Get state of REPMGR_MASTER $REPMGR_MASTER
+master_info=$( grep "^${REPMGR_MASTER}:" /tmp/backendsinfo.txt )
+echo $master_info
+echo $master_info | grep dbup=t
+if [ $? -eq 0 ] ; then
+  echo master is up
+else
+  echo master is down, lets wait 1 minute
+  wait_for_one_db ${REPMGR_MASTER} ${REPMGR_MASTER_PORT} 12
+  echo check again
+  is_db_up ${REPMGR_MASTER} ${REPMGR_MASTER_PORT}
+  if [ $? -ne 1 ] ; then
+     echo I will promote another database
+     HOST2PROMOTE=$( grep "repm_type=standby" /tmp/backendsinfo.txt | grep "dbup=t" | head -1 | cut -f1 -d":" )
+     echo Promoting $HOST2PROMOTE
+     ssh ${HOST2PROMOTE} -c "/scripts/promote_me.sh"
+     sleep 10
+     echo Promotion done, rebuilding the pgpool_status file
+     build_pgpool_status_file ${HOST2PROMOTE}
+     echo Get state of REPMGR_MASTER $REPMGR_MASTER
+     master_info=$( grep "^${REPMGR_MASTER}:" /tmp/backendsinfo.txt )
+     echo $master_info
+     echo $master_info | grep dbup=t
+     if [ $? -eq 0 ] ; then
+       echo master is up
+     else
+       echo FATAL Master is down, this will not work
+     fi
   fi
-  if [ "a$active" == "af" ] ; then
-    echo $h is down in repl_nodes
-    echo down >> /tmp/pgpool_status
-  fi
-  if [ "a$active" == "a" ] ; then
-    (>&2 echo "backend $h is not found in repl_nodes, marking as up")
-    echo up >> /tmp/pgpool_status
-  fi
-done
-echo ">>> pgpool_status file"
-cat /tmp/pgpool_status
+fi
+
 echo "Create user hcuser (fails if the hcuser already exists, which is ok)"
-ssh ${DBHOST} "psql -c \"create user hcuser with login password 'hcuser';\""
+ssh ${REPMGR_MASTER} "psql -c \"create user hcuser with login password 'hcuser';\""
 echo "Generate pool_passwd file from ${DBHOST}"
 touch ${CONFIG_DIR}/pool_passwd
 ssh postgres@${DBHOST} "psql -c \"select rolname,rolpassword from pg_authid;\"" | awk 'BEGIN {FS="|"}{print $1" "$2}' | grep md5 | while read f1 f2

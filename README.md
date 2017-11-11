@@ -93,3 +93,170 @@ The following environment variables are important to properly set-up pgpool
 
 * the users are created via the script initdb.sh, have a look at it.
 * postgres unix user has uid 50010
+
+# use cases and scenarios
+
+
+## failover
+
+Stop the master database -> pgpool will execute the script failover.sh on the surviving node, the slave gets promoted and becomes the new master. The old master will be detached from pgpool and will be marked as inactive in repmgr repl_node table.
+
+```
+repmgr=# select * from repl_nodes;
+ id |  type  | upstream_node_id | cluster | name |                      conninfo                       |   slot_name   | priority | active 
+----+--------+------------------+---------+------+-----------------------------------------------------+---------------+----------+--------
+  1 | master |                  | phoenix | pg01 | host=pg01 dbname=repmgr user=repmgr password=rep123 | repmgr_slot_1 |      100 | f
+  2 | master |                  | phoenix | pg02 | host=pg02 dbname=repmgr user=repmgr password=rep123 | repmgr_slot_2 |      100 | t
+(2 rows)
+
+```
+
+### failover pgpool
+
+stop pgpool
+
+set search_primary_node_timeout=30
+
+stop master database (pg02): pg01 is up, repmgr standby pg02 is up repmgr master both active in repl_nodes
+
+start pgpool: /tmp/pgpool_status up up (because both actives in repl_nodes) -> after 30 seconds failover is executed but this does nothing, because the falling node (1) is not the old primary id so it looks like the slave is failing and not the master.
+
+2017-11-11 12:29:57: pid 144: LOG:  failed to connect to PostgreSQL server on "pg02:5432", getsockopt() detected error "Connection refused"
+2017-11-11 12:29:57: pid 144: LOCATION:  pool_connection_pool.c:660
+2017-11-11 12:29:57: pid 144: ERROR:  failed to make persistent db connection
+2017-11-11 12:29:57: pid 144: DETAIL:  connection to host:"pg02:5432" failed
+2017-11-11 12:29:57: pid 144: LOCATION:  child.c:1224
+2017-11-11 12:29:57: pid 144: LOG:  setting backend node 1 status to NODE DOWN
+2017-11-11 12:29:57: pid 144: LOCATION:  pgpool_main.c:600
+2017-11-11 12:29:57: pid 144: LOG:  received degenerate backend request for node_id: 1 from pid [144]
+2017-11-11 12:29:57: pid 144: LOCATION:  pgpool_main.c:1202
+2017-11-11 12:29:57: pid 144: LOG:  starting degeneration. shutdown host pg02(5432)
+2017-11-11 12:29:57: pid 144: LOCATION:  pgpool_main.c:1814
+2017-11-11 12:29:57: pid 144: LOG:  Do not restart children because we are switching over node id 1 host: pg02 port: 5432 and we are in streaming replication mode
+2017-11-11 12:29:57: pid 144: LOCATION:  pgpool_main.c:1888
+2017-11-11 12:29:57: pid 144: LOG:  execute command: /opt/scripts/failover.sh  1 pg02 0 0 pg01 /u01/pg10/data
+2017-11-11 12:29:57: pid 144: LOCATION:  pgpool_main.c:2877
+Sat Nov 11 12:29:58 UTC 2017
+FALLING_NODE: 1
+FALLING_HOST: pg02
+OLD_PRIMARY_ID: 0
+NEW_PRIMARY_ID: 0
+NEW_PRIMARY_HOST: pg01
+NEW_MASTER_PGDATA: pg01
++ '[' 1 = 0 ']'
++ exit 0
+2017-11-11 12:29:58: pid 144: LOG:  failover: no follow backends are degenerated
+2017-11-11 12:29:58: pid 144: LOCATION:  pgpool_main.c:2033
+2017-11-11 12:29:58: pid 144: LOG:  failover: set new primary node: -1
+2017-11-11 12:29:58: pid 144: LOCATION:  pgpool_main.c:2067
+2017-11-11 12:29:58: pid 144: LOG:  failover: set new master node: 0
+2017-11-11 12:29:58: pid 144: LOCATION:  pgpool_main.c:2073
+failover done. shutdown host pg02(5432)2017-11-11 12:29:58: pid 144: LOG:  failover done. shutdown host pg02(5432)
+2017-11-11 12:29:58: pid 144: LOCATION:  pgpool_main.c:2177
+2017-11-11 12:29:58: pid 208: LOG:  worker process received restart request
+2017-11-11 12:29:58: pid 208: LOCATION:  pool_worker_child.c:154
+2017-11-11 12:29:59: pid 207: LOG:  restart request received in pcp child process
+2017-11-11 12:29:59: pid 207: LOCATION:  pcp_child.c:150
+2017-11-11 12:29:59: pid 144: LOG:  PCP child 207 exits with status 0 in failover()
+2017-11-11 12:29:59: pid 144: LOCATION:  pgpool_main.c:2219
+2017-11-11 12:29:59: pid 144: LOG:  fork a new PCP child pid 217 in failover()
+2017-11-11 12:29:59: pid 144: LOCATION:  pgpool_main.c:2223
+2017-11-11 12:29:59: pid 144: LOG:  pgpool-II successfully started. version 3.6.6 (subaruboshi)
+2017-11-11 12:29:59: pid 144: LOCATION:  pgpool_main.c:481
+2017-11-11 12:29:59: pid 144: LOG:  worker child process with pid: 208 exits with status 256
+2017-11-11 12:29:59: pid 144: LOCATION:  pgpool_main.c:2468
+2017-11-11 12:29:59: pid 144: LOG:  fork a new worker child process with pid: 218
+2017-11-11 12:29:59: pid 144: LOCATION:  pgpool_main.c:2554
+2017-11-11 12:31:29: pid 153: LOG:  failback event detected
+2017-11-11 12:31:29: pid 153: DETAIL:  restarting myself
+2017-11-11 12:31:29: pid 153: LOCATION:  child.c:1843
+2017-11-11 12:31:29: pid 144: LOG:  child process with pid: 153 exits with status 256
+2017-11-11 12:31:29: pid 144: LOCATION:  pgpool_main.c:2468
+2017-11-11 12:31:29: pid 144: LOG:  fork a new child process with pid: 219
+2017-11-11 12:31:29: pid 144: LOCATION:  pgpool_main.c:2554
+2017-11-11 12:31:30: pid 198: LOG:  new connection received
+2017-11-11 12:31:30: pid 198: DETAIL:  connecting host=pgcluster_manager.1.jbs4f7cy14wnx7ygejjqu4scs.pgcluster_network port=33204
+2017-11-11 12:31:30: pid 198: LOCATION:  child.c:2172
+2017-11-11 12:31:30: pid 198: LOG:  selecting backend connection
+2017-11-11 12:31:30: pid 198: DETAIL:  failback event detected, discarding existing connections
+2017-11-11 12:31:30: pid 198: LOCATION:  child.c:2272
+2017-11-11 12:31:50: pid 175: LOG:  failback event detected
+2017-11-11 12:31:50: pid 175: DETAIL:  restarting myself
+2017-11-11 12:31:50: pid 175: LOCATION:  child.c:1843
+2017-11-11 12:31:50: pid 144: LOG:  child process with pid: 175 exits with status 256
+2017-11-11 12:31:50: pid 144: LOCATION:  pgpool_main.c:2468
+2017-11-11 12:31:50: pid 144: LOG:  fork a new child process with pid: 220
+2017-11-11 12:31:50: pid 144: LOCATION:  pgpool_main.c:2554
+2017-11-11 12:32:20: pid 184: LOG:  new connection received
+2017-11-11 12:32:20: pid 184: DETAIL:  connecting host=10.255.0.2 port=54312
+2017-11-11 12:32:20: pid 184: LOCATION:  child.c:2172
+
+Same use case: stop pgpool, stop the master, this case remove the /tmp/pgpool_status --> same issue, failover does nothing because old primary = new primary
+So master = pg01, running
+   slave = pg02, running
+stop pgpool
+stop pg01
+start pgpool with status up up and search_primary_node_timeout = 30 --> this times it works.
+
+017-11-11 13:04:12: pid 721: LOCATION:  child.c:1224
+2017-11-11 13:04:12: pid 721: LOG:  setting backend node 0 status to NODE DOWN
+2017-11-11 13:04:12: pid 721: LOCATION:  pgpool_main.c:600
+2017-11-11 13:04:12: pid 721: LOG:  received degenerate backend request for node_id: 0 from pid [721]
+2017-11-11 13:04:12: pid 721: LOCATION:  pgpool_main.c:1202
+2017-11-11 13:04:12: pid 721: LOG:  starting degeneration. shutdown host pg01(5432)
+2017-11-11 13:04:12: pid 721: LOCATION:  pgpool_main.c:1814
+2017-11-11 13:04:12: pid 721: LOG:  Restart all children
+2017-11-11 13:04:12: pid 721: LOCATION:  pgpool_main.c:1930
+2017-11-11 13:04:12: pid 721: LOG:  execute command: /opt/scripts/failover.sh  0 pg01 0 1 pg02 /u01/pg10/data
+2017-11-11 13:04:12: pid 721: LOCATION:  pgpool_main.c:2877
+Sat Nov 11 13:04:12 UTC 2017
+FALLING_NODE: 0
+FALLING_HOST: pg01
+OLD_PRIMARY_ID: 0
+NEW_PRIMARY_ID: 1
+NEW_PRIMARY_HOST: pg02
+NEW_MASTER_PGDATA: pg02
++ '[' 0 = 0 ']'
++ ssh -n -T -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no postgres@pg02 '/usr/pgsql-10/bin/repmgr --log-to-file -f /etc/repmgr/10/repmgr.conf standby promote -v '
+[2017-11-11 13:04:12] [NOTICE] using configuration file "/etc/repmgr/10/repmgr.conf"
+[2017-11-11 13:04:12] [NOTICE] Redirecting logging output to '/var/log/repmgr/repmgr.log'
+waiting for server to promote.... done
+server promoted
++ exit 0
+2017-11-11 13:04:13: pid 721: LOG:  failover: no follow backends are degenerated
+2017-11-11 13:04:13: pid 721: LOCATION:  pgpool_main.c:2033
+2017-11-11 13:04:13: pid 721: LOG:  failover: set new primary node: -1
+2017-11-11 13:04:13: pid 721: LOCATION:  pgpool_main.c:2067
+2017-11-11 13:04:13: pid 721: LOG:  failover: set new master node: 1
+
+
+Important note: some processes cannot connect, pgpool would have done a failover if it was not for fail_over_on_backend_error !!!
+2017-11-11 13:03:40: pid 782: DETAIL:  connecting host=pgcluster_manager.1.jbs4f7cy14wnx7ygejjqu4scs.pgcluster_network port=35376
+2017-11-11 13:03:40: pid 782: LOCATION:  child.c:2172
+2017-11-11 13:03:40: pid 782: LOG:  failed to connect to PostgreSQL server on "pg01:5432", getsockopt() detected error "Connection refused"
+2017-11-11 13:03:40: pid 782: LOCATION:  pool_connection_pool.c:660
+2017-11-11 13:03:40: pid 782: FATAL:  failed to create a backend 0 connection
+2017-11-11 13:03:40: pid 782: DETAIL:  not executing failover because fail_over_on_backend_error is off
+2017-11-11 13:03:40: pid 782: LOCATION:  pool_connection_pool.c:878
+2017-11-11 13:03:40: pid 721: LOG:  child process with pid: 782 exits with status 256
+2017-11-11 13:03:40: pid 721: LOCATION:  pgpool_main.c:2468
+2017-11-11 13:03:40: pid 721: LOG:  fork a new child process with pid: 784
+2017-11-11 13:03:40: pid 721: LOCATION:  pgpool_main.c:2554
+
+let's try the same but this time set pool_status to up/down
+stop pgpool, stop the master, this case remove the /tmp/pgpool_status --> same issue, failover does nothing because old primary = new primary
+So master = pg02, running
+   slave = pg01, running
+stop pgpool
+stop pg02
+in pool_status, set up down
+in this case nothing happens, pg02 is marked down and pg01 is up but slave
+
+
+
+
+
+
+
+
+
