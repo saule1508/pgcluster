@@ -1,17 +1,22 @@
 # cl-pg-cluster
-Postgres database 9.6 on Centos 7.3 with streaming replication. The postgres image will contain a ssh server, repmgr and supervisord (there is a variant with systemd)
+Postgres database 10 on Centos 7.4 with streaming replication. The postgres image contains a ssh server, repmgr and supervisord. Postgres is replicated with streaming replication and repmgr on top of it.
 
-There is one pgpool; it works also with two pgpool in watch dog mode but since this set-up is targeted at a docker swarm cluster the normal case will be one pgpool container running which will be failed-over by swarm when needed.
+There is one pgpool; since this set-up is targeted at a docker swarm cluster so that there is one pgpool service and it is made HA by swarm. When pgpool starts (for example if it was restarted on another node), it will rebuild the node availability (file /tmp/pgpool_status) by looking at repmgr repl_nodes table. One hedge case is the one when both the master and pgpool are running on the same swarm node: if this node goes down pgpool will be restarted on another node while the old master will not be restarted (it is sticky to its node). When pgpool starts it must then manually promote the surviving postgres node.
 
-There is a manager application, written in nodejs (the front-end is written in react). this small web application on top of pgpool let visualize the cluster state and will to allow fail-over, switch-over, etc. this is completly WIP for now. The backend will be nodejs with websocket and the front-end React+Redux. I will also make an electron app. 
+There is a manager application, written in nodejs (the front-end is written in react). this small web application on top of pgpool let visualize the cluster state and will to allow fail-over, switch-over, etc. 
 
 What's worth mentioning that is specific to docker is that everytime the container is started (postgres container or pgpool container), it is configured again based on the environment variables (i.e. /etc/repmgr/9.6/repmgr.conf and /etc/pgpool-II/pgpool.conf are rebuild, among others). Similarly the file /etc/pgpool-II/pool_passwd is rebuild again, by querying the postgres database).
 
-There are various instances of docker-compose files, to test various test cases. docker-compose files are convenient to set all env variables.
+To test it is best to make a swarm, even with one single node, and use the docker-compose files provided.
 
-** this is WIP: the end result will be 1 master, 2 slaves (with repmgr) and 2 pgpool **
+if one want to play with the pgpool container, to experiment, a good trick is to adapt the docker-compose and add in the pgpool definition a dummy command like
 
-I don't have time to work on it now. However in the coming months I will have to do it for work and so will get time...
+```
+command: tail -f /etc/passwd
+```
+
+and then you can enter in the container (with docker exec -ti) and stop/start pgpool without having the container restarted by swarm.
+
 
 ## build
 
@@ -22,32 +27,46 @@ see the script build.sh, it build the image postgres (pg) and the image pgpool a
 It is easy to start the containers with docker compose. For production one will need to use docker in swarm mode but to test on a single machine docker compose is perfect.
 
 ```
-docker-compose up
+docker network create --driver=overlay --attachable pgcluster_network
+docker stack deploy -c docker-compose.yml pgcluster
 ```
+
+wait that all services are running
+
+```
+watch docker service ls
+```
+
+The GUI is available on port 8080
+
 
 The entrypoint of the docker image is entrypoint.sh. This script calls initdb.sh (directory bootstrap). initdb.sh tests if the file $PGDATA/postgresql.conf exists, and if not it creates the database with the users corresponding to MSLIST. For each micro-service in the list, a _owner and _user user are created. passwords can be given via MSOWNERPWDLIST and MSUSERPWDLIST
 
 ## develop
 
-To develop the manager application, one should first run pg01, pg02 and pgpool01 via a docker-compose (remove the manager from docker-compose.yml).
-```
-docker-compose -f docker-compose-nomanager.yml up
-```
+To develop the manager application, you can start the stack and then, on your workstation start the client application. 
 
-Then start a nodejs container linked to the network of the compose above and with the sources host mounted, for example on my set-up
+In the package.json of the client one has to set the IP of the server for proxying. For the websocket, it is necessary to give the IP of the server as well
 
 ```
-docker run -ti -v /Users/pierre/git/pgcluster/manager:/sources -v /var/run/docker.sock:/var/run/docker.sock \
-  -p 8080:8080 --network=pgcluster_default --name manager manager:0.1.2 /bin/bash
+cd client
+export REACT_APP_SERVERIP=<ip of the server>
+yarn start
 ```
 
-once in the container
+to change the server part, one can change the docker-compose and put a dummy command for the manager service in order to keep it running
+
+```
+command: tail -f /etc/passwd
+```
+
+and then get into the manager container with docker exec -ti. One can stop/start the backend manager app with node server.js But before the env variable PG_BACKEND_NODE_LIST must be set.
 
 ```
 export PG_BACKEND_NODE_LIST=0:pg01:5432:1:/u01/pg96/data:ALLOW_TO_FAILOVER,1:pg02:5432:1:/u01/pg96/data:ALLOW_TO_FAILOVER
 export REPMGRPWD=rep123
 
-cd /sources/server
+cd /opt/manager/server
 npm start
 ```
 
@@ -55,9 +74,10 @@ after that start the client application (react application build using create-re
 
 ```
 cd /Users/pierre/git/pgcluster/manager/client
-npm start
+export REACT_APP_SERVERIP=<ip server>
+yarn npm start
 ```
-
+don't forget to adapt package.json for the proxying of API calls to the backend.
 
 
 ### get inside the container
@@ -73,8 +93,9 @@ you can also ssh into the container
 
 When the container starts the configuration /etc/pgpool-II/pgpool.conf is build based on environment variables passed in the run command.
 
-The following environment variables are important to properly set-up pgpool
+pgpool can also be used in the traditional active/passive node, i.e. the watchdog mode. But then one must exclude the two containers from the swarm, or one must make two different pgpool services and make each  sticky to one node.
 
+The following environment variables are important to properly set-up pgpool
 
 * PGMASTER_NODE_NAME: pg01. Node name of the postgres database. Needed so that the container can query the list of users and build the pool_passwd list
 * PG_BACKEND_NODE_LIST: 0:pg01:9999:1:/u01/pg96/data:ALLOW_TO_FAILOVER, 1:pg02, etc.
@@ -84,7 +105,7 @@ The following environment variables are important to properly set-up pgpool
 * PGP_NODE_NAME: pgpool01
 * REPMGRPWD: repmgr_pwd (must correspond to the value in postgres of course)
 * DELEGATE_IP: 172.18.0.100 Only if you want the watchdog mode. Note that this watchdog mode does not make a lot of sense inside docker, it is probably better to use the HA functionality of docker swarm
-* TRUSTED_SERVERS: 172.23.1.250 When using the watchdog, it helps prevent split-brain
+* TRUSTED_SERVERS: 172.23.1.250 When using the watchdog, it helps prevent split-brain. Again not for the normal swarm usage
 * PGP_HEARTBEATS: "0:pgpool01:9694,1:pgpool02:9694" When using the watchdog
 * PGP_OTHERS: "0:pgpool02:9999" The other pgpool nodes, needed for the configuration
 
@@ -112,6 +133,10 @@ repmgr=# select * from repl_nodes;
 ```
 
 ### failover pgpool
+
+if pgpool failovers on his own (for example it was running on a different node than any of the two postgres) then there is no issue at all. If pgpool fails and it was on the same node as the slave, then there is no problem either: pgpool will be restarted on another node and the slave will remains down.
+
+some tests done
 
 stop pgpool
 
@@ -192,6 +217,7 @@ failover done. shutdown host pg02(5432)2017-11-11 12:29:58: pid 144: LOG:  failo
 2017-11-11 12:32:20: pid 184: LOCATION:  child.c:2172
 
 Same use case: stop pgpool, stop the master, this case remove the /tmp/pgpool_status --> same issue, failover does nothing because old primary = new primary
+
 So master = pg01, running
    slave = pg02, running
 stop pgpool
@@ -243,15 +269,8 @@ Important note: some processes cannot connect, pgpool would have done a failover
 2017-11-11 13:03:40: pid 721: LOG:  fork a new child process with pid: 784
 2017-11-11 13:03:40: pid 721: LOCATION:  pgpool_main.c:2554
 
-let's try the same but this time set pool_status to up/down
-stop pgpool, stop the master, this case remove the /tmp/pgpool_status --> same issue, failover does nothing because old primary = new primary
-So master = pg02, running
-   slave = pg01, running
-stop pgpool
-stop pg02
-in pool_status, set up down
-in this case nothing happens, pg02 is marked down and pg01 is up but slave
 
+To solve this issue, I have added logic to the entrypoint script of pgpool. It detects if the master (as seen in repmgr's repl_nodes table) is down and in this case it promotes the first standby. The old master is then marked down in pgpool_status.
 
 
 
