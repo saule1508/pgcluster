@@ -68,7 +68,7 @@ wait_for_one_db(){
 build_pgpool_status_file(){
   h=${1}
 
-  psql -h ${h} -U repmgr repmgr -t -c 'select name,active,type from repl_nodes;'" > /tmp/repl_nodes
+  psql -h ${h} -U repmgr repmgr -t -c "select name,active,type from repl_nodes;" > /tmp/repl_nodes
   echo ">>>repl_nodes:"
   cat /tmp/repl_nodes
   > /tmp/pgpool_status
@@ -82,7 +82,7 @@ build_pgpool_status_file(){
     repm_active=$( grep $h /tmp/repl_nodes | sed -e "s/ //g" | cut -f2 -d"|" )
     repm_type=$( grep $h /tmp/repl_nodes | sed -e "s/ //g" | cut -f3 -d"|" )
     echo "repm_active is $repm_active and repm_type is $repm_type for $h"
-    if [ "a$type" == "amaster" ] ; then
+    if [ "a$repm_type" == "amaster" ] ; then
       REPMGR_MASTER=$h
       REPMGR_MASTER_PORT=$p
     fi
@@ -149,8 +149,12 @@ if [ $nbrbackend -gt 1 ] ; then
   MASTER_SLAVE_MODE=on
 else
   MASTER_SLAVE_MODE=off
+  FAILOVER_MODE=manual
 fi
 echo MASTER_SLAVE_MODE=$MASTER_SLAVE_MODE
+FAILOVER_MODE=${FAILOVER_MODE:-auto}
+echo FAILOVER_MODE=${FAILOVER_MODE}
+
 # make connections via psql convenient
 echo "*:*:repmgr:repmgr:${REPMGRPWD}" > /home/postgres/.pgpass
 chmod 600 /home/postgres/.pgpass
@@ -169,7 +173,7 @@ nbrlines=$( grep -v "^$" /tmp/repl_nodes | wc -l )
 NBRTRY=30
 while [ $nbrlines -lt $nbrbackend -a $NBRTRY -gt 0 ] ; do
   echo "waiting for repl_nodes to be initialized: currently $nbrlines in repl_node, there must be one line per back-end ($nbrbackend)"
-  psql -h ${DBHOST} -U repmgr repmgr -t -c 'select name,active from repl_nodes;'" > /tmp/repl_nodes
+  psql -h ${DBHOST} -U repmgr repmgr -t -c "select name,active,type from repl_nodes;" > /tmp/repl_nodes
   nbrlines=$( grep -v "^$" /tmp/repl_nodes | wc -l )
   NBRTRY=$((NBRTRY-1))
   echo "Sleep 10 seconds, still $NBRTRY to go..."
@@ -182,12 +186,16 @@ echo REPMGR_MASTER is ${REPMGR_MASTER}
 # however in the failover it will say : falling node = 1, old_primary = 0 and so the failover will do nothing
 echo Get state of REPMGR_MASTER $REPMGR_MASTER
 master_info=$( grep "^${REPMGR_MASTER}:" /tmp/backendsinfo.txt )
-echo $master_info
 echo $master_info | grep dbup=t
 if [ $? -eq 0 ] ; then
-  echo master is up
+  masterup=1
+  echo master database is up
 else
-  echo master is down, lets wait 1 minute
+  masterup=0
+  echo master database is down
+fi
+if [ $masterup -eq 0 -a ${FAILOVER_MODE} == "auto" ] ; then
+  echo master database is down and FAILOVER_MODE is auto, wait 1 minute before doing promotion
   wait_for_one_db ${REPMGR_MASTER} ${REPMGR_MASTER_PORT} 12
   echo check again
   is_db_up ${REPMGR_MASTER} ${REPMGR_MASTER_PORT}
@@ -195,7 +203,8 @@ else
      echo I will promote another database
      HOST2PROMOTE=$( grep "repm_type=standby" /tmp/backendsinfo.txt | grep "dbup=t" | head -1 | cut -f1 -d":" )
      echo Promoting $HOST2PROMOTE
-     ssh ${HOST2PROMOTE} -c "/scripts/promote_me.sh"
+     ssh ${HOST2PROMOTE} -C "/scripts/promote_me.sh"
+     echo Server ${HOST2PROMOTE} promoted to primary, waiting 10 seconds before starting pgpool
      sleep 10
      echo Promotion done, rebuilding the pgpool_status file
      build_pgpool_status_file ${HOST2PROMOTE}
@@ -471,7 +480,7 @@ connect_timeout = 10000
 # FAILOVER AND FAILBACK
 #------------------------------------------------------------------------------
 EOF
-if [ $MASTER_SLAVE_MODE == "on" ] ; then
+if [ $FAILOVER_MODE == "auto" ] ; then
   cat <<EOF >> $CONFIG_FILE
 failover_command = '/opt/scripts/failover.sh  %d %h %P %m %H %R'
                                    # Executes this command at failover

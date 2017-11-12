@@ -12,21 +12,11 @@ services:
       MSUSERPWDLIST: "asset_user,ingest_user,playout_user"
       REPMGRPWD: rep123
       PGMASTER: pg01
-    volumes:
-      - /u01/pg96/data:/u01/pg96/data
-      - /u02/archive:/u02/archive
-      - /u02/backup:/u02/backup
-      - /etc/localtime:/etc/localtime
-    deploy:
-      placement:
-        constraints:
-          - node.id == {{ docker_node_1 }}
     ports:
-      - target: 5432
-        published: 5432
-        protocol: tcp
-        mode: host
-
+      - 15432:5432 # postgres port
+    volumes:
+      - pg01db:/u01/pg10/data
+      - pg01arc:/u02/archive
   pg02:
     image: pg:0.4.0
     environment:
@@ -39,23 +29,13 @@ services:
       MSUSERPWDLIST: "asset_user,ingest_user,playout_user"
       REPMGRPWD: rep123
       PGMASTER: pg01
-    volumes:
-      - /u01/pg96/data:/u01/pg96/data
-      - /u02/archive:/u02/archive
-      - /u02/backup:/u02/backup
-      - /etc/localtime:/etc/localtime
-    deploy:
-      placement:
-        constraints:
-          - node.id == {{ docker_node_2 }}
     ports:
-      - target: 5432
-        published: 5432
-        protocol: tcp
-        mode: host
+      - 25432:5432 # postgres port
+    volumes:
+      - pg02db:/u01/pg10/data
+      - pg02arc:/u02/archive
     depends_on:
       - pg01
-
   pgpool01:
     image: pgpool:0.4.0
     ports:
@@ -76,10 +56,10 @@ services:
                 # csv list of other pgpool nodes, each node contains (separated by :)
                 # number (start with 0):host name:pgpool port (default 9999)
                 # not needed when there is a single pgpool node
+
     depends_on:
       - pg01
       - pg02
-
   manager:
     image: manager:0.1.4
     ports:
@@ -90,3 +70,8 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     restart: always
+volumes:
+  pg01db:
+  pg02db:
+  pg01arc:
+  pg02arc:

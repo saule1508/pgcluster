@@ -18,4 +18,6 @@ repmgr=# select * from repl_nodes;
   2 | master |                  | phoenix | pg02 | host=pg02 dbname=repmgr user=repmgr password=rep123 | repmgr_slot_2 |      100 | t
 (2 rows)
 
+## manual failover
 
+Set search_primary_node_timeout = 0 and failover_command=''

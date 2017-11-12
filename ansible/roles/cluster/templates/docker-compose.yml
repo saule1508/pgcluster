@@ -48,7 +48,7 @@ services:
         constraints:
           - node.id == {{ docker_node_1 }}
     volumes:
-      - /u01/pg96/data:/u01/pg96/data
+      - /u01/pg10/data:/u01/pg10/data
       - /u02/archive:/u02/archive
       - /u02/backup:/u02/backup
       - /etc/localtime:/etc/localtime
@@ -80,7 +80,7 @@ services:
       restart_policy:
         condition: on-failure
     volumes:
-      - /u01/pg96/data:/u01/pg96/data
+      - /u01/pg10/data:/u01/pg10/data
       - /u02/archive:/u02/archive
       - /u02/backup:/u02/backup
       - /etc/localtime:/etc/localtime
