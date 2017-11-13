@@ -435,7 +435,7 @@ delay_threshold = 10000000
 
 # - Special commands -
 
-follow_master_command = '/opt/scripts/follow_master.sh %d %h %m %p %H %M %P'
+follow_master_command = '/scripts/follow_master.sh %d %h %m %p %H %M %P'
                                    # Executes this command after master failover
                                    # Special values:
                                    #   %d = node id
@@ -482,7 +482,7 @@ connect_timeout = 10000
 EOF
 if [ $FAILOVER_MODE == "auto" ] ; then
   cat <<EOF >> $CONFIG_FILE
-failover_command = '/opt/scripts/failover.sh  %d %h %P %m %H %R'
+failover_command = '/scripts/failover.sh  %d %h %P %m %H %R'
                                    # Executes this command at failover
                                    # Special values:
                                    #   %d = node id
@@ -612,7 +612,7 @@ delegate_IP = '${DELEGATE_IP}'
                                     # delegate IP address
                                     # If this is empty, virtual IP never bring up.
                                     # (change requires restart)
-if_cmd_path = '/opt/scripts'
+if_cmd_path = '/scripts'
                                     # path to the directory where if_up/down_cmd exists
                                     # (change requires restart)
 if_up_cmd = 'ip_w.sh addr add $_IP_$/16 dev eth0 label eth0:0'
@@ -621,7 +621,7 @@ if_up_cmd = 'ip_w.sh addr add $_IP_$/16 dev eth0 label eth0:0'
 if_down_cmd = 'ip_w.sh addr del $_IP_$/16 dev eth0'
                                     # shutdown delegate IP command
                                     # (change requires restart)
-arping_path = '/opt/scripts'
+arping_path = '/scripts'
                                     # arping command path
                                     # (change requires restart)
 arping_cmd = 'arping_w.sh -U $_IP_$ -I eth0 -w 1'

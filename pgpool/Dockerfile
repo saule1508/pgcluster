@@ -24,9 +24,9 @@ ADD pool_hba.conf /etc/pgpool-II-10/
 RUN echo "postgres:e8a48653851e28c69d0506508fb27fc5" >> /etc/pgpool-II-10/pcp.conf
 RUN echo "*:*:postgres:postgres" > /home/postgres/.pcppass && chown postgres:postgres /home/postgres/.pcppass && chmod 600 /home/postgres/.pcppass
 RUN chown -R postgres:postgres /etc/pgpool-II-10 
-ADD scripts /opt/scripts
+ADD scripts /scripts
 ADD bin/entrypoint.sh /
-RUN chown postgres:postgres /entrypoint.sh /opt/scripts/* && chmod +x /entrypoint.sh /opt/scripts/*.sh
+RUN chown postgres:postgres /entrypoint.sh /scripts/* && chmod +x /entrypoint.sh /scripts/*.sh
 EXPOSE 9999
 USER postgres
 CMD ["/entrypoint.sh"]
