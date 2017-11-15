@@ -13,7 +13,7 @@ const Backend = ( {backend} ) => {
 			<rect width={160} height={100} style={{fill : color,strokeWidth: strokeW, stroke: strokeC}} />
 			<text x={40} y={20} style={{fontSize: '110%'}} fill={strokeC}>** {backend.type} **</text>
 			<text x={10} y={40} style={{fontSize: '80%'}} fill='black'>
-				ID: {backend.id} - Host:{backend.name}
+				ID: {backend.id} - Host:{backend.node_name}
         <tspan x={10} y={60}>State:{backend.active ? 'active' :'inactive'}</tspan>
 				<tspan x={10} y={70}>Slot name: {backend.slot_name}</tspan>
 				<tspan x={10} y={80}>Upstream node id: {backend.upstream_node_id}</tspan>

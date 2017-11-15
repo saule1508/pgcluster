@@ -76,13 +76,13 @@ wait_for_master(){
  nbrlines=0
  while [ $nbrlines -lt 1 -a $NBRTRY -gt 0 ] ; do
   sleep $SLEEP_TIME
-  echo "waiting for repl_nodes to be initialized with the master"
-  ssh ${HOST} "psql -U repmgr repmgr -t -c 'select name,active from repl_nodes;'" > /tmp/repl_nodes
+  echo "waiting for repmgr node to be initialized with the master"
+  ssh ${HOST} "psql -U repmgr repmgr -t -c 'select node_name,active from nodes;'" > /tmp/nodes
   if [ $? -ne 0 ] ; then
     echo "cannot connect to $HOST in psql.."
     nbrlines=0
   else
-    nbrlines=$( grep -v "^$" /tmp/repl_nodes | wc -l )
+    nbrlines=$( grep -v "^$" /tmp/nodes | wc -l )
   fi
   NBRTRY=$((NBRTRY-1))
  done
@@ -147,23 +147,27 @@ chmod 600 /home/postgres/.pgpass
 #build repmgr.conf
 sudo touch /etc/repmgr/10/repmgr.conf && sudo chown postgres:postgres /etc/repmgr/10/repmgr.conf
 cat <<EOF > /etc/repmgr/10/repmgr.conf
-cluster=phoenix
-node=${NODE_ID}
+node_id=${NODE_ID}
 node_name=${NODE_NAME}
-conninfo='host=${NODE_NAME} dbname=repmgr user=repmgr password=${REPMGRPWD}'
+conninfo='host=${NODE_NAME} dbname=repmgr user=repmgr password=${REPMGRPWD} connect_timeout=2'
+data_directory='/u01/pg10/data'
 use_replication_slots=1
-restore_command = cp /u02/archive/%f %p
+restore_command = 'cp /u02/archive/%f %p'
 
-logfile='/var/log/repmgr/repmgr.log'
-failover=manual
-monitor_interval_secs=30
+log_file='/var/log/repmgr/repmgr.log'
+failover=automatic
+monitor_interval_secs=10
 
 pg_bindir='/usr/pgsql-10/bin'
 
-service_start_command = pg_ctl start
-service_stop_command = pg_ctl stop
-service_restart_command = pg_ctl restart
-service_reload_command = pg_ctl reload
+service_start_command = 'pg_ctl start'
+service_stop_command = 'pg_ctl stop'
+service_restart_command = 'pg_ctl restart'
+service_reload_command = 'pg_ctl reload'
+
+promote_command='repmgr -f /etc/repmgr/10/repmgr.conf standby promote'
+follow_command='repmgr -f /etc/repmgr/10/repmgr.conf standby follow -W --upstream-node-id=%n'
+
 EOF
 
 #
@@ -199,7 +203,7 @@ EOF
     # NB: super user needed for replication
     psql <<-EOF
      create user repmgr with superuser login password '${REPMGRPWD}' ;
-     alter user repmgr set search_path to repmgr_phoenix,"\$user",public;
+     alter user repmgr set search_path to repmgr,"\$user",public;
      \q
 EOF
     log_info "set password for postgres"

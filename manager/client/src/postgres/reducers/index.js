@@ -64,13 +64,13 @@ export const getReplicationStatus = ( state ) => {
   let backends = {};
   let repl_nodes = getReplNodesSorted(state);
   repl_nodes.forEach((el)=>{
-    if (! backends[el.name]){
-      backends[el.name] = {}
+    if (! backends[el.node_name]){
+      backends[el.node_name] = {}
     }
-    backends[el.name].id = el.id;
-    backends[el.name].role = el.type;
-    backends[el.name].slot_name = el.slot_name;
-    backends[el.name].active = el.active;
+    backends[el.node_name].id = el.id;
+    backends[el.node_name].role = el.type;
+    backends[el.node_name].slot_name = el.slot_name;
+    backends[el.node_name].active = el.active;
   });
   let stats = getReplicationStatsSorted(state);
   stats.forEach((el)=>{

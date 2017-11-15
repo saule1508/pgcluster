@@ -68,7 +68,7 @@ wait_for_one_db(){
 build_pgpool_status_file(){
   h=${1}
 
-  psql -h ${h} -U repmgr repmgr -t -c "select name,active,type from repl_nodes;" > /tmp/repl_nodes
+  psql -h ${h} -U repmgr repmgr -t -c "select node_name,active,type from nodes;" > /tmp/repl_nodes
   echo ">>>repl_nodes:"
   cat /tmp/repl_nodes
   > /tmp/pgpool_status
@@ -82,7 +82,7 @@ build_pgpool_status_file(){
     repm_active=$( grep $h /tmp/repl_nodes | sed -e "s/ //g" | cut -f2 -d"|" )
     repm_type=$( grep $h /tmp/repl_nodes | sed -e "s/ //g" | cut -f3 -d"|" )
     echo "repm_active is $repm_active and repm_type is $repm_type for $h"
-    if [ "a$repm_type" == "amaster" ] ; then
+    if [ "a$repm_type" == "aprimary" ] ; then
       REPMGR_MASTER=$h
       REPMGR_MASTER_PORT=$p
     fi
@@ -165,7 +165,7 @@ wait_for_any_db
 echo "Checking backend databases state in repl_nodes table"
 # if the cluster is initializing it is possible that repl_nodes does not contain
 # all backend yet and so we might need to wait a bit...
-ssh ${DBHOST} "psql -U repmgr repmgr -t -c 'select name,active,type from repl_nodes;'" > /tmp/repl_nodes
+ssh ${DBHOST} "psql -U repmgr repmgr -t -c 'select node_name,active,type from nodes;'" > /tmp/repl_nodes
 if [ $? -ne 0 ] ; then
   echo "error connecting to $DBHOST, this likely indicates an unexpected issue"
 fi
@@ -173,7 +173,7 @@ nbrlines=$( grep -v "^$" /tmp/repl_nodes | wc -l )
 NBRTRY=30
 while [ $nbrlines -lt $nbrbackend -a $NBRTRY -gt 0 ] ; do
   echo "waiting for repl_nodes to be initialized: currently $nbrlines in repl_node, there must be one line per back-end ($nbrbackend)"
-  psql -h ${DBHOST} -U repmgr repmgr -t -c "select name,active,type from repl_nodes;" > /tmp/repl_nodes
+  psql -h ${DBHOST} -U repmgr repmgr -t -c "select node_name,active,type from nodes;" > /tmp/repl_nodes
   nbrlines=$( grep -v "^$" /tmp/repl_nodes | wc -l )
   NBRTRY=$((NBRTRY-1))
   echo "Sleep 10 seconds, still $NBRTRY to go..."

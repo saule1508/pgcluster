@@ -1,5 +1,5 @@
 const SQL_ACTIVITY_STAT = 'select * from pg_stat_activity;';
-const SQL_REPL_NODES = 'select * from repl_nodes;'
+const SQL_REPL_NODES = 'select * from nodes;'
 const SQL_SHOW_POOL_NODES = 'show pool_nodes;'
 
 const getStatActivity = () => {

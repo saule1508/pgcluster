@@ -1,15 +1,15 @@
 version: '3.2'
 services:
   pg01:
-    image: pg:0.4.0
+    image: pg:0.4.1
     environment:
       INITIAL_NODE_TYPE: master
       NODE_ID: 1
       NODE_NAME: pg01
-      MSLIST: "asset,ingest,playout" 
+      MSLIST: "myservice" 
               # for each micro-service two db users are created, for ex. asset_owner and asset_user, etc.
-      MSOWNERPWDLIST: "asset_owner,ingest_owner,playout_owner"
-      MSUSERPWDLIST: "asset_user,ingest_user,playout_user"
+      MSOWNERPWDLIST: "myservice_owner"
+      MSUSERPWDLIST: "myservice_user"
       REPMGRPWD: rep123
       PGMASTER: pg01
     ports:
@@ -17,16 +17,18 @@ services:
     volumes:
       - pg01db:/u01/pg10/data
       - pg01arc:/u02/archive
+    networks:
+      - pgcluster_network
   pg02:
-    image: pg:0.4.0
+    image: pg:0.4.1
     environment:
       INITIAL_NODE_TYPE: slave
       NODE_ID: 2
       NODE_NAME: pg02
-      MSLIST: "asset,ingest,playout" 
+      MSLIST: "myservice" 
               # for each micro-service two db users are created, for ex. asset_owner and asset_user, etc.
-      MSOWNERPWDLIST: "asset_owner,ingest_owner,playout_owner"
-      MSUSERPWDLIST: "asset_user,ingest_user,playout_user"
+      MSOWNERPWDLIST: "myservice_owner"
+      MSUSERPWDLIST: "myservice_user"
       REPMGRPWD: rep123
       PGMASTER: pg01
     ports:
@@ -34,10 +36,12 @@ services:
     volumes:
       - pg02db:/u01/pg10/data
       - pg02arc:/u02/archive
+    networks:
+      - pgcluster_network
     depends_on:
       - pg01
   pgpool01:
-    image: pgpool:0.4.0
+    image: pgpool:0.4.1
     ports:
       - 9999:9999
     environment:
@@ -56,22 +60,31 @@ services:
                 # csv list of other pgpool nodes, each node contains (separated by :)
                 # number (start with 0):host name:pgpool port (default 9999)
                 # not needed when there is a single pgpool node
-
+    networks:
+      - pgcluster_network
     depends_on:
       - pg01
       - pg02
   manager:
-    image: manager:0.1.4
+    image: manager:0.1.5
     ports:
       - 8080:8080
+    command: tail -f /etc/passwd
     environment:
       PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER,1:pg02:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER
       REPMGRPWD: rep123
+    networks:
+      - pgcluster_network
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     restart: always
+
 volumes:
   pg01db:
   pg02db:
   pg01arc:
   pg02arc:
+
+networks:
+  pgcluster_network:
+    external: true
