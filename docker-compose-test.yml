@@ -69,7 +69,7 @@ services:
     image: manager:0.1.5
     ports:
       - 8080:8080
-    command: tail -f /etc/passwd
+    #command: tail -f /etc/passwd
     environment:
       PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER,1:pg02:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER
       REPMGRPWD: rep123
