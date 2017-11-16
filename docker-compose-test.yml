@@ -52,7 +52,7 @@ services:
                 # not needed when there is a single postgres DB
       PGP_NODE_NAME: pgpool01
       REPMGRPWD: rep123
-      FAILOVER_MODE: auto
+      FAILOVER_MODE: manual
       #DELEGATE_IP: 172.18.0.100
       #TRUSTED_SERVERS: 172.23.1.250
       #PGP_HEARTBEATS: "0:pgpool01:9694,1:pgpool02:9694"
@@ -77,7 +77,6 @@ services:
       - pgcluster_network
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    restart: always
 
 volumes:
   pg01db:

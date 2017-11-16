@@ -56,7 +56,7 @@ const Backend = ( {host,backend, onConsoleAction } ) => {
 	let pgStopClass = backend.status === 'green' ? 'btn btn-primary enabled' : 'btn btn-primary disabled' ;
 	let pgStartClass = backend.status === 'green' ? 'btn btn-primary disabled' : 'btn btn-primary  enabled' ;
 	let repmgrUnregisterClass = backend.active && backend.role === 'standby' ? 'btn btn-primary  enabled' : 'btn btn-primary disabled'
-	let masterClass = backend.role === 'master' ? 'alert success' : 'alert warning'
+	let masterClass = backend.role === 'primary' ? 'alert success' : 'alert warning'
 	let tabStyleMaster = {border: 'solid 2px green'}
 	let tabStyleStandby = {}
 	let recoveryNodeBtnClass = backend.pgpool_status === 'down' ? 'btn btn-block' : 'btn btn-block disabled';
@@ -205,11 +205,11 @@ class ReplicationStats extends Component{
 				break;
 			case 'pg_stop':
 				let repl_node = this.props.repl_nodes.filter( (el) => {
-					return el.name === this.state.host;
+					return el.node_name === this.state.host;
 				})
 				console.log(repl_node);
-				if (repl_node[0].type === 'master'){
-					prompt = `Stop active master database on node ${this.state.pcp_node_id} ? !! It will cause a failover.`;
+				if (repl_node[0].type === 'primary'){
+					prompt = `Stop active primary database on node ${this.state.pcp_node_id} ? !! It will cause a failover.`;
 				} else {
 					prompt = `Stop database on node ${this.state.pcp_node_id} ?`;
 				}

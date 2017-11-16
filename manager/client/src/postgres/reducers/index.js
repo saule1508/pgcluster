@@ -67,7 +67,7 @@ export const getReplicationStatus = ( state ) => {
     if (! backends[el.node_name]){
       backends[el.node_name] = {}
     }
-    backends[el.node_name].id = el.id;
+    backends[el.node_name].node_id = el.node_id;
     backends[el.node_name].role = el.type;
     backends[el.node_name].slot_name = el.slot_name;
     backends[el.node_name].active = el.active;
