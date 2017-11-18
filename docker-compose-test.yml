@@ -11,6 +11,7 @@ services:
       MSOWNERPWDLIST: "myservice_owner"
       MSUSERPWDLIST: "myservice_user"
       REPMGRPWD: rep123
+      REPMGRD_FAILOVER_MODE: automatic
       PGMASTER: pg01
     ports:
       - 15432:5432 # postgres port
@@ -30,6 +31,7 @@ services:
       MSOWNERPWDLIST: "myservice_owner"
       MSUSERPWDLIST: "myservice_user"
       REPMGRPWD: rep123
+      REPMGRD_FAILOVER_MODE: automatic
       PGMASTER: pg01
     ports:
       - 25432:5432 # postgres port

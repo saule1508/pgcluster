@@ -110,7 +110,7 @@ const replication_stats = (state = REPLICATION_STATS_INITIAL_STATE, action) => {
 
 export const getReplNodesSorted  = (state) => {
   return state.postgres.repl_nodes.rows.sort((el1,el2)=>{
-    return el1.id - el2.id 
+    return el1.node_id - el2.node_id 
   })
 }
 

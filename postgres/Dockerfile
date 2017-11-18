@@ -58,7 +58,6 @@ ADD ssh_keys /home/postgres/.ssh
 RUN chown -R postgres:postgres /home/postgres/.ssh && chmod 700 /home/postgres/.ssh && chmod 644 /home/postgres/.ssh/* && chmod 600 /home/postgres/.ssh/id_rsa
 ENV PATH=$PATH:/usr/pgsql-${MAJORVER}/bin
 ADD initdb.sh /scripts/initdb.sh
-ADD start_repmgr.sh /scripts/start_repmgr.sh
 EXPOSE 5432
 EXPOSE 22
 VOLUME ["/u01/pg${PGVER}/data","/u02/archive","/u02/backup"]

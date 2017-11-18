@@ -106,6 +106,9 @@ log_info "NODE_ID: $NODE_ID"
 log_info "NODE_NAME: $NODE_NAME"
 log_info "ARCHIVELOG: $ARCHIVELOG"
 log_info "docker: ${docker}"
+# automatic or manual
+REPMGRD_FAILOVER_MODE=${REPMGRD_FAILOVER_MODE:-manual}
+log_info "REPMGRD_FAILOVER_MODE: ${REPMGRD_FAILOVER_MODE}"
 
 create_microservices(){
  IFS=',' read -ra MSERVICES <<< "$MSLIST"
@@ -154,9 +157,10 @@ data_directory='/u01/pg10/data'
 use_replication_slots=1
 restore_command = 'cp /u02/archive/%f %p'
 
-log_file='/var/log/repmgr/repmgr.log'
-failover=automatic
-monitor_interval_secs=10
+#log_file='/var/log/repmgr/repmgr.log'
+log_facility=STDERR
+failover=${REPMGRD_FAILOVER_MODE}
+monitor_interval_secs=5
 
 pg_bindir='/usr/pgsql-10/bin'
 
