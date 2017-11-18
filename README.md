@@ -32,7 +32,7 @@ docker swarm init --advertise-addr=<ip machine>
 docker network create --driver=overlay --attachable=true pgcluster_network
 docker stack deploy -c docker-compose-test.yml pgcluster
 ```
-you can then go on <i>:8080 to see the manager GUI.
+you can then go on <ipaddress>:8080 to see the manager GUI.
 
 To run on a real cluster one can use the scripts in the ansible directory.
 
