@@ -9,11 +9,11 @@
 # This script must be in PGDATA
 #set -e
 
-if [ ! -d /var/log/pg-utils ] ; then
- sudo mkdir /var/log/pg-utils
- sudo chown postgres:postgres /var/log/pg-utils
+if [ ! -d /var/log/pg ] ; then
+ sudo mkdir /var/log/pg
+ sudo chown postgres:postgres /var/log/pg
 fi
-LOGFILE=/var/log/pg-utils/pgpool_remote_start.log
+LOGFILE=/var/log/pg/pgpool_remote_start.log
 
 echo "Exec pgpool_remote_start.sh at `date`" | tee -a $LOGFILE
 PATH=$PATH:/usr/pgsql-10/bin/pg_ctl
@@ -31,7 +31,7 @@ remote_path=$2
 echo "remote_host: ${remote_host}" | tee -a $LOGFILE
 echo "remote_path: ${remote_path}" | tee -a $LOGFILE
 
-ssh_options="ssh -n -T -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no postgres@$remote_host"
+ssh_options="ssh -p 222 -n -T -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no postgres@$remote_host"
 set -x
 $ssh_options "/usr/pgsql-10/bin/pg_ctl -D ${remote_path} start" &
 echo "sleep 20 after pg_ctl start"

@@ -1,7 +1,7 @@
 FROM centos:7
 MAINTAINER p.timmermans@evs.com
 ENV MAJORVER=10
-ENV MINORVER=0
+ENV MINORVER=1
 ENV PGVER=10
 ENV docker=yes
 RUN yum update -y ; yum clean all
@@ -12,7 +12,7 @@ RUN easy_install supervisor
 RUN mkdir /var/run/sshd
 RUN ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N ''
 RUN useradd -u 50010 postgres
-RUN yum install -y https://download.postgresql.org/pub/repos/yum/10/redhat/rhel-7-x86_64/pgdg-centos10-10-1.noarch.rpm
+RUN yum install -y https://download.postgresql.org/pub/repos/yum/10/redhat/rhel-7-x86_64/pgdg-centos10-10-2.noarch.rpm
 RUN yum install -y postgresql${MAJORVER} postgresql${MAJORVER}-server  postgresql${MAJORVER}-contrib ; yum clean all
 # pgpool extensions
 RUN yum install -y pgpool-II-${MAJORVER} pgpool-II-${MAJORVER}-extensions; yum clean all
@@ -54,12 +54,14 @@ ADD supervisord.conf /etc/supervisor/supervisord.conf
 RUN echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config && \
     echo "UserKnownHostsFile /dev/null" >> /etc/ssh/ssh_config && \
     echo "LogLevel QUIET" >> /etc/ssh/ssh_config
+# ssh listen on port 222
+RUN sed -i -e "s/^#Port 22/Port 222/" /etc/ssh/sshd_config
 ADD ssh_keys /home/postgres/.ssh 
 RUN chown -R postgres:postgres /home/postgres/.ssh && chmod 700 /home/postgres/.ssh && chmod 644 /home/postgres/.ssh/* && chmod 600 /home/postgres/.ssh/id_rsa
 ENV PATH=$PATH:/usr/pgsql-${MAJORVER}/bin
 ADD initdb.sh /scripts/initdb.sh
 EXPOSE 5432
-EXPOSE 22
+EXPOSE 222
 VOLUME ["/u01/pg${PGVER}/data","/u02/archive","/u02/backup"]
 # if the file $PGDATA/postgres.conf does not exist initdb will initialize the cluster and create db phoenix
 #  and db users (two per microservice)

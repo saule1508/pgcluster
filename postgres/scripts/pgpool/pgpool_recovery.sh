@@ -39,7 +39,7 @@ echo "primary_host: ${primary_host}"
 echo "replica_host: ${replica_host}" 
 echo "replicat_path: ${replica_path}" 
 
-ssh_copy="ssh postgres@$replica_host -T -n -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+ssh_copy="ssh -p 222 postgres@$replica_host -T -n -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 echo "Stopping postgres on ${replica_host}"
 $ssh_copy "/usr/pgsql-10/bin/pg_ctl -D ${replica_path} stop"
 echo sleeping 20

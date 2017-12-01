@@ -22,11 +22,11 @@ echo "failback.sh FALLING_NODE: ${FALLING_NODE}; FALLING_HOST: ${FALLING_HOST}; 
 if [ $FALLING_NODE = $OLDPRIMARY_NODE ]; then
     if [ $UID -eq 0 ]
     then
-#        sudo -u postgres ssh -T postgres@$NEW_PRIMARY /etc/postgresql/10/main/replication/scripts/promote.sh -f -p $REPL_PASS -d $FALLING_HOST
+#        ssh -T -p 222 postgres@$NEW_PRIMARY /etc/postgresql/10/main/replication/scripts/promote.sh -f -p $REPL_PASS -d $FALLING_HOST
       echo "DEBUG: UID != 0"
     else
       echo "DEBUG: UID = 0"
-#        ssh -T postgres@$NEW_PRIMARY /etc/postgresql/10/main/replication/scripts/promote.sh -f -p $REPL_PASS -d $FALLING_HOST
+#        ssh -T -p 222 postgres@$NEW_PRIMARY /etc/postgresql/10/main/replication/scripts/promote.sh -f -p $REPL_PASS -d $FALLING_HOST
 # -d was previously $OLDPRIMARY_NODE
     fi
     exit 0;

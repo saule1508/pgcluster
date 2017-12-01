@@ -5,7 +5,7 @@ const getFilesForHost = (host, directory) => {
   let stderr = '';
   return new Promise((resolve,reject)=>{
 
-    let cmdArr = ['-o','StrictHostKeyChecking=no','-o','UserKnownHostsFile=/dev/null', `postgres@${host}`,'-C',
+    let cmdArr = ['-p','222','-o','StrictHostKeyChecking=no','-o','UserKnownHostsFile=/dev/null', `postgres@${host}`,'-C',
        'ls',directory];
     let cmd = spawn('ssh',cmdArr);
     cmd.stdout.on('data',(data)=>{

@@ -5,7 +5,7 @@ CONFIG_FILE=${CONFIG_DIR}/pgpool.conf
 
 is_db_up(){
   echo "Is DB up for host ${1} port ${2:-5432} ?"
-  ssh -oPasswordAuthentication=no ${1} uname
+  ssh -p 222 -oPasswordAuthentication=no ${1} uname
   ret=$?
   if [ $ret -ne 0 ] ; then
     echo Cannot connect to host $1 via ssh
@@ -13,7 +13,7 @@ is_db_up(){
   fi
   echo Try psql connection on host $1 port ${2:-5432}
   # we could use pg_is_ready also
-  ssh -oPasswordAuthentication=no $1 "psql --username=repmgr -p ${2:-5432} repmgr -c \"select 1;\""
+  ssh -p 222 -oPasswordAuthentication=no $1 "psql --username=repmgr -p ${2:-5432} repmgr -c \"select 1;\""
   ret=$?
   if [ $ret -ne 0 ] ; then
     return 0
@@ -152,7 +152,7 @@ else
   FAILOVER_MODE=manual
 fi
 echo MASTER_SLAVE_MODE=$MASTER_SLAVE_MODE
-FAILOVER_MODE=${FAILOVER_MODE:-auto}
+FAILOVER_MODE=${FAILOVER_MODE:-automatic}
 echo FAILOVER_MODE=${FAILOVER_MODE}
 
 # make connections via psql convenient
@@ -165,7 +165,7 @@ wait_for_any_db
 echo "Checking backend databases state in repl_nodes table"
 # if the cluster is initializing it is possible that repl_nodes does not contain
 # all backend yet and so we might need to wait a bit...
-ssh ${DBHOST} "psql -U repmgr repmgr -t -c 'select node_name,active,type from nodes;'" > /tmp/repl_nodes
+psql -h ${DBHOST} -U repmgr repmgr -t -c "select node_name,active,type from nodes;" > /tmp/repl_nodes
 if [ $? -ne 0 ] ; then
   echo "error connecting to $DBHOST, this likely indicates an unexpected issue"
 fi
@@ -194,7 +194,7 @@ else
   masterup=0
   echo master database is down
 fi
-if [ $masterup -eq 0 -a ${FAILOVER_MODE} == "auto" ] ; then
+if [ $masterup -eq 0 -a ${FAILOVER_MODE} == "automatic" ] ; then
   echo master database is down and FAILOVER_MODE is auto, wait 1 minute before doing promotion
   wait_for_one_db ${REPMGR_MASTER} ${REPMGR_MASTER_PORT} 12
   echo check again
@@ -203,7 +203,7 @@ if [ $masterup -eq 0 -a ${FAILOVER_MODE} == "auto" ] ; then
      echo I will promote another database
      HOST2PROMOTE=$( grep "repm_type=standby" /tmp/backendsinfo.txt | grep "dbup=t" | head -1 | cut -f1 -d":" )
      echo Promoting $HOST2PROMOTE
-     ssh ${HOST2PROMOTE} -C "/scripts/promote_me.sh"
+     ssh -p 222 ${HOST2PROMOTE} -C "/scripts/promote_me.sh"
      echo Server ${HOST2PROMOTE} promoted to primary, waiting 10 seconds before starting pgpool
      sleep 10
      echo Promotion done, rebuilding the pgpool_status file
@@ -221,10 +221,10 @@ if [ $masterup -eq 0 -a ${FAILOVER_MODE} == "auto" ] ; then
 fi
 
 echo "Create user hcuser (fails if the hcuser already exists, which is ok)"
-ssh ${REPMGR_MASTER} "psql -c \"create user hcuser with login password 'hcuser';\""
+ssh -p 222 ${REPMGR_MASTER} "psql -c \"create user hcuser with login password 'hcuser';\""
 echo "Generate pool_passwd file from ${DBHOST}"
 touch ${CONFIG_DIR}/pool_passwd
-ssh postgres@${DBHOST} "psql -c \"select rolname,rolpassword from pg_authid;\"" | awk 'BEGIN {FS="|"}{print $1" "$2}' | grep md5 | while read f1 f2
+ssh -p 222 postgres@${DBHOST} "psql -c \"select rolname,rolpassword from pg_authid;\"" | awk 'BEGIN {FS="|"}{print $1" "$2}' | grep md5 | while read f1 f2
 do
  # delete the line and recreate it
  echo "setting passwd of $f1 in ${CONFIG_DIR}/pool_passwd"
@@ -254,7 +254,7 @@ do
     HOST=""
     PORT="9999"
     WEIGHT=1
-    DIR="/u01/pg96/data"
+    DIR="/u01/pg10/data"
     FLAG="ALLOW_TO_FAILOVER"
 
     [[ "${INFO[0]}" != "" ]] && NUM="${INFO[0]}"
@@ -480,7 +480,7 @@ connect_timeout = 10000
 # FAILOVER AND FAILBACK
 #------------------------------------------------------------------------------
 EOF
-if [ $FAILOVER_MODE == "auto" ] ; then
+if [ $FAILOVER_MODE == "automatic" ] ; then
   cat <<EOF >> $CONFIG_FILE
 failover_command = '/scripts/failover.sh  %d %h %P %m %H %R'
                                    # Executes this command at failover
@@ -525,7 +525,7 @@ fail_over_on_backend_error = ${FAIL_OVER_ON_BACKEND_ERROR}
                                    # If set to off, pgpool will report an
                                    # error and disconnect the session.
 
-search_primary_node_timeout = 300
+search_primary_node_timeout = 0
                                    # Timeout in seconds to search for the
                                    # primary node when a failover occurs.
                                    # 0 means no timeout, keep searching
@@ -561,6 +561,8 @@ client_idle_limit_in_recovery = 0
 EOF
 if [ ! -z $DELEGATE_IP ] ; then
  echo "watchdog set to on because DELETEGATE_IP is set to $DELEGATE_IP"
+ DELEGATE_IP_MASK=$(echo $DELEGATE_IP | cut -f2 -d"/")
+ DELEGATE_IP_IP=$(echo $DELEGATE_IP | cut -f1 -d"/")
  echo "use_watchdog = on" >> $CONFIG_FILE
 else
  echo "watchdog set to off because DELEGATE_IP is not set"
@@ -608,23 +610,23 @@ if [ ! -z ${DELEGATE_IP} ] ; then
   cat <<EOF >> $CONFIG_FILE
 # - Virtual IP control Setting -
 
-delegate_IP = '${DELEGATE_IP}'
+delegate_IP = '${DELEGATE_IP_IP}'
                                     # delegate IP address
                                     # If this is empty, virtual IP never bring up.
                                     # (change requires restart)
 if_cmd_path = '/scripts'
                                     # path to the directory where if_up/down_cmd exists
                                     # (change requires restart)
-if_up_cmd = 'ip_w.sh addr add $_IP_$/16 dev eth0 label eth0:0'
+if_up_cmd = 'ip_w.sh addr add \$_IP_\$/${DELEGATE_IP_MASK:-24} dev ${DELEGATE_IP_INTERFACE:-eth0} label ${DELEGATE_IP_INTERFACE:-eth0}:0'
                                     # startup delegate IP command
                                     # (change requires restart)
-if_down_cmd = 'ip_w.sh addr del $_IP_$/16 dev eth0'
+if_down_cmd = 'ip_w.sh addr del \$_IP_\$/${DELEGATE_IP_MASK:-24} dev ${DELEGATE_IP_INTERFACE:-eth0}'
                                     # shutdown delegate IP command
                                     # (change requires restart)
 arping_path = '/scripts'
                                     # arping command path
                                     # (change requires restart)
-arping_cmd = 'arping_w.sh -U $_IP_$ -I eth0 -w 1'
+arping_cmd = 'arping_w.sh -U \$_IP_\$ -I ${DELEGATE_IP_INTERFACE:-eth0} -w 1'
                                     # arping command
                                     # (change requires restart)
 

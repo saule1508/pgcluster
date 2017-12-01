@@ -4,7 +4,7 @@ ENV PGVER=10
 RUN yum update -y ; yum clean all
 RUN groupadd -g 50010 postgres && useradd -u 50010 -g postgres postgres 
 RUN usermod -G wheel -a postgres && echo "postgres" | passwd --stdin postgres
-RUN yum install -y https://download.postgresql.org/pub/repos/yum/10/redhat/rhel-7-x86_64/pgdg-centos10-10-1.noarch.rpm
+RUN yum install -y https://download.postgresql.org/pub/repos/yum/10/redhat/rhel-7-x86_64/pgdg-centos10-10-2.noarch.rpm
 RUN yum install -y pgpool-II-${PGVER} pgpool-II-${PGVER}-extensions pgpool-II-${PGVER}-debuginfo epel-release sudo vi openssh openssh-clients iproute; yum clean all
 # postgres can do sudo
 RUN echo "Defaults:postgres !requiretty" > /etc/sudoers.d/postgres && \
@@ -24,6 +24,7 @@ ADD pool_hba.conf /etc/pgpool-II-10/
 RUN echo "postgres:e8a48653851e28c69d0506508fb27fc5" >> /etc/pgpool-II-10/pcp.conf
 RUN echo "*:*:postgres:postgres" > /home/postgres/.pcppass && chown postgres:postgres /home/postgres/.pcppass && chmod 600 /home/postgres/.pcppass
 RUN chown -R postgres:postgres /etc/pgpool-II-10 
+RUN chmod +s /usr/sbin/arping /usr/sbin/ip
 ADD scripts /scripts
 ADD bin/entrypoint.sh /
 RUN chown postgres:postgres /entrypoint.sh /scripts/* && chmod +x /entrypoint.sh /scripts/*.sh

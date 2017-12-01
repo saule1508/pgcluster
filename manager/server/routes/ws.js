@@ -190,7 +190,7 @@ wsrouter.ws('/shell', function(ws, req) {
     console.log(`message is ${msg}`);
     let args = getArgsFromString(msg);
     console.log(args);
-    let cmdArgs = ['-o','StrictHostKeyChecking=no','-o','UserKnownHostsFile=/dev/null', `postgres@${args.host}`,'-C'];
+    let cmdArgs = ['-p','222',-o','StrictHostKeyChecking=no','-o','UserKnownHostsFile=/dev/null', `postgres@${args.host}`,'-C'];
     switch (args.action){
       case 'backup': 
         cmdArgs.push('/scripts/backup.sh');

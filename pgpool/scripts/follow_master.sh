@@ -35,7 +35,7 @@ echo PGDATA=${PGDATA}
 if [ $NODEID -eq $OLD_PRIMARY_ID ] ; then
   echo "Do nothing as this is the failed master. We could prevent failed master to restart here, so that we can investigate the issue" | tee -a $LOGFILE
 else
-  ssh_options="ssh -n -T -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+  ssh_options="ssh -p 222 -n -T -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
   set -x
   $ssh_options postgres@${HOSTNAME} "/usr/pgsql-10/bin/repmgr --log-to-file -f /etc/repmgr/10/repmgr.conf -h ${NEW_MASTER_HOST} -D ${PGDATA} -U repmgr -d repmgr standby follow -v "
 fi

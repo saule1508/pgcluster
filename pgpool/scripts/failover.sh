@@ -44,7 +44,7 @@ echo "NEW_PRIMARY_ID: $NEW_PRIMARY_ID"
 echo "NEW_PRIMARY_HOST: $NEW_PRIMARY_HOST"
 echo "NEW_MASTER_PGDATA: $NEW_MASTER_PGDATA"
  
-ssh_options="ssh -n -T -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+ssh_options="ssh -p 222 -n -T -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 set -x
  
 if [ $FALLING_NODE = $OLD_PRIMARY_ID ] ; then

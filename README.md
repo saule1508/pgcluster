@@ -102,17 +102,17 @@ pgpool can also be used in the traditional active/passive node, i.e. the watchdo
 
 The following environment variables are important to properly set-up pgpool
 
-* PGMASTER_NODE_NAME: pg01. Node name of the postgres database. Needed so that the container can query the list of users and build the pool_passwd list
-* PG_BACKEND_NODE_LIST: 0:pg01:9999:1:/u01/pg96/data:ALLOW_TO_FAILOVER, 1:pg02, etc.
+* PG_BACKEND_NODE_LIST: 0:pg01:9999:1:/u01/pg10/data:ALLOW_TO_FAILOVER, 1:pg02, etc.
                 # csv list of backend postgres databases, each backend db contains (separated by :)
-                # number (start with 0):host name:pgpool port (default 9999):data dir (default /u01/pg96/data):flag ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
+                # number (start with 0):host name:pgpool port (default 9999):data dir (default /u01/pg10/data):flag ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
                 # not needed when there is a single postgres DB
 * PGP_NODE_NAME: pgpool01
 * REPMGRPWD: repmgr_pwd (must correspond to the value in postgres of course)
-* DELEGATE_IP: 172.18.0.100 Only if you want the watchdog mode. Note that this watchdog mode does not make a lot of sense inside docker, it is probably better to use the HA functionality of docker swarm
+* DELEGATE_IP: 191.168.1.45/24 for example. Only if you want the watchdog mode. Note that this watchdog mode does not make sense inside a docker swarm cluster, it is probably better to use the HA functionality of docker swarm
+* DELEGATE_IP_INTERFACE: interface on which the delegate ip (the VIP) will be brought on. Default to eth0
 * TRUSTED_SERVERS: 172.23.1.250 When using the watchdog, it helps prevent split-brain. Again not for the normal swarm usage
 * PGP_HEARTBEATS: "0:pgpool01:9694,1:pgpool02:9694" When using the watchdog
-* PGP_OTHERS: "0:pgpool02:9999" The other pgpool nodes, needed for the configuration
+* PGP_OTHERS: "0:pgpool02:9999" on the first pgpool, "0:pgpool01:9999" on the other pgpool. Only in watchdog mode. 
 
 
 ## users and passords
