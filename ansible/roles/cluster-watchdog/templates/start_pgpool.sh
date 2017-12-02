@@ -3,16 +3,16 @@
 # this will start the pgpool container
 
 set -o allexport
-source /etc/pgcluster/pgcluster.conf
+source /etc/pgwatchdog/pgwatchdog.conf
 set +o allexport
 
 docker run -d \
-  --privileged
+  --privileged \
   --net=host \
   -p 9999:9999 \
   -v /tmp:/tmp \
-  -e PG_BACKEND_NODE_LIST=${PG_BACKEND_NODE_LIST}
-  -e DELETEGATE_IP=${DELEGATE_IP} \
+  -e PG_BACKEND_NODE_LIST=${PG_BACKEND_NODE_LIST} \
+  -e DELEGATE_IP=${DELEGATE_IP} \
   -e DELEGATE_IP_INTERFACE=${DELEGATE_IP_INTERFACE} \
   -e TRUSTED_SERVERS=${TRUSTED_SERVERS} \
   -e PGP_HEARBEATS=${PGP_HEARTBEATS} \
@@ -21,4 +21,4 @@ docker run -d \
   -e FAILOVER_MODE=${PGPOOL_FAILOVER_MODE:-automatic} \
   --restart=always \
   --name=pgpool0${NODE_ID} \
-  pgpool:${pgpool_version}
+  {{ docker_url }}pgpool:{{ images.pgpool.tag }}

@@ -77,7 +77,7 @@ wait_for_master(){
  while [ $nbrlines -lt 1 -a $NBRTRY -gt 0 ] ; do
   sleep $SLEEP_TIME
   echo "waiting for repmgr node to be initialized with the master"
-  ssh ${HOST} "psql -U repmgr repmgr -t -c 'select node_name,active from nodes;'" > /tmp/nodes
+  psql -U repmgr -h ${HOST} repmgr -t -c "select node_name,active from nodes;" > /tmp/nodes
   if [ $? -ne 0 ] ; then
     echo "cannot connect to $HOST in psql.."
     nbrlines=0

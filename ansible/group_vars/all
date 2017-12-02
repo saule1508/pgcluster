@@ -2,27 +2,27 @@
 # =======================================================
 storage:
   docker:
-    disk: 'vdb'
+    disk: 'sdb'
     #if the volume group does not exist, it will be created otherwise it will expanded with the disk above
     vg: vg_01
     #this is the size of the lv volume that will be created
     size_gb: "16"
   postgres:
     data:
-      disk: "vdb"
+      disk: "sdb"
       vg: vg_01
       size_gb: "3"
     backup:
-      disk: "vdb"
+      disk: "sdb"
       vg: vg_01
       size_gb: "3"
 
 
 #following variables will inserted in /etc/evs/config
 #those variables can be injected from the commandline, for example via a config file (i.e with the param extra-vars="@<file.yml>")
-ms_list: "{{ mslist | default('asset,ingest,playout') }}"
-ms_ownerpwdlist: "{{ msownerpwdlist | default('asset_owner,ingest_owner,playout_owner') }}"
-ms_userpwdlist: "{{ msuserpwdlist | default('asset_user,ingest_user,playout_user') }}"
+ms_list: "{{ mslist | default('critlib') }}"
+ms_ownerpwdlist: "{{ msownerpwdlist | default('critlib_owner') }}"
+ms_userpwdlist: "{{ msuserpwdlist | default('critlib_user') }}"
 repmgr_pwd: "{{ repmgrpwd | default('rep123') }}"
 #one or more swarm networks will be created
 docker_swarm_networks:

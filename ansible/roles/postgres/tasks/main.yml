@@ -106,9 +106,9 @@
       state: mounted
     when: not (u02_exists.stat.isdir is defined and u02_exists.stat.isdir)
     
-  - name: directory /u01/pg96/data
+  - name: directory /u01/pgxx/data
     file:
-      path: /u01/pg96/data
+      path: "/u01/pg{{ postgres_pg_version }}/data"
       state: directory
       mode: 0700      
       owner: postgres

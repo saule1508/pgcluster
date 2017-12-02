@@ -1,3 +1,4 @@
+postgres_pg_version: 10
 default_images:
   manager:
     tag: "0.1.4"

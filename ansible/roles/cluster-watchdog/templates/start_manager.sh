@@ -3,7 +3,7 @@
 # this will start the manager container
 
 set -o allexport
-source /etc/pgcluster/pgcluster.conf
+source /etc/pgwatchdog/pgwatchdog.conf
 set +o allexport
 
 docker run -d \
@@ -14,4 +14,4 @@ docker run -d \
   -e REPMGRDPWD=${REPMGRDPWD:-rep123} \
   --restart=always \
   --name=manager \
-  manager:${manager_version}
+  {{ docker_url }}manager:{{ images.manager.tag }}

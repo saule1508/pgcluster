@@ -2,6 +2,7 @@
 <service>
   <short>pgcluster</short>
   <description>Ports for postgres and pgpool</description>
+  <port port="222" protocol="tcp"/>
   <port port="5432" protocol="tcp"/>
   <port port="9999" protocol="tcp"/>
   <port port="9898" protocol="tcp"/>
