@@ -1,0 +1,2 @@
+postgres_pg_version: 10
+pgpool_ip_failover_netmask: 24

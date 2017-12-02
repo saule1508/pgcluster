@@ -1,0 +1,60 @@
+---
+
+- hosts: all
+
+  remote_user: vagrant
+  become: yes
+  become_method: sudo
+  vars:
+    docker_url: 192.168.1.39:5000/
+    insecure_registries: ["192.168.1.39:5000"]
+    images: 
+      manager:
+        tag: "0.1.5"
+        id: 41aa6c801612
+        file: "manager.0.1.5.tar"
+        name: "manager"
+      pgpool:
+        tag: "0.5.0"
+        id: "956f1b2dfa2f"
+        file: "pgpool.0.5.0.tar"
+        name: "pgpool"
+      postgres:
+        tag: "0.5.0"
+        id: "bc8a2e178e5e"
+        file: "pg.0.5.0.tar"
+        name: "pg"
+    pgpool_ip_failover: 192.168.122.250
+    pgpool_ip_failover_netmask: 24
+    pgpool_ip_failover_interface: eth0
+    pgpool_trusted_servers: 192.168.1.39
+
+  pre_tasks:
+
+  # let us use a group called cluster if it is not explicitly defined in the inventory file
+  - add_host:
+      name: "{{ item }}"
+      groups: cluster
+    with_items: "{{ groups.all }}"
+    when: groups.cluster is undefined
+    changed_when: false
+    tags: ['init']
+
+  roles:
+    - { role: base, tags: ['init'] }
+    - { role: docker-ce, tags: ['init'] }
+    - { role: postgres, tags: ['init'] }
+    - { role: cluster-watchdog, tags: ['init'] }
+
+  handlers:
+
+    - name: restart firewalld
+      systemd:
+        state: restarted
+        name: firewalld 
+
+    - name: restart docker
+      systemd:
+        state: restarted
+        name: docker
+...

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+  <short>pgcluster</short>
+  <description>Ports for postgres and pgpool</description>
+  <port port="5432" protocol="tcp"/>
+  <port port="9999" protocol="tcp"/>
+  <port port="9898" protocol="tcp"/>
+  <port port="9000" protocol="tcp"/>
+  <port port="9694" protocol="udp"/>
+</service>

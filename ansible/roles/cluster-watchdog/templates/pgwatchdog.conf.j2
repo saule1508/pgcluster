@@ -1,0 +1,34 @@
+NODE_ID={{ groups.cluster.index(inventory_hostname)+1 }}
+PG_NODE_NAME=pg0{{ groups.cluster.index(inventory_hostname)+1 }}
+PGP_NODE_NAME=pgpool0{{ groups.cluster.index(inventory_hostname)+1 }}
+{% if ( (groups.cluster | length) == 1 ) %}
+PG_INITIAL_NODE_TYPE=single
+{% else %}
+PG_INITIAL_NODE_TYPE={{ initial_node_type }}
+{% endif %}
+{% set comma = joiner(",") %}
+PG_BACKEND_NODE_LIST={% for item in groups.cluster[:2] -%} {{ comma() }}{{loop.index-1}}:pg0{{ loop.index }}:5432:1:/u01/pg{{ postgres_pg_version}}/data:ALLOW_TO_FAILOVER
+                     {%- endfor %}
+
+{% set comma = joiner(",") %}
+NODE_LIST={% for item in groups.cluster -%}{{ comma() }}{{ hostvars[item].inventory_hostname }}
+          {%- endfor %}
+DELETEGATE_IP={{ pgpool_ip_failover }}/{{ pgpool_ip_failover_netmask }}
+DELEGATE_IP_INTERFACE={{ pgpool_ip_failover_interface }}
+TRUSTED_SERVERS={{ pgpool_trusted_servers }}
+PGP_HEARBEATS={% for item in groups.cluster[:2] -%} {{ comma() }}{{loop.index-1}}:pgpool0{{ loop.index }}:9694{%- endfor %}
+PGP_OTHERS=0:{% if groups.cluster.index(inventory_hostname) == 0 %}pgpool02{% else %}pgpool02{% endif %}:9999
+
+
+{% set list1 = ms_list.split(',') %}
+{% set list2 = ms_userpwdlist.split(',') %}
+{% set list3 = ms_ownerpwdlist.split(',') %}
+{% for i in list1 %}
+{{ i | upper }}_USER_PWD={{ list2[list1.index(i)] }}
+{{ i | upper }}_OWNER_PWD={{ list3[list1.index(i)] }}
+{% endfor %}
+MSLIST={{ ms_list }}
+MSOWNERPWDLIST={{ ms_ownerpwdlist }}
+MSUSERPWDLIST={{ ms_userpwdlist }}
+REPMGRPWD={{ repmgr_pwd }}
+ARCHIVELOG={{ postgres_archivelog is defined | ternary(postgres_archivelog,1) }}

@@ -1,0 +1,121 @@
+---
+
+  # let us use a group called cluster
+  - add_host:
+      name: "{{ item }}"
+      groups: cluster
+    with_items: "{{ groups.all }}"
+    when: groups.cluster is undefined
+
+  - name: ensure directory /opt/pgwatchdog/bin exists
+    file:
+      path: /opt/pgwatchdog/bin
+      state: directory
+      owner: pgadmin
+      group: pgadmin
+      mode: 0755
+
+  - name: ensure directory /etc/pgwatchdog/bin exists
+    file:
+      path: /etc/pgwatchdog/bin
+      state: directory
+      owner: pgadmin
+      group: pgadmin
+      mode: 0755
+
+  - name: install pgwatchdog.conf
+    template:
+      src: pgwatchdog.conf.j2
+      dest: /etc/pgwatchdog/pgwatchdog.conf
+      owner: pgadmin
+      group: pgadmin
+      mode: 0550
+    vars:
+      initial_node_type: "{{ (inventory_hostname == groups.cluster[0]) | ternary('master','slave') }}"
+
+
+  - name: Add IP address of all hosts in /etc/hosts 
+    lineinfile:
+      dest: /etc/hosts
+      line: "{{ hostvars[item].ansible_default_ipv4.address }} {{ hostvars[item].inventory_hostname }} {{ hostvars[item].inventory_hostname_short }} pg0{{groups.cluster.index(item)+1}} pgpool0{{groups.cluster.index(item)+1}}"
+      state: present
+    with_items: "{{ groups.cluster }}"
+
+  - name: Add pgpool delegate IP address in /etc/hosts 
+    lineinfile:
+      dest: /etc/hosts
+      line: "{{ pgpool_ip_failover }} pgpool"
+      state: present
+    with_items: "{{ groups.cluster }}"
+
+  - name: fetch postgres public ssh key
+    shell: cat /home/postgres/.ssh/id_rsa.pub
+    register: postgres_ssh_keys
+
+  - name: deploy postgres public key to all servers
+    authorized_key: user=postgres key="{{ item[0] }}" state=present
+    delegate_to: "{{ item[1] }}"
+    with_nested:
+      - "{{ postgres_ssh_keys.stdout }}"
+      - "{{ groups['cluster'] }}"
+
+  - name: generate host key file
+    command: "ssh-keyscan -t ecdsa-sha2-nistp256 {{ inventory_hostname }}"
+    register: host_pub_key
+
+#  - debug: var=host_pub_key.stdout
+
+  - name: add to know_hosts of other servers
+    known_hosts:
+      path: /home/postgres/.ssh/known_hosts
+      name: "{{ inventory_hostname }}"
+      key: "{{ host_pub_key.stdout }}"
+    delegate_to: "{{ item }}"
+    when: item != inventory_hostname
+    with_items:
+      - "{{ groups['cluster'] }}"
+
+#  - debug: var=hostvars[item]['ansible_default_ipv4']['address']
+#    with_items: "{{ groups['cluster'] }}"
+
+#  - debug: var=groups['cluster'][0]
+
+  - name: copy start scripts
+    copy:
+      src: "{{ item }}"
+      dest: "/opt/pgwatchdog/bin/{{ item }}"
+      owner: pgadmin
+      group: pgadmin
+      mode: 0754
+    with_items:
+      - start_postgres.sh
+      - start_pgpool.sh
+      - start_manager.sh
+
+  - name: authorized key for manager
+    authorized_key:
+      key: "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAqi1qAUEbO43hrxvi8TCVqGope3LMFhY7OQy+5QpBYsO0Vsz4FIu8qtXiXiX1pLe+5efrc+AJpP/skchnb/IBm7Czi9Gft8jOFRzCZy/CIVL6tocrPhTEr++q3CQ86UjFPtaQDOJGZK2bzfv6MfKy5KeGOevxa8KBEW54SdjSR528LveohqHRj98hoDbVf0+IK2e3zlp9Tp0Q/SrxCAg6CiHGEh8PmL9SshHccLVvX1qsjZbJBBkAtCkuzAju7B4lcxZ/XKqd8BrH9AVcE7X4QgNvXzBDx1ZZghloQKhSjsILzahHAHxesiONJ5C4YtWo0MWJLHDduqod0ZV7l61QCQ== postgres@docker-image"
+      user: root
+      state: present
+
+  - name: install firewalld services
+    copy:
+      src: pgcluster.xml
+      dest: /usr/lib/firewalld/services/pgcluster.xml
+ 
+  - name: reload firewalld
+    systemd:
+      name: firewalld
+      state: reloaded
+
+  
+  - name: activate firewalld services
+    firewalld:
+      service: pgcluster
+      state: enabled
+    notify:
+      - restart firewalld
+      - restart docker
+
+
+...
