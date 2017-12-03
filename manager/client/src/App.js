@@ -3,18 +3,19 @@ import React, { Component } from 'react';
 //import 'bootstrap/dist/css/bootstrap.css';
 import './styles/styles.css'
 import Header from './Header'
-import Home from './dash/components/Home.js'
+import DashHome from './dash/components/Home.js'
 import DockerHome from './docker/components/DockerHome.js'
 import PostgresHome from './postgres/components/PostgresHome.js'
-import { Switch, Route } from 'react-router-dom'
+import { Switch, Route, Redirect } from 'react-router-dom'
 
 
 const Main = () => (
   <main>
-    <Switch>
-      <Route exact path='/' component={Home}/>
-      <Route path='/docker' component={DockerHome} />
+    <Switch> 
+      <Route exact path='/' component={PostgresHome}/>
       <Route path='/postgres' component={PostgresHome}/>
+      <Route path='/docker' component={DockerHome} />
+      <Route path='/dash' component={DashHome}/>
     </Switch>
   </main>
 )

@@ -4,8 +4,8 @@ import ConnectedStatus from '../../shared/components/ConnectedStatus'
 const Backend = ( {backend} ) => {
 	//console.log(backend);
 	let color= backend.active  ? '#89C35C' : 'red';
-  let strokeW = backend.type === 'master' ? 5 : 2;
-	let strokeC = backend.type === 'master' ? 'blue' : 'grey';
+  let strokeW = backend.type === 'primary' ? 5 : 2;
+	let strokeC = backend.type === 'primary' ? 'blue' : 'grey';
 
 	return (
 		<svg width="180" height="100">
