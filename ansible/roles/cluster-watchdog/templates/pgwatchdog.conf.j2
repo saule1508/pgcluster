@@ -14,7 +14,7 @@ PG_BACKEND_NODE_LIST={% for item in groups.cluster[:2] -%} {{ comma() }}{{loop.i
 NODE_LIST={% for item in groups.cluster -%}{{ comma() }}{{ hostvars[item].inventory_hostname }}
           {%- endfor %}
 
-DELETEGATE_IP={{ pgpool_ip_failover }}/{{ pgpool_ip_failover_netmask }}
+DELEGATE_IP={{ pgpool_ip_failover }}/{{ pgpool_ip_failover_netmask }}
 DELEGATE_IP_INTERFACE={{ pgpool_ip_failover_interface }}
 TRUSTED_SERVERS={{ pgpool_trusted_servers }}
 
