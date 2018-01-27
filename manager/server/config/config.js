@@ -11,7 +11,7 @@ let pg = dbs.map((el)=>{
 module.exports = {
 	pg: pg,
 	pgp: {
-		'host': process.env.DBHOST || 'pgpool',
+		'host': process.env.DBHOST || 'pgpool01',
 		'port': 9999,
 		'user': 'repmgr',
 		'password': process.env.REPMGRPWD || 'rep123',

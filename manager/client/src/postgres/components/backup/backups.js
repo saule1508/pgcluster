@@ -72,7 +72,7 @@ class Backup extends Component {
     this.props.fetchBackups();
   }
 
-  onClickRestore(buname,host,action,butype,evt){
+  onClickRestore(buname,host,evt){
     evt.preventDefault();
     if (this.state.processing){
       return;

@@ -1,7 +1,7 @@
 version: '3.2'
 services:
   pg01:
-    image: pg:0.4.1
+    image: pg:0.5.0
     environment:
       INITIAL_NODE_TYPE: master
       NODE_ID: 1
@@ -21,7 +21,7 @@ services:
     networks:
       - pgcluster_network
   pg02:
-    image: pg:0.4.1
+    image: pg:0.5.0
     environment:
       INITIAL_NODE_TYPE: slave
       NODE_ID: 2
@@ -43,7 +43,7 @@ services:
     depends_on:
       - pg01
   pgpool01:
-    image: pgpool:0.4.1
+    image: pgpool:0.5.0
     ports:
       - 9999:9999
     environment:
@@ -75,6 +75,7 @@ services:
     environment:
       PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER,1:pg02:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER
       REPMGRPWD: rep123
+      DBHOST: pgpool01
     networks:
       - pgcluster_network
     volumes:

@@ -80,7 +80,7 @@ class Repl extends Component{
 		let content = this.props.repl_nodes.map((el,idx)=>{
 
 			return(
-				<Backend key={el.id} backend={el} />
+				<Backend key={el.node_id} backend={el} />
 			)
 		});
 		

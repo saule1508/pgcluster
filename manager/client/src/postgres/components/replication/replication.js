@@ -23,13 +23,13 @@ class Replication extends Component {
             <PgpoolContainer />
           </div>
         </div>
-      
+        
         <div className="row" style={{'marginBottom': 20,'marginTop': 20}}>  
           <div className="col-md-12">
             <ReplicationStatsContainer />
           </div>                
         </div>
-        
+      
       </div>
 
     )

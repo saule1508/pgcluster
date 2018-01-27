@@ -32,7 +32,8 @@ class PostgresHome extends Component{
       <div>
         <h2>Postgres</h2>
         <Header />
-        <Redirect from="/" exact to="/postgres/replication" />
+        <Redirect from="/" to="/postgres/replication" />
+        <Route exact path="/postgres" component={Replication} />
         <Route path='/postgres/stat_activity' component={StatActivityContainer} /> 
         <Route path='/postgres/backup' exact={false} component={Backup} />
         <Route path='/postgres/replication' exact={false} component={Replication} />      
