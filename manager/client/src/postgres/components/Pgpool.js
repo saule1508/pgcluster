@@ -5,19 +5,19 @@ import ConnectedStatus from '../../shared/components/ConnectedStatus'
 const Backend = ( {backend} ) => {
 
 	let color= backend.status === 'up' || backend.status === 'waiting' ? '#89C35C' : 'red';
-  let strokeW = backend.role === 'primary' ? 5 : 2;
+  let strokeW = backend.role === 'primary' ? 3 : 2;
 	let strokeC = backend.role === 'primary' ? 'blue' : 'grey';
 
 	return (
-		<svg width="180" height="100">
+		<svg width="135" height="100">
 			
-			<rect width={160} height={100} style={{fill : color,strokeWidth: strokeW, stroke: strokeC}} />
-			<text x={40} y={20} style={{fontSize: '110%'}} fill={strokeC}>** {backend.role} **</text>
-			<text x={10} y={40} style={{fontSize: '80%'}} fill='black'>
+			<rect width={130} height={100} style={{fill : color,strokeWidth: strokeW, stroke: strokeC}} />
+			<text x={20} y={20} style={{fontSize: '110%'}} fill={strokeC}>** {backend.role} **</text>
+			<text x={5} y={40} style={{fontSize: '80%'}} fill='black'>
 				ID: {backend.node_id} - Host:{backend.hostname} 
-				<tspan x={10} y={60}>State:{backend.status}</tspan>
-        <tspan x={10} y={70}>Select count: {backend.select_cnt}</tspan>
-				<tspan x={10} y={80}>Load balance node? {backend.load_balance_node}</tspan>
+				<tspan x={5} y={60}>State:{backend.status}</tspan>
+        <tspan x={5} y={70}>Select count: {backend.select_cnt}</tspan>
+				<tspan x={5} y={80}>Load balance? {backend.load_balance_node}</tspan>
 			</text>
 		</svg>
 	)

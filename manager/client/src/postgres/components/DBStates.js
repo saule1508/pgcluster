@@ -7,9 +7,9 @@ const Backend = ( {backend} ) => {
 	let color= backend.status === 'green'  ? '#89C35C' : 'red';
 
 	return (
-		<svg width="180" height="100">
+		<svg width="120" height="100">
 			
-			<rect width={160} height={100} style={{fill : color}} />
+			<rect width={110} height={100} style={{fill : color}} />
 			<text x={10} y={40} style={{fontSize: '80%'}} fill='black'>
 				ID: {backend.idx} - Host: {backend.host}
         <tspan x={10} y={60}>
