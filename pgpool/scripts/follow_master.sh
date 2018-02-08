@@ -7,7 +7,7 @@ if [ ! -d /var/log/pg ] ; then
  sudo mkdir -p /var/log/pg
  sudo chown postgres:postgres /var/log/pg
 fi
-LOGFILE=/var/log/pgfollow_master.log
+LOGFILE=/var/log/pg/follow_master.log
 if [ ! -f $LOGFILE ] ; then
  > $LOGFILE
 fi

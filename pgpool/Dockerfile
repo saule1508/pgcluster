@@ -1,11 +1,12 @@
 FROM centos:latest
 MAINTAINER ptim007@yahoo.com
 ENV PGVER=10
-RUN yum update -y ; yum clean all
+RUN yum update -y ; yum clean all ; rm -rf /var/cache/yum
 RUN groupadd -g 50010 postgres && useradd -u 50010 -g postgres postgres 
 RUN usermod -G wheel -a postgres && echo "postgres" | passwd --stdin postgres
 RUN yum install -y https://download.postgresql.org/pub/repos/yum/10/redhat/rhel-7-x86_64/pgdg-centos10-10-2.noarch.rpm
-RUN yum install -y pgpool-II-${PGVER} pgpool-II-${PGVER}-extensions pgpool-II-${PGVER}-debuginfo epel-release sudo vi openssh openssh-clients iproute; yum clean all
+RUN yum install -y pgpool-II-${PGVER} pgpool-II-${PGVER}-extensions pgpool-II-${PGVER}-debuginfo epel-release sudo vi openssh openssh-clients iproute ; \
+     yum clean all ; rm -rf /var/cache/yum
 # postgres can do sudo
 RUN echo "Defaults:postgres !requiretty" > /etc/sudoers.d/postgres && \
     echo "postgres ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/postgres

@@ -433,23 +433,6 @@ delay_threshold = 10000000
                                    # Unit is in bytes
                                    # Disabled (0) by default
 
-# - Special commands -
-
-follow_master_command = '/scripts/follow_master.sh %d %h %m %p %H %M %P'
-                                   # Executes this command after master failover
-                                   # Special values:
-                                   #   %d = node id
-                                   #   %h = host name
-                                   #   %p = port number
-                                   #   %D = database cluster path
-                                   #   %m = new master node id
-                                   #   %H = hostname of the new master node
-                                   #   %M = old master node id
-                                   #   %P = old primary node id
-                                                                   #   %r = new master port number
-                                                                   #   %R = new master database cluster path
-                                   #   %% = '%' character
-
 #------------------------------------------------------------------------------
 # HEALTH CHECK
 #------------------------------------------------------------------------------
@@ -510,11 +493,26 @@ failback_command = 'echo failback %d %h %p %D %m %H %M %P'
                                                                    #   %r = new master port number
                                                                    #   %R = new master database cluster path
                                    #   %% = '%' character
+follow_master_command = '/scripts/follow_master.sh %d %h %m %p %H %M %P'
+                                   # Executes this command after master failover
+                                   # Special values:
+                                   #   %d = node id
+                                   #   %h = host name
+                                   #   %p = port number
+                                   #   %D = database cluster path
+                                   #   %m = new master node id
+                                   #   %H = hostname of the new master node
+                                   #   %M = old master node id
+                                   #   %P = old primary node id
+                                                                   #   %r = new master port number
+                                                                   #   %R = new master database cluster path
+                                   #   %% = '%' character
 EOF
 else 
   cat <<EOF >> $CONFIG_FILE
 failover_command = ''
 failback_command = '' 
+follow_master_command = '' 
 EOF
 fi
 
