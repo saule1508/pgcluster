@@ -115,10 +115,6 @@ class Backup extends Component {
 
   onSubmitRestore(buname, host, to_host, force, butype = "backup") {
     if (!this.state.processing) {
-      console.log(
-        `lets restore ${buname} on ${host} to ${to_host} type is ${butype} with force = ${force}`
-      );
-
       this.setState({
         restoreModalVisible: false,
         processing: true,
