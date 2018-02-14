@@ -3,7 +3,7 @@
 DOCKER_REGISTRY=192.168.1.54:5000
 
 THISDIR=`pwd`
-NOCACHE=false
+NOCACHE=true
 APPNAME=manager
 
 BRANCH=${1:-develop}
