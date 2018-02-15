@@ -1,7 +1,7 @@
 FROM centos:7
 MAINTAINER p.timmermans@evs.com
 ENV MAJORVER=10
-ENV MINORVER=1
+ENV MINORVER=2
 ENV PGVER=10
 ENV docker=yes
 RUN yum update -y ; yum clean all

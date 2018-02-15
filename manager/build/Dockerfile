@@ -13,8 +13,8 @@ RUN cd /opt/server && yarn install --production=true
 RUN mv /opt/server /opt/manager
 ADD client /tmp/client
 RUN cd /tmp/client && yarn install 
-RUN find /tmp/client/src -name "*.js" -exec sed -i -e "s/ console.log/ \/\/console.log/" {} \; && \
-    find /tmp/client/src -name "*.js" -exec sed -i -e "s/^console.log/\/\/console.log/" {} \;
+#RUN find /tmp/client/src -name "*.js" -exec sed -i -e "s/ console.log/ \/\/console.log/" {} \; && \
+#    find /tmp/client/src -name "*.js" -exec sed -i -e "s/^console.log/\/\/console.log/" {} \;
 RUN cd /tmp/client && yarn run prebuild-css && yarn build-css && yarn build
 RUN mv /tmp/client/build /opt/manager/app
 
