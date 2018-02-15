@@ -38,5 +38,9 @@ else
   ssh_options="ssh -p 222 -n -T -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
   set -x
   $ssh_options postgres@${HOSTNAME} "/usr/pgsql-10/bin/repmgr --log-to-file -f /etc/repmgr/10/repmgr.conf -h ${NEW_MASTER_HOST} -D ${PGDATA} -U repmgr -d repmgr standby follow -v "
+  echo "Sleep 5"
+  sleep 5
+  echo "Attach node ${NODEID}"
+  pcp_attach_node -h localhost -p 9898 -w ${NODEID}
 fi
 ) 2>&1 | tee -a $LOGFILE
