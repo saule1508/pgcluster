@@ -8,4 +8,5 @@
   <port port="9898" protocol="tcp"/>
   <port port="9000" protocol="tcp"/>
   <port port="9694" protocol="udp"/>
+  <port port="8081" protocol="tcp"/>
 </service>

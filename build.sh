@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DOCKER_REGISTRY=192.168.1.39:5000
+DOCKER_REGISTRY=192.168.1.57:5000
 VER=`cat version.txt`
 
 # remove volumes so we start from scratch

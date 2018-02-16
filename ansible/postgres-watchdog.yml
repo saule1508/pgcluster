@@ -6,8 +6,8 @@
   become: yes
   become_method: sudo
   vars:
-    docker_url: 192.168.1.54:5000/
-    insecure_registries: ["192.168.1.54:5000"]
+    docker_url: 192.168.1.57:5000/
+    insecure_registries: ["192.168.1.57:5000"]
     images: 
       manager:
         tag: "0.1.5"

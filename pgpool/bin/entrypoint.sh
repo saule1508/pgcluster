@@ -684,7 +684,6 @@ do
     echo "
 other_pgpool_hostname$NUM = '$HOST'
 other_pgpool_port$NUM = $PGP_PORT
-other_pgpool_port$NUM = $PGP_PORT
 other_wd_port$NUM = $WD_PORT
 " >> $CONFIG_FILE
 done
