@@ -81,7 +81,7 @@
 
 #  - debug: var=groups['cluster'][0]
 
-  - name: copy start scripts
+  - name: copy start/stop scripts
     template:
       src: "{{ item }}"
       dest: "/opt/pgwatchdog/bin/{{ item }}"
@@ -92,6 +92,11 @@
       - start_postgres.sh
       - start_pgpool.sh
       - start_manager.sh
+      - start_all.sh
+      - stop_postgres.sh
+      - stop_pgpool.sh
+      - stop_manager.sh
+      - stop_all.sh
 
   - name: authorized key for manager
     authorized_key:

@@ -733,6 +733,6 @@ check_unlogged_table = on
 memory_cache_enabled = off
 EOF
 
-rm -f /var/run/pgpool/pgpool.pid /var/run/pgpool/.s.PGSQL.9999 2>/dev/null
+rm -f /var/run/pgpool/pgpool.pid /var/run/pgpool/.s.PGSQL.9999 /var/run/pgpool/.s.PGSQL.9898 2>/dev/null
 echo "Start pgpool in foreground"
-/usr/bin/pgpool -f ${CONFIG_FILE} -n
+exec /usr/bin/pgpool -f ${CONFIG_FILE} -n
