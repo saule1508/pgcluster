@@ -5,9 +5,10 @@ import {
   FETCH_REPLICATION_STATS_REQUEST, FETCH_REPLICATION_STATS_FAILURE, FETCH_REPLICATION_STATS_SUCCESS,
   FETCH_PGPOOL_REQUEST, FETCH_PGPOOL_FAILURE, FETCH_PGPOOL_SUCCESS,
   FETCH_REPL_REQUEST, FETCH_REPL_FAILURE, FETCH_REPL_SUCCESS,
+  FETCH_PGPOOL_WATCHDOG_REQUEST,FETCH_PGPOOL_WATCHDOG_SUCCESS,FETCH_PGPOOL_WATCHDOG_FAILURE,
   FETCH_STAT_ACTIVITY_REQUEST,FETCH_STAT_ACTIVITY_FAILURE,FETCH_STAT_ACTIVITY_SUCCESS } from '../actions'
 
-import {FETCH_BACKUPS_REQUEST, FETCH_BACKUPS_FAILURE, FETCH_BACKUPS_SUCCESS } from '../actions'
+  import {FETCH_BACKUPS_REQUEST, FETCH_BACKUPS_FAILURE, FETCH_BACKUPS_SUCCESS } from '../actions'
 
 
 const REPL_NODES_INITIAL_STATE = {
@@ -32,6 +33,18 @@ const REPLICATION_STATS_INITIAL_STATE = {
   rows: [],
   error: null,
   timeStamp: null
+}
+const PGPOOL_WATCHDOG_INITIAL_STATE = {
+  timeStamp: null,
+  loading: false,
+  error: null,
+  total_nodes: null,
+  remote_nodes: null,
+  quorum_state: null,
+  node_fetched_from: null,
+  vip_up_on_local_node: null,
+  master_host_name: null,
+  nodes: []
 }
 
 export const getDBStatesSorted = ( state ) => {
@@ -183,6 +196,22 @@ let backups = (state = {loading: false, error: null, data: {}}, action) => {
   }
 }
 
+let pgpool_watchdog = (state = PGPOOL_WATCHDOG_INITIAL_STATE, action) => {
+  switch (action.type) {
+    case FETCH_PGPOOL_WATCHDOG_REQUEST:
+      return Object.assign({},state, {'loading': true});
+    case FETCH_PGPOOL_WATCHDOG_FAILURE:
+      return Object.assign({},state, {'loading': false, 'error': action.payload});
+    case FETCH_PGPOOL_WATCHDOG_SUCCESS:
+      return Object.assign({},state, 
+        {'loading': false, 
+         'error': null, 
+         ...action.payload});
+    default:
+      return state;
+  }
+}
+
 
 export default combineReducers({
   pool_nodes: pool_nodes,
@@ -190,5 +219,6 @@ export default combineReducers({
   stat_activity: stat_activity,
   replication_stats: replication_stats,
   dbstates: dbstates,
+  pgpool_watchdog: pgpool_watchdog,
   backups: backups
 })

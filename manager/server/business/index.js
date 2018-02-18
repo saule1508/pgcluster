@@ -91,13 +91,26 @@ const getPgpoolWDStatusFromDB = dbhost => {
     });
   });
 };
-/*
-module.exports = {
-  getPgpoolWDStatus: getBackups
+
+const getPgpoolWDStatus = async () => {
+  const dblist = require("../config/config.js").pg;
+  let response;
+  let done = false;
+  for (var i=0; i<dblist.length && ! done;i++){
+    try {
+      let result = await getPgpoolWDStatusFromDB(dblist[i].host);
+      done=true;
+      result.node_fetched_from = dblist[i].host;
+      response = result;
+    } catch (e){
+      console.log(e);
+      response = e;
+    }
+  }
+  return response;
 }
-*/
 
 module.exports = {
   bus_health: bus_health,
-  getPgpoolWDStatusFromDB: getPgpoolWDStatusFromDB
+  getPgpoolWDStatus: getPgpoolWDStatus
 };
