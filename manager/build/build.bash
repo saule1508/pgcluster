@@ -1,9 +1,9 @@
 #!/bin/bash
 #set -x
-DOCKER_REGISTRY=192.168.1.54:5000
+DOCKER_REGISTRY=192.168.1.57:5000
 
 THISDIR=`pwd`
-NOCACHE=true
+NOCACHE=false
 APPNAME=manager
 
 BRANCH=${1:-develop}
@@ -18,7 +18,6 @@ rm -rf client/node_modules server/node_modules
 docker build --no-cache=${NOCACHE} --file Dockerfile -t ${APPNAME}:${VERSION} .
 if [ $? -eq 0 ] ;  then
  docker tag ${APPNAME}:${VERSION} $DOCKER_REGISTRY/${APPNAME}:${VERSION}
- docker pull $DOCKER_REGISTRY/${APPNAME}:${VERSION}
- 
+ docker push $DOCKER_REGISTRY/${APPNAME}:${VERSION}
 fi
 rm -rf server client 2>/dev/null

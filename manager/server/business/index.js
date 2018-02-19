@@ -63,7 +63,7 @@ const getPgpoolWDStatusFromDB = dbhost => {
       "UserKnownHostsFile=/dev/null",
       `postgres@${dbhost}`,
       "-C",
-      "/usr/pgpool-10/bin/pcp_watchdog_info",
+      "pcp_watchdog_info",
       "-h",
       "pgpool",
       "-p",

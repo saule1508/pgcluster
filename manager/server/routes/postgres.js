@@ -80,29 +80,18 @@ router.get("/backups", (req, res) => {
 });
 
 router.get("/pgp_watchdog", (req, res) => {
-  const dblist = require("../config/config.js").pg;
-  const getPgpoolWDStatusFromDB = require("../business/index")
-    .getPgpoolWDStatusFromDB;
+  const getPgpoolWDStatus = require("../business/index").getPgpoolWDStatus;
   let result;
   let response;
   let done = 0;
 
-  dblist.some((el, idx) => {
-    console.log("doing " + el.host);
-    result = getPgpoolWDStatusFromDB(el.host)
-      .then(data => {
-        console.log("then for " + el.host);
-        if (!done) {
-          done++;
-          return res.status(200).send(data);
-        }
-      })
-      .catch(error => {
-        if (done === dblist.length) {
-          return res.status(500).send(error);
-        }
-      });
-  });
+  result = getPgpoolWDStatus()
+    .then(data => {
+      return res.status(200).send(data);
+    })
+    .catch(error => {
+      return res.status(500).send(error);
+    });
 });
 
 module.exports = router;
