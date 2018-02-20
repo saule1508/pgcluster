@@ -16,7 +16,8 @@ const PgpoolNode = ( {idx, host_name,delegate_ip,status_name} ) => {
           <tr>
             <td>Delegate IP</td><td>{delegate_ip}</td>
           </tr>
-          <tr className={status_name === 'MASTER' ? 'success' : ''}>
+          <tr className={status_name === 'MASTER' ? 'success' : 
+            status_name === 'SHUTDOWN' ? 'danger' : ''}>
             <td>Status</td><td>{status_name}</td>
           </tr>
         </tbody>
@@ -41,7 +42,15 @@ class PgpoolWatchDog extends Component {
   }
 
   render() {
-    console.log(this.props.pgpool_watchdog);
+    let nodeSorted = this.props.pgpool_watchdog.nodes.sort((a,b)=>{
+      if (a.host_name < b.host_name){
+        return -1;
+      }
+      if (a.host_name > b.host_name){
+        return 1;
+      }
+      return 0
+    })
     return (
       <div className="panel panel-default">
         <div className="panel-heading">
@@ -51,9 +60,8 @@ class PgpoolWatchDog extends Component {
           Master: {this.props.pgpool_watchdog.master_host_name}
           <br/>Quorum: {this.props.pgpool_watchdog.quorum_state} 
           <br/>VIP up on local node: {this.props.pgpool_watchdog.vip_up_on_local_node} 
-            (local node: {this.props.pgpool_watchdog.node_fetched_from})
           <div className="row">
-            {this.props.pgpool_watchdog.nodes.map((el,idx)=>{
+            {nodeSorted.map((el,idx)=>{
               return (
               <PgpoolNode key={el.idx} {...el} />)
             })}
