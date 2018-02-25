@@ -2,7 +2,11 @@
 
 Postgres streaming replication with pgpool and/or repmgr for the automated failover and docker swarm for the failover of pgpool. The postgres image contains a ssh server, repmgr and supervisord. Postgres is replicated with streaming replication and repmgr on top of it.
 
-This set-up is designed for a docker swarm: therefore there is one pgpool instance running (no watchdog) and it is made high available via swarm. When pgpool starts it rebuilds the node availability (file /tmp/pgpool_status) by looking at repmgr's repl_nodes table. Also each of the postgres service (pg01 and pg02) is sticky to one docker swarm node, via this configuration item in the docker-compose file
+This set-up is designed for a docker swarm: therefore there is one pgpool instance running (no watchdog) and it is made high available via swarm. When pgpool starts it rebuilds the node availability (file /tmp/pgpool_status) by looking at repmgr's repl_nodes table. 
+
+If you are interested by the more classical pgpool setup in watchdog mode, then it is documented in doc/pgpoolwatchdog.md. In pgpool watchdog mode there are two nodes, postgres is made HA via streaming replication and pgpool itself is made HA via the watchdog functionality, based on a virtual IP
+
+Also each of the postgres service (pg01 and pg02) is sticky to one docker swarm node, via this configuration item in the docker-compose file
 
 ```
    deploy:

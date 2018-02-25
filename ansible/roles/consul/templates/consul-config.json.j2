@@ -1,15 +1,15 @@
 {
      {% if single_machine != true %}
        {% set comma = joiner(",") %}
-       "retry-join": {% for item in groups['cluster'] %}
-                        {{ comma() }}{{ groups.consul[item].ansible_default_ipv4.address }}
+       "retry-join": {% for item in groups['consul'] %}
+                        {{ comma() }}{{ hostvars[item]['consul_advertise_address'] }}
                      {% endfor %}
      {% else %}
      "bootstrap": true,
      {% endif %}
 
     "server": true,
-    "advertise_addr": "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}",
+    "advertise_addr": "{{ consul_advertise_address }}",
     "bind_addr": "0.0.0.0",
     "addresses": {
         "http": "0.0.0.0",
@@ -19,6 +19,5 @@
         "dns": 53,
         "http": 80
     },
-    "data_dir": "/var/consul",
-    "recursor": "{{ dns_recursor }}"
+    "data_dir": "/var/consul"
 }

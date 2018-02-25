@@ -1,7 +1,4 @@
 ---
-  # copied over from euranova MVP - to be documented and improved
-
-  - debug: var=consul_ver
 
   # let us use a group called consul
   - add_host:
@@ -20,7 +17,7 @@
       single_machine: false
     when: "{{ groups['consul'] | length }} > 1"
 
-  - debug: var=single_machine
+  - debug: var=groups['consul']
 
   - name: consul - install unzip
     yum:
@@ -103,9 +100,7 @@
     vars:
       bootstrap: "{{ consul_bootstrap_server | ternary('true', 'false') }}"
       #join_server: "{{ consul_bootstrap_server | ternary('', consul_join_server) }}"
-      #advertise_addr: "{{ consul_advertise_address }}"
-      # TODO : use best local DNS resolv rather than google.
-      dns_recursor: "8.8.8.8"
+      advertise_addr: "{{ consul_advertise_address }}"
 
 #  - name: consul - start service
 #    service: name=consul state=restarted

@@ -6,8 +6,8 @@
   become: yes
   become_method: sudo
   vars:
-    docker_url: 192.168.1.57:5000/
-    insecure_registries: ["192.168.1.57:5000"]
+    docker_url: 192.168.1.39:5000/
+    insecure_registries: ["192.168.1.39:5000"]
     images: 
       manager:
         tag: "0.1.5"
@@ -24,10 +24,10 @@
         id: "bc8a2e178e5e"
         file: "pg.0.5.0.tar"
         name: "pg"
-    pgpool_ip_failover: 172.22.1.250
+    pgpool_ip_failover: 192.168.122.250
     pgpool_ip_failover_netmask: 24
-    pgpool_ip_failover_interface: eth1
-    pgpool_trusted_servers: 192.168.1.54
+    pgpool_ip_failover_interface: eth0
+    pgpool_trusted_servers: 192.168.1.39
 
   pre_tasks:
 
@@ -45,6 +45,7 @@
     - { role: docker-ce, tags: ['init'] }
     - { role: postgres, tags: ['init'] }
     - { role: cluster-watchdog, tags: ['init'] }
+    #- { role: consul } must be improved
 
   handlers:
 
@@ -57,4 +58,9 @@
       systemd:
         state: restarted
         name: docker
+
+    - name: restart consul
+      systemd:
+        state: restarted
+        name: consul
 ...
