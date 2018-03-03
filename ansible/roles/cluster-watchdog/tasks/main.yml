@@ -15,9 +15,9 @@
       group: pgadmin
       mode: 0755
 
-  - name: ensure directory /etc/pgwatchdog/bin exists
+  - name: ensure directory /etc/pgwatchdog exists
     file:
-      path: /etc/pgwatchdog/bin
+      path: /etc/pgwatchdog
       state: directory
       owner: pgadmin
       group: pgadmin
