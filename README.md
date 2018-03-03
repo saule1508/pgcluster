@@ -6,13 +6,15 @@ The postgres image contains a ssh server, repmgr and supervisord. Postgres is re
 
 There are two different ways to use those docker images:
 
-* In a docker swarm: in this case there is one pgpool instance running (no watchdog) and it is made high available via swarm. When pgpool starts it rebuilds the node availability (file /tmp/pgpool_status) by looking at repmgr's repl_nodes table. 
+* In a docker swarm: in this case there is one pgpool instance running (no watchdog) and it is made high available via swarm. When pgpool starts it rebuilds the node availability (file /tmp/pgpool_status) by looking at repmgr's nodes table. 
 
 * The more classical pgpool setup in watchdog mode is documented in [pgpool watchdog](doc/pgpoolwatchdog.md). In pgpool watchdog mode there are two nodes, postgres is made HA via streaming replication and pgpool itself is made HA via the watchdog functionality, based on a virtual IP. postgres, pgpool and the monitoring tool all run in docker but not in a swarm.
 
+In both case some ansible scripts are available to automated the deployment on two or three virtual machines (centos 7).
+
 The rest of this README is for the docker swarm scenario.
 
-In the swarm, each of the postgres service (pg01 and pg02) is sticky to one docker swarm node, this is needed because the database is stored on the host. This stickyness is done via the docker-compose file
+In the swarm, each of the postgres service (pg01 and pg02 and pg03) is sticky to one docker swarm node, this is so because those service are statefull as the data is stored on the host. This stickyness is done via the docker-compose file
 
 ```
    deploy:
