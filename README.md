@@ -1,10 +1,14 @@
-# cl-pg-cluster
+# pg-cluster
 
-Postgres streaming replication with pgpool and/or repmgr for the automated failover and docker swarm for the failover of pgpool. The postgres image contains a ssh server, repmgr and supervisord. Postgres is replicated with streaming replication, repmgr is used because it brings well documented and tested scripting and it adds some metadata about the cluster that ease monitoring. repmgr can be used to automated the postgres failover (via repmgrd) or this can be done by pgpool. There is a graphical monitoring/operational interface available.
+Postgres streaming replication with pgpool and/or repmgr for the automated failover and docker swarm for the failover of pgpool. 
 
-This set-up is designed for a docker swarm: therefore there is one pgpool instance running (no watchdog) and it is made high available via swarm. When pgpool starts it rebuilds the node availability (file /tmp/pgpool_status) by looking at repmgr's repl_nodes table. 
+The postgres image contains a ssh server, repmgr and supervisord. Postgres is replicated with streaming replication, repmgr is used because it brings well documented and tested scripts and it adds some metadata about the cluster that ease monitoring. Automatic failover of postgres can be done either by repmgr (repmgrd) or by pgpool. There is a graphical monitoring/operational interface available (written in nodejs / react).
 
-If you are interested by the more classical pgpool setup in watchdog mode, then it is documented in doc/pgpoolwatchdog.md. In pgpool watchdog mode there are two nodes, postgres is made HA via streaming replication and pgpool itself is made HA via the watchdog functionality, based on a virtual IP
+There are two different ways to use those docker images:
+
+* In a docker swarm: in this case there is one pgpool instance running (no watchdog) and it is made high available via swarm. When pgpool starts it rebuilds the node availability (file /tmp/pgpool_status) by looking at repmgr's repl_nodes table. 
+
+* The more classical pgpool setup in watchdog mode is documented in [pgpool watchdog](doc/pgpoolwatchdog.md). In pgpool watchdog mode there are two nodes, postgres is made HA via streaming replication and pgpool itself is made HA via the watchdog functionality, based on a virtual IP. postgres, pgpool and the monitoring tool all run in docker but not in a swarm.
 
 The rest of this README is for the docker swarm scenario.
 
