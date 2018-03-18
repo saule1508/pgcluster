@@ -6,7 +6,11 @@ Provisioning of the two nodes can be done via the ansible playbook postgres-watc
 
 ## provisioning
 
-To provision the set-up one need two Centos 7 servers.
+To provision the set-up via ansible one need two Centos 7 servers, any other linux distrubution will work but the provisioning must be adapted or done manually.
+
+Basically the provisioning is about installing the three docker images (you must build the docker images and then transfer them to the servers either via a tar or via a registry), installing start scripts (start_postgres.sh, start_pgpool.sh, start_manager.sh) and installing configuration files. The configuration file is installed in /etc/pgwatchdog/pgwatchdog.conf but take care that /etc/hosts must also be adapted (the names pg01, pg02, pgpool01, pgpool02 and pgpool must be resolvable)
+
+It is easy to provision the two servers with ansible if you have Centos servers (or VM's). You need an ansible inventory file that contains the IP of the servers and some variables defined in the playbook must be adapted to your own case.
 
 the inventory file looks like that on my set-up (call pgwatchdog.inventory)
 
@@ -20,6 +24,7 @@ for this to work one need on each host a user called ansible with passwordless s
 
 ```
 ssh-copy-id ansible@192.168.122.146
+ssh-copy-id ansible@192.168.122.209
 ```
 Once the servers are ready (one need a Centos 7 base install on each server beside the ansible user with sudo access), you can run the playbook
 
@@ -29,6 +34,7 @@ ansible-playbook -i pgwatchdog.inventory postgres-watchdog.yml
 
 variables needed for the provisioning are specified in the playbook, there are variables related to the docker registry where the images are available, the version of the images and the configuration of the pgpool watchdog mode (VIP information)
 
+NB: in order to load the docker images on the provisioned server, the ansible scripts will pull them from a remote registry (it can typically be on your desktop, where you have built the images). This requires that insecure_registry is set on the remote servers which ansible will attempt to do.
 ## configuration
 
 Once the playbook has run the configuration information is stored in the following files
@@ -52,6 +58,9 @@ NODE_LIST=pgcluster01,pgcluster02
 DELEGATE_IP=192.168.122.250/24
 DELEGATE_IP_INTERFACE=eth0
 TRUSTED_SERVERS=192.168.1.39
+
+FAILOVER_MODE=manual
+REPMGRD_FAILOVER_MODE=manual
 
 PGP_HEARTBEATS=0:pgpool01:9694,1:pgpool02:9694
 PGP_OTHERS=0:pgpool02:9999
