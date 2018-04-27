@@ -1,5 +1,3 @@
 #!/bin/bash
 
-source /scripts/lib/pg_utils.sh
-
-pg_ctl stop --mode=fast
+sudo supervisorctl stop postgres

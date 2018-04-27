@@ -1,0 +1,43 @@
+version: '3.2'
+services:
+  pg01:
+    image: pg:0.4.0
+    environment:
+      INITIAL_NODE_TYPE: master
+      NODE_ID: 1
+      NODE_NAME: pg01
+      MSLIST: "asset,ingest,playout" 
+              # for each micro-service two db users are created, for ex. asset_owner and asset_user, etc.
+      MSOWNERPWDLIST: "asset_owner,ingest_owner,playout_owner"
+      MSUSERPWDLIST: "asset_user,ingest_user,playout_user"
+      REPMGRPWD: rep123
+      PGMASTER: pg01
+    ports:
+      - 15432:5432 # postgres port
+    volumes:
+      - pg01db:/u01/pg10/data
+      - pg01arc:/u02/archive
+  pg02:
+    image: pg:0.4.0
+    environment:
+      INITIAL_NODE_TYPE: slave
+      NODE_ID: 2
+      NODE_NAME: pg02
+      MSLIST: "asset,ingest,playout" 
+              # for each micro-service two db users are created, for ex. asset_owner and asset_user, etc.
+      MSOWNERPWDLIST: "asset_owner,ingest_owner,playout_owner"
+      MSUSERPWDLIST: "asset_user,ingest_user,playout_user"
+      REPMGRPWD: rep123
+      PGMASTER: pg01
+    ports:
+      - 25432:5432 # postgres port
+    volumes:
+      - pg02db:/u01/pg10/data
+      - pg02arc:/u02/archive
+    depends_on:
+      - pg01
+volumes:
+  pg01db:
+  pg02db:
+  pg01arc:
+  pg02arc:

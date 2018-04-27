@@ -1,7 +1,7 @@
 version: '3'
 services:
   pg01:
-    image: pg:0.3.0
+    image: pg:0.6.0
     environment:
       NODE_ID: 1
       NODE_NAME: pg01
@@ -14,13 +14,13 @@ services:
     ports:
       - 5432:5432 # postgres port
     volumes:
-      - pg01db:/u01/pg96/data
+      - pg01db:/u01/pg10/data
       - pg01arc:/u02/archive
       - pg01backup:/u02/backup
   pgpool01:
-    image: pgpool:0.3.0
+    image: pgpool:0.6.0
     environment:
-      PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg96/data:ALLOW_TO_FAILOVER
+      PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER
                 # csv list of backend postgres databases, each backend db contains (separated by :)
                 # number (start with 0):host name:pgpool port (default 9999):data dir (default /u01/pg96/data):flag ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
       PGP_NODE_NAME: pgpool01

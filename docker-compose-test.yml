@@ -1,7 +1,7 @@
 version: '3.2'
 services:
   pg01:
-    image: pg:0.5.0
+    image: pg:0.6.0
     environment:
       INITIAL_NODE_TYPE: master
       NODE_ID: 1
@@ -11,7 +11,7 @@ services:
       MSOWNERPWDLIST: "myservice_owner"
       MSUSERPWDLIST: "myservice_user"
       REPMGRPWD: rep123
-      REPMGRD_FAILOVER_MODE: automatic
+      REPMGRD_FAILOVER_MODE: manual
       PGMASTER: pg01
     ports:
       - 15432:5432 # postgres port
@@ -21,7 +21,7 @@ services:
     networks:
       - pgcluster_network
   pg02:
-    image: pg:0.5.0
+    image: pg:0.6.0
     environment:
       INITIAL_NODE_TYPE: slave
       NODE_ID: 2
@@ -31,7 +31,7 @@ services:
       MSOWNERPWDLIST: "myservice_owner"
       MSUSERPWDLIST: "myservice_user"
       REPMGRPWD: rep123
-      REPMGRD_FAILOVER_MODE: automatic
+      REPMGRD_FAILOVER_MODE: manual
       PGMASTER: pg01
     ports:
       - 25432:5432 # postgres port
@@ -43,7 +43,7 @@ services:
     depends_on:
       - pg01
   pg03:
-    image: pg:0.5.0
+    image: pg:0.6.0
     environment:
       INITIAL_NODE_TYPE: slave
       NODE_ID: 3
@@ -53,7 +53,7 @@ services:
       MSOWNERPWDLIST: "myservice_owner"
       MSUSERPWDLIST: "myservice_user"
       REPMGRPWD: rep123
-      REPMGRD_FAILOVER_MODE: automatic
+      REPMGRD_FAILOVER_MODE: manual
       PGMASTER: pg01
     ports:
       - 35432:5432 # postgres port
@@ -66,7 +66,7 @@ services:
       - pg01
 
   pgpool01:
-    image: pgpool:0.5.0
+    image: pgpool:0.6.0
     ports:
       - 9999:9999
     environment:
@@ -77,7 +77,7 @@ services:
                 # not needed when there is a single postgres DB
       PGP_NODE_NAME: pgpool01
       REPMGRPWD: rep123
-      FAILOVER_MODE: manual
+      FAILOVER_MODE: automatic
       #DELEGATE_IP: 172.18.0.100
       #TRUSTED_SERVERS: 172.23.1.250
       #PGP_HEARTBEATS: "0:pgpool01:9694,1:pgpool02:9694"

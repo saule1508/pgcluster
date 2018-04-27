@@ -65,7 +65,7 @@ if [ $? -eq 1 ] ; then
  if [ ${FORCE} -eq 1 ] ; then
    WASRUNNING=1
    echo Stopping postgres
-   pg_ctl stop -w --mode=fast
+   /scripts/pg_stop.sh
    if [ $? -ne 0 ] ; then
      echo Cannot stop postgres..
      exit 1

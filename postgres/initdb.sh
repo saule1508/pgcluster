@@ -7,7 +7,13 @@ if [ `id -un` != "postgres" ] ; then
 fi
 
 log_info(){
- echo `date` - $1 
+ echo `date +"%Y-%m-%d %H:%M:%S.%s"` - INFO - $1 
+}
+
+function shutdown()
+{
+  echo "Shutting down PostgreSQL"
+  pg_ctl stop
 }
 
 #
@@ -164,9 +170,9 @@ monitor_interval_secs=5
 
 pg_bindir='/usr/pgsql-10/bin'
 
-service_start_command = 'pg_ctl start'
-service_stop_command = 'pg_ctl stop'
-service_restart_command = 'pg_ctl restart'
+service_start_command = 'sudo supervisorctl start postgres'
+service_stop_command = 'sudo supervisorctl stop postgres'
+service_restart_command = 'sudo supervisorctl restart postgres'
 service_reload_command = 'pg_ctl reload'
 
 promote_command='repmgr -f /etc/repmgr/10/repmgr.conf standby promote'
@@ -199,7 +205,7 @@ EOF
     echo "host     all           all        0.0.0.0/0            md5" >> $PGDATA/pg_hba.conf
     echo starting database
     ps -ef
-    pg_ctl -D ${PGDATA} start -w 
+    pg_ctl -D ${PGDATA} start -o "-c 'listen_addresses=localhost'" -w 
     psql --command "create database phoenix ENCODING='UTF8' LC_COLLATE='en_US.UTF8';"
     create_microservices
     psql phoenix -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"";
@@ -213,10 +219,6 @@ EOF
     log_info "set password for postgres"
     psql --command "alter user postgres with login password '${REPMGRPWD}';"
     psql --command "create database repmgr with owner=repmgr ENCODING='UTF8' LC_COLLATE='en_US.UTF8';"
-    #if [ "a$INITIAL_NODE_TYPE" = "amaster" ] ; then
-      log_info "Register master in repmgr"
-      repmgr -f /etc/repmgr/10/repmgr.conf -v master register
-    #fi
     if [ -f /usr/pgsql-10/share/extension/pgpool-recovery.sql ] ; then
       log_info "pgpool extensions"
       psql -f /usr/pgsql-10/share/extension/pgpool-recovery.sql -d template1
@@ -229,6 +231,12 @@ EOF
     log_info "Create hcuser"
     psql -c "create user hcuser with login password 'hcuser';"
     echo "ARCHIVELOG=$ARCHIVELOG" > $PGDATA/override.env
+    echo "Start postgres again to register master"
+    pg_ctl stop
+    pg_ctl start -w
+    log_info "Register master in repmgr"
+    repmgr -f /etc/repmgr/10/repmgr.conf -v master register
+    pg_ctl stop
   else
     log_info "This is a slave. Wait that master is up and running"
     wait_for_master
@@ -239,14 +247,16 @@ EOF
      repmgr -h ${PG_MASTER_NODE_NAME} -U repmgr -d repmgr -D ${PGDATA} -f /etc/repmgr/10/repmgr.conf standby clone
      pg_ctl -D ${PGDATA} start -w
      repmgr -f /etc/repmgr/10/repmgr.conf standby register
+     pg_ctl stop
     else
      log_info "Master is not ready, standby will not be initialized"
     fi
   fi
 else
   log_info "File ${PGDATA}/postgresql.conf already exist"
-  log_info "create micro-services users if needed"
-  pg_ctl -D ${PGDATA} start -w 
-  create_microservices
 fi
+#TODO: this trap is not used
+trap shutdown HUP INT QUIT ABRT KILL ALRM TERM TSTP
 ps -ef
+log_info "start postgres in foreground"
+exec postgres -D ${PGDATA} 

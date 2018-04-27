@@ -1,5 +1,3 @@
 #!/bin/bash
 
-source /scripts/lib/pg_utils.sh
-
-pg_ctl start -l /dev/null
+sudo supervisorctl start postgres

@@ -1,7 +1,7 @@
 FROM centos:7
 MAINTAINER p.timmermans@evs.com
 ENV MAJORVER=10
-ENV MINORVER=2
+ENV MINORVER=3
 ENV PGVER=10
 ENV docker=yes
 RUN yum update -y ; yum clean all && rm -rf /var/yum/cache
@@ -67,3 +67,4 @@ VOLUME ["/u01/pg${PGVER}/data","/u02/archive","/u02/backup"]
 # if the file $PGDATA/postgres.conf does not exist initdb will initialize the cluster and create db phoenix
 #  and db users (two per microservice)
 CMD ["/usr/bin/supervisord","--configuration=/etc/supervisor/supervisord.conf"]
+#CMD ["tail","-f","/etc/supervisor/supervisord.conf"]

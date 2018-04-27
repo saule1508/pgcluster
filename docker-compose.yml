@@ -1,7 +1,7 @@
 version: '3.2'
 services:
   pg01:
-    image: pg:0.4.0
+    image: pg:0.6.0
     environment:
       INITIAL_NODE_TYPE: master
       NODE_ID: 1
@@ -13,7 +13,7 @@ services:
       REPMGRPWD: rep123
       PGMASTER: pg01
     volumes:
-      - /u01/pg96/data:/u01/pg96/data
+      - /u01/pg10/data:/u01/pg10/data
       - /u02/archive:/u02/archive
       - /u02/backup:/u02/backup
       - /etc/localtime:/etc/localtime
@@ -28,7 +28,7 @@ services:
         mode: host
 
   pg02:
-    image: pg:0.4.0
+    image: pg:0.6.0
     environment:
       INITIAL_NODE_TYPE: slave
       NODE_ID: 2
@@ -40,7 +40,7 @@ services:
       REPMGRPWD: rep123
       PGMASTER: pg01
     volumes:
-      - /u01/pg96/data:/u01/pg96/data
+      - /u01/pg10/data:/u01/pg10/data
       - /u02/archive:/u02/archive
       - /u02/backup:/u02/backup
       - /etc/localtime:/etc/localtime
@@ -56,8 +56,8 @@ services:
     depends_on:
       - pg01
 
-  pgpool01:
-    image: pgpool:0.4.0
+  pgpool:
+    image: pgpool:0.6.0
     ports:
       - 9999:9999
     environment:
@@ -66,7 +66,7 @@ services:
                 # csv list of backend postgres databases, each backend db contains (separated by :)
                 # number (start with 0):host name:pgpool port (default 9999):data dir (default /u01/pg10/data):flag ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
                 # not needed when there is a single postgres DB
-      PGP_NODE_NAME: pgpool01
+      PGP_NODE_NAME: pgpool
       REPMGRPWD: rep123
       FAILOVER_MODE: auto
       #DELEGATE_IP: 172.18.0.100
