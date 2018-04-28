@@ -94,4 +94,29 @@ router.get("/pgp_watchdog", (req, res) => {
     });
 });
 
+router.get("/supervisorctl", (req, res) => {
+  const getSupervisorCtl = require("../business/index.js").getSupervisorCtl;
+  getSupervisorCtl()
+    .then(data => {
+      return res.status(200).send(data);
+    })
+    .catch(err => {
+      console.log(err);
+      res.status(500).send(err);
+    });
+});
+
+router.get("/repmgr_nodes_check", (req, res) => {
+  const getRepmgrNodesCheck = require("../business/index.js")
+    .getRepmgrNodesCheck;
+  getRepmgrNodesCheck()
+    .then(data => {
+      return res.status(200).send(data);
+    })
+    .catch(err => {
+      console.log(err);
+      res.status(500).send(err);
+    });
+});
+
 module.exports = router;

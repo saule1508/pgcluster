@@ -19,7 +19,7 @@ RUN yum install -y http://www.pgpool.net/yum/rpms/3.7/redhat/rhel-7-x86_64/pgpoo
 RUN yum install -y pgpool-II-pg${MAJORVER} pgpool-II-pg${MAJORVER}-extensions; yum clean all; rm -rf /var/cache/yum
 # repmgr: installed from 2ndquadrant repo will install repmgr4
 RUN yum install -y http://packages.2ndquadrant.com/repmgr/yum-repo-rpms/repmgr-rhel-1.0-1.noarch.rpm ; yum clean all ; rm -rf /var/cache/yum
-RUN yum install -y repmgr10 ; yum clean all
+RUN yum install --enablerepo=2ndquadrant-repmgr --disablerepo=pgdg10 -y repmgr10 && yum clean all && rm -rf /var/cache/yum
 RUN chown postgres:postgres /var/log/repmgr
 RUN mkdir -p /u01/pg${PGVER}/data /u02/backup /u02/archive && chown -R postgres:postgres /u01/pg${PGVER} /u02/backup /u02/archive && chmod 700 /u01/pg${PGVER}/data /u02/archive
 ENV PGDATA /u01/pg${PGVER}/data
