@@ -49,9 +49,6 @@ const formatPgpoolWD = arr => {
 const getFromSSH = (dbhost, args) => {
   const { spawn } = require("child_process");
 
-  //  const pools = require('../config/pgpool').pools;
-  //  const getFilesForHost = require('./utils.js').getFilesForHost;
-  //  const directory = '/u02/backup';
   return new Promise((resolve, reject) => {
     let response = "";
     const cmdArgs = [
@@ -66,18 +63,20 @@ const getFromSSH = (dbhost, args) => {
     ].concat(args);
 
     const shell = spawn("ssh", cmdArgs);
+    let error = "";
     shell.stdout.on("data", data => {
       response = `${response}${data.toString()}`;
     });
     shell.stderr.on("data", data => {
       console.log(`got error ${data.toString()}`);
+      error = `${error}${data.toString()}`;
     });
     shell.on("close", code => {
       console.log(`shell exited with code ${code}`);
       if (code === 0) {
         resolve({ node: dbhost, rows: response.split("\n") });
       } else {
-        reject({ error: code });
+        reject(`code ${code} ${error}`);
       }
     });
     shell.on("error", error => {
@@ -181,7 +180,7 @@ const getSupervisorCtl = async () => {
       });
     } catch (e) {
       console.log(e);
-      response.push(e);
+      response.push({ node: dblist[i].host, error: e.toString() });
     }
   }
   return response;
@@ -212,7 +211,53 @@ const getRepmgrNodesCheck = async () => {
       });
     } catch (e) {
       console.log(e);
-      response.push(e);
+      response.push({ node: dblist[i].host, error: e.toString() });
+    }
+  }
+  return response;
+};
+
+const getChecks = async () => {
+  const dblist = require("../config/config.js").pg;
+  let response = [];
+  for (var i = 0; i < dblist.length; i++) {
+    let nodechecks = {
+      node: dblist[i].host,
+      serverTimeStamp: new Date(),
+      supervisor: [],
+      repmgr: [],
+      disk: [],
+      error: null
+    };
+    try {
+      let result = await getFromSSH(dblist[i].host, ["/scripts/checks.sh"]);
+      result.rows.forEach((el, idx) => {
+        const cols = el.split(",");
+        if (cols[0] === "supervisor") {
+          nodechecks.supervisor.push({
+            process: cols[1],
+            state: cols[2],
+            info: cols[3]
+          });
+        }
+        if (cols[0] === "repmgr") {
+          nodechecks.repmgr.push({ check: cols[1], result: cols[2] });
+        }
+        if (cols[0] === "disk") {
+          nodechecks.disk.push({
+            fs: cols[1],
+            percused: cols[2],
+            kbtotal: cols[3],
+            kbused: cols[4]
+          });
+        }
+      });
+      response.push(nodechecks);
+    } catch (e) {
+      console.log("catched error");
+      console.log(e);
+      nodechecks.error = e;
+      response.push(nodechecks);
     }
   }
   return response;
@@ -222,5 +267,6 @@ module.exports = {
   bus_health: bus_health,
   getPgpoolWDStatus: getPgpoolWDStatus,
   getSupervisorCtl: getSupervisorCtl,
-  getRepmgrNodesCheck: getRepmgrNodesCheck
+  getRepmgrNodesCheck: getRepmgrNodesCheck,
+  getChecks: getChecks
 };

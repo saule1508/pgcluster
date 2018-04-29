@@ -5,7 +5,9 @@ import {
   getRepl,
   getStatActivity,
   getBackups,
-  getPgpoolWatchDog
+  getPgpoolWatchDog,
+  getSupervisorCtl,
+  getChecks
 } from "../api/index.js";
 
 export const FETCH_DBSTATES_REQUEST = "FETCH_DBSTATES_REQUEST";
@@ -38,6 +40,14 @@ export const FETCH_BACKUPS_SUCCESS = "FETCH_BACKUPS_SUCCESS";
 export const FETCH_PGPOOL_WATCHDOG_REQUEST = "FETCH_PGPOOL_WATCHDOG_REQUEST";
 export const FETCH_PGPOOL_WATCHDOG_SUCCESS = "FETCH_PGPOOL_WATCHDOG_SUCCESS";
 export const FETCH_PGPOOL_WATCHDOG_FAILURE = "FETCH_PGPOOL_WATCHDOG_FAILURE";
+
+export const FETCH_NODES_CHECKS_REQUEST = "FETCH_NODES_CHECKS_REQUEST";
+export const FETCH_NODES_CHECKS_FAILURE = "FETCH_NODES_CHECKS_FAILURE";
+export const FETCH_NODES_CHECKS_SUCCESS = "FETCH_NODES_CHECKS_SUCCESS";
+
+export const FETCH_SUPERVISORCTL_REQUEST = "FETCH_SUPERVISORCTL_REQUEST";
+export const FETCH_SUPERVISORCTL_FAILURE = "FETCH_SUPERVISORCTL_FAILURE";
+export const FETCH_SUPERVISORCTL_SUCCESS = "FETCH_SUPERVISORCTL_SUCCESS";
 
 const fetchDBStatesRequest = () => ({
   type: FETCH_DBSTATES_REQUEST
@@ -237,11 +247,65 @@ export const fetchPgpoolWatchDog = () => {
   return (dispatch, getStore) => {
     dispatch(fetchPgpoolWDRequest());
     getPgpoolWatchDog()
-      .then( (data) => {
+      .then(data => {
         dispatch(fetchPgpoolWDSuccess(data));
       })
       .catch(error => {
         dispatch(fetchPgpoolWDFailure(error));
+      });
+  };
+};
+
+const fetchNodesChecksRequest = () => ({
+  type: FETCH_NODES_CHECKS_REQUEST
+});
+
+export const fetchNodesChecksFailure = error => ({
+  type: FETCH_NODES_CHECKS_FAILURE,
+  payload: error
+});
+
+export const fetchNodesChecksSuccess = rows => ({
+  type: FETCH_NODES_CHECKS_SUCCESS,
+  payload: { rows: rows, timeStamp: new Date() }
+});
+
+export const fetchNodesChecks = () => {
+  return (dispatch, getStore) => {
+    dispatch(fetchNodesChecksRequest());
+    getChecks()
+      .then(result => {
+        dispatch(fetchNodesChecksSuccess(result));
+      })
+      .catch(error => {
+        dispatch(fetchNodesChecksFailure(error));
+      });
+  };
+};
+
+const fetchSupervisorCtlRequest = () => ({
+  type: FETCH_SUPERVISORCTL_REQUEST
+});
+
+export const fetchSupervisorCtlFailure = error => ({
+  type: FETCH_SUPERVISORCTL_FAILURE,
+  payload: error
+});
+
+export const fetchSupervisorCtlSuccess = rows => ({
+  type: FETCH_SUPERVISORCTL_SUCCESS,
+  payload: { rows: rows, timeStamp: new Date() }
+});
+
+export const fetchSupervisorCtl = () => {
+  return (dispatch, getStore) => {
+    dispatch(fetchSupervisorCtlRequest());
+    getSupervisorCtl()
+      .then(result => {
+        dispatch(fetchSupervisorCtlSuccess(result));
+      })
+      .catch(error => {
+        dispatch(fetchSupervisorCtlFailure(error));
       });
   };
 };
