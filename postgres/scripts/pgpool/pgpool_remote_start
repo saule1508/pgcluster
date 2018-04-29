@@ -33,8 +33,8 @@ echo "remote_path: ${remote_path}" | tee -a $LOGFILE
 
 ssh_options="ssh -p 222 -n -T -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no postgres@$remote_host"
 set -x
-$ssh_options "/usr/pgsql-10/bin/pg_ctl -D ${remote_path} start" &
+$ssh_options "/scripts/pg_start.sh" &
 echo "sleep 20 after pg_ctl start"
 sleep 20
-$ssh_options "ps -ef"
+$ssh_options "supervisorctl status all"
 exit 0
