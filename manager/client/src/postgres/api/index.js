@@ -1,6 +1,6 @@
 export const getDBStates = () => {
-  const URL = "/api/postgres/dbstates";
-  return fetch(URL, { method: "GET" })
+  const URL = '/api/postgres/dbstates';
+  return fetch(URL, { method: 'GET' })
     .then(response => {
       if (!response.ok) {
         return response.json().then(json => {
@@ -15,8 +15,8 @@ export const getDBStates = () => {
 };
 
 export const getReplicationStats = () => {
-  const URL = "/api/postgres/replication_stats";
-  return fetch(URL, { method: "GET" })
+  const URL = '/api/postgres/replication_stats';
+  return fetch(URL, { method: 'GET' })
     .then(response => {
       if (!response.ok) {
         return response.json().then(json => {
@@ -26,14 +26,14 @@ export const getReplicationStats = () => {
       return response.json();
     })
     .catch(err => {
-      console.log("got error in fetch " + URL);
+      console.log('got error in fetch ' + URL);
       throw err;
     });
 };
 
 export const getPgpool = () => {
-  const URL = "/api/postgres/pool_nodes";
-  return fetch(URL, { method: "GET" })
+  const URL = '/api/postgres/pool_nodes';
+  return fetch(URL, { method: 'GET' })
     .then(response => {
       if (!response.ok) {
         return response.json().then(json => {
@@ -48,8 +48,8 @@ export const getPgpool = () => {
 };
 
 export const getRepl = () => {
-  const URL = "/api/postgres/repl_nodes";
-  return fetch(URL, { method: "GET" })
+  const URL = '/api/postgres/repl_nodes';
+  return fetch(URL, { method: 'GET' })
     .then(response => {
       if (!response.ok) {
         throw response.statusText;
@@ -62,8 +62,8 @@ export const getRepl = () => {
 };
 
 export const getStatActivity = () => {
-  const URL = "/api/postgres/stat_activity";
-  return fetch(URL, { method: "GET" })
+  const URL = '/api/postgres/stat_activity';
+  return fetch(URL, { method: 'GET' })
     .then(response => {
       if (!response.ok) {
         throw response.statusText;
@@ -76,8 +76,8 @@ export const getStatActivity = () => {
 };
 
 export const getBackups = () => {
-  const URL = "/api/postgres/backups";
-  return fetch(URL, { method: "GET" })
+  const URL = '/api/postgres/backups';
+  return fetch(URL, { method: 'GET' })
     .then(response => {
       if (!response.ok) {
         throw response.statusText;
@@ -90,8 +90,8 @@ export const getBackups = () => {
 };
 
 export const getPgpoolWatchDog = () => {
-  const URL = "/api/postgres/pgp_watchdog";
-  return fetch(URL, { method: "GET" })
+  const URL = '/api/postgres/pgp_watchdog';
+  return fetch(URL, { method: 'GET' })
     .then(response => {
       if (!response.ok) {
         throw response.statusText;
@@ -104,22 +104,8 @@ export const getPgpoolWatchDog = () => {
 };
 
 export const getChecks = () => {
-  const URL = "/api/postgres/checks";
-  return fetch(URL, { method: "GET" })
-    .then(response => {
-      if (!response.ok) {
-        throw response.statusText;
-      }
-      return response.json();
-    })
-    .catch(err => {
-      throw err;
-    });
-};
-
-export const getSupervisorCtl = () => {
-  const URL = "/api/postgres/supervisorctl";
-  return fetch(URL, { method: "GET" })
+  const URL = '/api/postgres/checks';
+  return fetch(URL, { method: 'GET' })
     .then(response => {
       if (!response.ok) {
         throw response.statusText;

@@ -1,4 +1,4 @@
-import { combineReducers } from "redux";
+import { combineReducers } from 'redux';
 
 import {
   FETCH_DBSTATES_REQUEST,
@@ -19,23 +19,19 @@ import {
   FETCH_STAT_ACTIVITY_REQUEST,
   FETCH_STAT_ACTIVITY_FAILURE,
   FETCH_STAT_ACTIVITY_SUCCESS
-} from "../actions";
+} from '../actions';
 
 import {
   FETCH_BACKUPS_REQUEST,
   FETCH_BACKUPS_FAILURE,
   FETCH_BACKUPS_SUCCESS
-} from "../actions";
+} from '../actions';
 
 import {
   FETCH_NODES_CHECKS_REQUEST,
   FETCH_NODES_CHECKS_FAILURE,
-  FETCH_NODES_CHECKS_SUCCESS,
-  FETCH_SUPERVISORCTL_REQUEST,
-  FETCH_SUPERVISORCTL_FAILURE,
-  FETCH_SUPERVISORCTL_SUCCESS
-} from "../actions";
-import { getSupervisorCtl } from "../api";
+  FETCH_NODES_CHECKS_SUCCESS
+} from '../actions';
 
 const REPL_NODES_INITIAL_STATE = {
   loading: false,
@@ -74,13 +70,6 @@ const PGPOOL_WATCHDOG_INITIAL_STATE = {
 };
 
 const NODES_CHECKS_INITIAL_STATE = {
-  timeStamp: null,
-  loading: false,
-  error: null,
-  nodes: []
-};
-
-const SUPERVISORCTL_INITIAL_STATE = {
   timeStamp: null,
   loading: false,
   error: null,
@@ -300,6 +289,12 @@ let pgpool_watchdog = (state = PGPOOL_WATCHDOG_INITIAL_STATE, action) => {
   }
 };
 
+export const getNodesChecksSorted = state => {
+  return state.postgres.nodes_checks.nodes.sort((el1, el2) => {
+    return el1.node > el2.node;
+  });
+};
+
 const nodes_checks = (state = NODES_CHECKS_INITIAL_STATE, action) => {
   switch (action.type) {
     case FETCH_NODES_CHECKS_REQUEST:
@@ -310,32 +305,6 @@ const nodes_checks = (state = NODES_CHECKS_INITIAL_STATE, action) => {
         error: action.payload
       });
     case FETCH_NODES_CHECKS_SUCCESS:
-      return Object.assign({}, state, {
-        loading: false,
-        error: null,
-        timeStamp: action.payload.timeStamp,
-        nodes: action.payload.rowss
-      });
-    default:
-      return state;
-  }
-};
-export const getSupervisorCtlSorted = state => {
-  return state.postgres.supervisorctl.nodes.sort((el1, el2) => {
-    return el1.node > el2.node;
-  });
-};
-
-const supervisorctl = (state = SUPERVISORCTL_INITIAL_STATE, action) => {
-  switch (action.type) {
-    case FETCH_SUPERVISORCTL_REQUEST:
-      return Object.assign({}, state, { loading: true });
-    case FETCH_SUPERVISORCTL_FAILURE:
-      return Object.assign({}, state, {
-        loading: false,
-        error: action.payload
-      });
-    case FETCH_SUPERVISORCTL_SUCCESS:
       return Object.assign({}, state, {
         loading: false,
         error: null,
@@ -355,6 +324,5 @@ export default combineReducers({
   dbstates: dbstates,
   pgpool_watchdog: pgpool_watchdog,
   backups: backups,
-  supervisorctl: supervisorctl,
-  nodes_checks: nodes_check
+  nodes_checks: nodes_checks
 });

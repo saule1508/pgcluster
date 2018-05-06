@@ -6,48 +6,43 @@ import {
   getStatActivity,
   getBackups,
   getPgpoolWatchDog,
-  getSupervisorCtl,
   getChecks
-} from "../api/index.js";
+} from '../api/index.js';
 
-export const FETCH_DBSTATES_REQUEST = "FETCH_DBSTATES_REQUEST";
-export const FETCH_DBSTATES_FAILURE = "FETCH_DBSTATES_FAILURE";
-export const FETCH_DBSTATES_SUCCESS = "FETCH_DBSTATES_SUCCESS";
+export const FETCH_DBSTATES_REQUEST = 'FETCH_DBSTATES_REQUEST';
+export const FETCH_DBSTATES_FAILURE = 'FETCH_DBSTATES_FAILURE';
+export const FETCH_DBSTATES_SUCCESS = 'FETCH_DBSTATES_SUCCESS';
 
-export const FETCH_PGPOOL_REQUEST = "FETCH_PGPOOL_REQUEST";
-export const FETCH_PGPOOL_FAILURE = "FETCH_PGPOOL_FAILURE";
-export const FETCH_PGPOOL_SUCCESS = "FETCH_PGPOOL_SUCCESS";
+export const FETCH_PGPOOL_REQUEST = 'FETCH_PGPOOL_REQUEST';
+export const FETCH_PGPOOL_FAILURE = 'FETCH_PGPOOL_FAILURE';
+export const FETCH_PGPOOL_SUCCESS = 'FETCH_PGPOOL_SUCCESS';
 
-export const FETCH_REPL_REQUEST = "FETCH_REPL_REQUEST";
-export const FETCH_REPL_FAILURE = "FETCH_REPL_FAILURE";
-export const FETCH_REPL_SUCCESS = "FETCH_REPL_SUCCESS";
+export const FETCH_REPL_REQUEST = 'FETCH_REPL_REQUEST';
+export const FETCH_REPL_FAILURE = 'FETCH_REPL_FAILURE';
+export const FETCH_REPL_SUCCESS = 'FETCH_REPL_SUCCESS';
 
 export const FETCH_REPLICATION_STATS_REQUEST =
-  "FETCH_REPLICATION_STATS_REQUEST";
+  'FETCH_REPLICATION_STATS_REQUEST';
 export const FETCH_REPLICATION_STATS_FAILURE =
-  "FETCH_REPLICATION_STATS_FAILURE";
+  'FETCH_REPLICATION_STATS_FAILURE';
 export const FETCH_REPLICATION_STATS_SUCCESS =
-  "FETCH_REPLICATION_STATS_SUCCESS";
+  'FETCH_REPLICATION_STATS_SUCCESS';
 
-export const FETCH_STAT_ACTIVITY_REQUEST = "FETCH_STAT_ACTIVITY_REQUEST";
-export const FETCH_STAT_ACTIVITY_FAILURE = "FETCH_STAT_ACTIVITY_FAILURE";
-export const FETCH_STAT_ACTIVITY_SUCCESS = "FETCH_STAT_ACTIVITY_SUCCESS";
+export const FETCH_STAT_ACTIVITY_REQUEST = 'FETCH_STAT_ACTIVITY_REQUEST';
+export const FETCH_STAT_ACTIVITY_FAILURE = 'FETCH_STAT_ACTIVITY_FAILURE';
+export const FETCH_STAT_ACTIVITY_SUCCESS = 'FETCH_STAT_ACTIVITY_SUCCESS';
 
-export const FETCH_BACKUPS_REQUEST = "FETCH_BACKUPS_REQUEST";
-export const FETCH_BACKUPS_FAILURE = "FETCH_BACKUPS_FAILURE";
-export const FETCH_BACKUPS_SUCCESS = "FETCH_BACKUPS_SUCCESS";
+export const FETCH_BACKUPS_REQUEST = 'FETCH_BACKUPS_REQUEST';
+export const FETCH_BACKUPS_FAILURE = 'FETCH_BACKUPS_FAILURE';
+export const FETCH_BACKUPS_SUCCESS = 'FETCH_BACKUPS_SUCCESS';
 
-export const FETCH_PGPOOL_WATCHDOG_REQUEST = "FETCH_PGPOOL_WATCHDOG_REQUEST";
-export const FETCH_PGPOOL_WATCHDOG_SUCCESS = "FETCH_PGPOOL_WATCHDOG_SUCCESS";
-export const FETCH_PGPOOL_WATCHDOG_FAILURE = "FETCH_PGPOOL_WATCHDOG_FAILURE";
+export const FETCH_PGPOOL_WATCHDOG_REQUEST = 'FETCH_PGPOOL_WATCHDOG_REQUEST';
+export const FETCH_PGPOOL_WATCHDOG_SUCCESS = 'FETCH_PGPOOL_WATCHDOG_SUCCESS';
+export const FETCH_PGPOOL_WATCHDOG_FAILURE = 'FETCH_PGPOOL_WATCHDOG_FAILURE';
 
-export const FETCH_NODES_CHECKS_REQUEST = "FETCH_NODES_CHECKS_REQUEST";
-export const FETCH_NODES_CHECKS_FAILURE = "FETCH_NODES_CHECKS_FAILURE";
-export const FETCH_NODES_CHECKS_SUCCESS = "FETCH_NODES_CHECKS_SUCCESS";
-
-export const FETCH_SUPERVISORCTL_REQUEST = "FETCH_SUPERVISORCTL_REQUEST";
-export const FETCH_SUPERVISORCTL_FAILURE = "FETCH_SUPERVISORCTL_FAILURE";
-export const FETCH_SUPERVISORCTL_SUCCESS = "FETCH_SUPERVISORCTL_SUCCESS";
+export const FETCH_NODES_CHECKS_REQUEST = 'FETCH_NODES_CHECKS_REQUEST';
+export const FETCH_NODES_CHECKS_FAILURE = 'FETCH_NODES_CHECKS_FAILURE';
+export const FETCH_NODES_CHECKS_SUCCESS = 'FETCH_NODES_CHECKS_SUCCESS';
 
 const fetchDBStatesRequest = () => ({
   type: FETCH_DBSTATES_REQUEST
@@ -71,9 +66,9 @@ export const fetchDBStates = () => {
         dispatch(fetchDBStatesSuccess(result.rows));
       })
       .catch(error => {
-        let errorStr = error && error.detail ? error.detail : "Internal error";
+        let errorStr = error && error.detail ? error.detail : 'Internal error';
         if (error && error.hint) {
-          errorStr += " (hint: " + error.hint + ")";
+          errorStr += ' (hint: ' + error.hint + ')';
         }
         dispatch(fetchDBStatesFailure(errorStr));
       });
@@ -102,11 +97,11 @@ export const fetchReplicationStats = () => {
         dispatch(fetchReplicationStatsSuccess(result));
       })
       .catch(error => {
-        console.log("got error from getReplicationStats");
+        console.log('got error from getReplicationStats');
         console.log(error);
-        let errorStr = error && error.detail ? error.detail : "Internal error";
+        let errorStr = error && error.detail ? error.detail : 'Internal error';
         if (error && error.hint) {
-          errorStr += " (hint: " + error.hint + ")";
+          errorStr += ' (hint: ' + error.hint + ')';
         }
         dispatch(fetchReplicationStatsFailure(errorStr));
       });
@@ -135,9 +130,9 @@ export const fetchPgpool = () => {
         dispatch(fetchPgpoolSuccess(result.rows));
       })
       .catch(error => {
-        let errorStr = error && error.detail ? error.detail : "Internal error";
+        let errorStr = error && error.detail ? error.detail : 'Internal error';
         if (error && error.hint) {
-          errorStr += " (hint: " + error.hint + ")";
+          errorStr += ' (hint: ' + error.hint + ')';
         }
         dispatch(fetchPgpoolFailure(errorStr));
       });
@@ -193,9 +188,9 @@ export const fetchStatActivity = () => {
         dispatch(fetchStatActivitySuccess(result.rows));
       })
       .catch(error => {
-        let errorStr = error && error.detail ? error.detail : "Internal error";
+        let errorStr = error && error.detail ? error.detail : 'Internal error';
         if (error && error.hint) {
-          errorStr += " (hint: " + error.hint + ")";
+          errorStr += ' (hint: ' + error.hint + ')';
         }
         dispatch(fetchStatActivityFailure(errorStr));
       });
@@ -279,33 +274,6 @@ export const fetchNodesChecks = () => {
       })
       .catch(error => {
         dispatch(fetchNodesChecksFailure(error));
-      });
-  };
-};
-
-const fetchSupervisorCtlRequest = () => ({
-  type: FETCH_SUPERVISORCTL_REQUEST
-});
-
-export const fetchSupervisorCtlFailure = error => ({
-  type: FETCH_SUPERVISORCTL_FAILURE,
-  payload: error
-});
-
-export const fetchSupervisorCtlSuccess = rows => ({
-  type: FETCH_SUPERVISORCTL_SUCCESS,
-  payload: { rows: rows, timeStamp: new Date() }
-});
-
-export const fetchSupervisorCtl = () => {
-  return (dispatch, getStore) => {
-    dispatch(fetchSupervisorCtlRequest());
-    getSupervisorCtl()
-      .then(result => {
-        dispatch(fetchSupervisorCtlSuccess(result));
-      })
-      .catch(error => {
-        dispatch(fetchSupervisorCtlFailure(error));
       });
   };
 };

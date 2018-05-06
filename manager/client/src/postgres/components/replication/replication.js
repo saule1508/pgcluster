@@ -3,7 +3,8 @@ import DBStatesContainer from "../DBStatesContainer.js";
 import PgpoolContainer from "../PgpoolContainer.js";
 import ReplContainer from "../ReplContainer.js";
 import ReplicationStatsContainer from "./replicationstatscontainer.js";
-import SupervisorCtlContainer from "./supervisorctlcontainer.js";
+//import SupervisorCtlContainer from "./supervisorctlcontainer.js";
+import NodesChecksContainer from "./nodescheckscontainer.js";
 import PgpoolWatchDogContainer from "./pgpool_watchdogcontainer.js";
 class Replication extends Component {
   render() {
@@ -28,7 +29,7 @@ class Replication extends Component {
 
         <div className="row" style={{ marginBottom: 20, marginTop: 20 }}>
           <div className="col-md-12">
-            <SupervisorCtlContainer />
+            <NodesChecksContainer />
           </div>
         </div>
 
