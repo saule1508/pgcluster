@@ -1,8 +1,8 @@
-var express = require("express");
+var express = require('express');
 var router = express.Router();
-let pg = require("../DAO/pg.js");
+let pg = require('../DAO/pg.js');
 
-router.get("/repl_nodes", function(req, res) {
+router.get('/repl_nodes', function(req, res) {
   pg
     .getReplNodes()
     .then(data => {
@@ -14,7 +14,7 @@ router.get("/repl_nodes", function(req, res) {
     });
 });
 
-router.get("/stat_activity", (req, res) => {
+router.get('/stat_activity', (req, res) => {
   pg
     .getStatActivity()
     .then(data => {
@@ -25,7 +25,7 @@ router.get("/stat_activity", (req, res) => {
     });
 });
 
-router.get("/pool_nodes", (req, res) => {
+router.get('/pool_nodes', (req, res) => {
   pg
     .getPoolNodes()
     .then(data => {
@@ -36,7 +36,7 @@ router.get("/pool_nodes", (req, res) => {
     });
 });
 
-router.get("/dbstates", (req, res) => {
+router.get('/dbstates', (req, res) => {
   pg
     .dbStates()
     .then(data => {
@@ -47,29 +47,29 @@ router.get("/dbstates", (req, res) => {
       let msg = err.detail ? err.detail : null;
       if (!msg) {
         msg =
-          "server error " +
-          (err.code ? err.code + " - " : " - ") +
-          (err.errno ? err.errno : "");
+          'server error ' +
+          (err.code ? err.code + ' - ' : ' - ') +
+          (err.errno ? err.errno : '');
       }
       res.status(500).send({ message: msg, error: err });
     });
 });
 
-router.get("/replication_stats", (req, res) => {
+router.get('/replication_stats', (req, res) => {
   pg
     .replicationStats()
     .then(data => {
       return res.status(200).send(data);
     })
     .catch(err => {
-      console.log("error from replicationStats");
+      console.log('error from replicationStats');
       console.log(err);
       res.status(500).send(err);
     });
 });
 
-router.get("/backups", (req, res) => {
-  const getBackups = require("../business/backup.js").getBackups;
+router.get('/backups', (req, res) => {
+  const getBackups = require('../business/backup.js').getBackups;
   getBackups()
     .then(result => {
       return res.status(200).send(result);
@@ -79,8 +79,8 @@ router.get("/backups", (req, res) => {
     });
 });
 
-router.get("/pgp_watchdog", (req, res) => {
-  const getPgpoolWDStatus = require("../business/index").getPgpoolWDStatus;
+router.get('/pgp_watchdog', (req, res) => {
+  const getPgpoolWDStatus = require('../business/index').getPgpoolWDStatus;
   let result;
   let response;
   let done = 0;
@@ -94,22 +94,9 @@ router.get("/pgp_watchdog", (req, res) => {
     });
 });
 
-router.get("/supervisorctl", (req, res) => {
-  const getSupervisorCtl = require("../business/index.js").getSupervisorCtl;
-  getSupervisorCtl()
-    .then(data => {
-      return res.status(200).send(data);
-    })
-    .catch(err => {
-      console.log(err);
-      res.status(500).send(err);
-    });
-});
-
-router.get("/repmgr_nodes_check", (req, res) => {
-  const getRepmgrNodesCheck = require("../business/index.js")
-    .getRepmgrNodesCheck;
-  getRepmgrNodesCheck()
+router.get('/checks', (req, res) => {
+  const getChecks = require('../business/index.js').getChecks;
+  getChecks()
     .then(data => {
       return res.status(200).send(data);
     })
