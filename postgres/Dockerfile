@@ -31,11 +31,12 @@ RUN echo "Defaults:postgres !requiretty" > /etc/sudoers.d/postgres && \
 RUN sed -i -e "s/^%wheel/#%wheel/" -e "/^#.*%wheel.*NOPASSWD/s/^#.*%wheel/%wheel/" /etc/sudoers
 RUN echo postgres:postgres | chpasswd
 RUN echo root:postgres | chpasswd
+# .bashrc is needed for connections via ssh
 RUN  echo "export PATH=\$PATH:/usr/pgsql-${MAJORVER}/bin" >  /etc/profile.d/postgres.sh
 RUN  echo "[ -f /etc/profile ] && source /etc/profile" >> /home/postgres/.bashrc && \
-     echo "export PGDATA=/u01/pg${PGVER}/data" >> /home/postgres/.bashrc
+     echo "export PGDATA=/u01/pg${PGVER}/data PGVER=${PGVER} " >> /home/postgres/.bashrc
 #Some useful aliases for replication
-RUN echo "alias pool_nodes='psql --username=repmgr -h pgpool01 -p 9999 repmgr -c \"show pool_nodes;\"'" >> /home/postgres/.bashrc && \
+RUN echo "alias pool_nodes='psql --username=repmgr -h pgpool -p 9999 repmgr -c \"show pool_nodes;\"'" >> /home/postgres/.bashrc && \
     echo "alias cluster_show='repmgr -f /etc/repmgr/${MAJORVER}/repmgr.conf cluster show'" >> /home/postgres/.bashrc && \
     echo "alias cluster_monitor='psql --username=repmgr repmgr -c \"select * from repl_monitor order by last_monitor_time desc limit 1;\"'" >> /home/postgres/.bashrc
 #
