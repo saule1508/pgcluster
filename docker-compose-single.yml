@@ -1,7 +1,7 @@
 version: '3'
 services:
   pg01:
-    image: pg:0.6.0
+    image: pg:${pg_version}
     environment:
       NODE_ID: 1
       NODE_NAME: pg01
@@ -18,7 +18,7 @@ services:
       - pg01arc:/u02/archive
       - pg01backup:/u02/backup
   pgpool01:
-    image: pgpool:0.6.0
+    image: pgpool:${pg_version}
     environment:
       PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER
                 # csv list of backend postgres databases, each backend db contains (separated by :)

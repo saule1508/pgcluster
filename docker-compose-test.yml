@@ -1,7 +1,7 @@
 version: '3.2'
 services:
   pg01:
-    image: pg:0.6.0
+    image: pg:${pg_version:-latest}
     environment:
       INITIAL_NODE_TYPE: master
       NODE_ID: 1
@@ -21,7 +21,7 @@ services:
     networks:
       - pgcluster_network
   pg02:
-    image: pg:0.6.0
+    image: pg:${pg_version:-latest}
     environment:
       INITIAL_NODE_TYPE: slave
       NODE_ID: 2
@@ -43,7 +43,7 @@ services:
     depends_on:
       - pg01
   pg03:
-    image: pg:0.6.0
+    image: pg:${pg_version:-latest}
     environment:
       INITIAL_NODE_TYPE: slave
       NODE_ID: 3
@@ -66,7 +66,7 @@ services:
       - pg01
 
   pgpool01:
-    image: pgpool:0.6.0
+    image: pgpool:${pg_version:-latest}
     ports:
       - 9999:9999
     environment:
@@ -78,6 +78,8 @@ services:
       PGP_NODE_NAME: pgpool01
       REPMGRPWD: rep123
       FAILOVER_MODE: automatic
+      PGPOOL_HEALTH_CHECK_MAX_RETRIES: 6
+      PGPOOL_HEALTH_CHECK_PERIOD: 5
       #DELEGATE_IP: 172.18.0.100
       #TRUSTED_SERVERS: 172.23.1.250
       #PGP_HEARTBEATS: "0:pgpool01:9694,1:pgpool02:9694"
@@ -92,7 +94,7 @@ services:
       - pg02
       - pg03
   manager:
-    image: manager:0.1.5
+    image: manager:${manager_version:-latest}
     ports:
       - 8080:8080
     #command: tail -f /etc/passwd

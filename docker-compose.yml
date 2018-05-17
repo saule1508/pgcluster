@@ -1,7 +1,7 @@
 version: '3.2'
 services:
   pg01:
-    image: pg:0.6.0
+    image: pg:${pg_version}
     environment:
       INITIAL_NODE_TYPE: master
       NODE_ID: 1
@@ -12,6 +12,7 @@ services:
       MSUSERPWDLIST: "asset_user,ingest_user,playout_user"
       REPMGRPWD: rep123
       PGMASTER: pg01
+      REPMGRD_FAILOVER_MODE: manual
     volumes:
       - /u01/pg10/data:/u01/pg10/data
       - /u02/archive:/u02/archive
@@ -28,7 +29,7 @@ services:
         mode: host
 
   pg02:
-    image: pg:0.6.0
+    image: pg:${pg_version}
     environment:
       INITIAL_NODE_TYPE: slave
       NODE_ID: 2
@@ -39,6 +40,7 @@ services:
       MSUSERPWDLIST: "asset_user,ingest_user,playout_user"
       REPMGRPWD: rep123
       PGMASTER: pg01
+      REPMGRD_FAILOVER_MODE: manual
     volumes:
       - /u01/pg10/data:/u01/pg10/data
       - /u02/archive:/u02/archive
@@ -57,7 +59,7 @@ services:
       - pg01
 
   pgpool:
-    image: pgpool:0.6.0
+    image: pgpool:${pg_version}
     ports:
       - 9999:9999
     environment:
@@ -68,7 +70,9 @@ services:
                 # not needed when there is a single postgres DB
       PGP_NODE_NAME: pgpool
       REPMGRPWD: rep123
-      FAILOVER_MODE: auto
+      FAILOVER_MODE: automatic
+      PGPOOL_HEALTH_CHECK_MAX_RETRIES: 6
+      PGPOOL_HEALTH_CHECK_PERIOD: 5
       #DELEGATE_IP: 172.18.0.100
       #TRUSTED_SERVERS: 172.23.1.250
       #PGP_HEARTBEATS: "0:pgpool01:9694,1:pgpool02:9694"
@@ -81,7 +85,7 @@ services:
       - pg02
 
   manager:
-    image: manager:0.1.4
+    image: manager:${manager_version}
     ports:
       - 8080:8080
     environment:

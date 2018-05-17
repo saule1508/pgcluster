@@ -166,6 +166,8 @@ restore_command = 'cp /u02/archive/%f %p'
 #log_file='/var/log/repmgr/repmgr.log'
 log_facility=STDERR
 failover=${REPMGRD_FAILOVER_MODE}
+reconnect_attempts=${REPMGRD_RECONNECT_ATTEMPS:-6}
+reconnect_interval=${REPMGRD_INTERVAL:-5}
 monitor_interval_secs=5
 
 pg_bindir='/usr/pgsql-10/bin'

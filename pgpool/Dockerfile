@@ -31,6 +31,8 @@ RUN echo "*:*:postgres:postgres" > /home/postgres/.pcppass && \
   chmod 600 /home/postgres/.pcppass && \
   chown -R postgres:postgres /etc/pgpool-II && \
   chmod +s /usr/sbin/arping /usr/sbin/ip
+# put a file on /tmp so that we can determine if /tmp is host mounted or not (for pgpool_status file)
+RUN touch /tmp/.not_host_mounted
 ADD scripts /scripts
 ADD bin/entrypoint.sh /
 RUN chown postgres:postgres /entrypoint.sh /scripts/* && chmod +x /entrypoint.sh /scripts/*.sh

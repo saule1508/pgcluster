@@ -2,7 +2,7 @@
 
 Postgres streaming replication with pgpool and/or repmgr for the automated failover and docker swarm for the failover of pgpool. 
 
-The postgres image contains a ssh server, repmgr and supervisord. Postgres is replicated with streaming replication, repmgr is used because it brings well documented and tested scripts and it adds some metadata about the cluster that ease monitoring. Automatic failover of postgres can be done either by repmgr (repmgrd) or by pgpool. There is a graphical monitoring/operational interface available (written in nodejs / react).
+The postgres image contains a ssh server, repmgr, postgres (!) and supervisord. Postgres is replicated with streaming replication, repmgr is used because it brings well documented and tested scripts and it adds some metadata about the cluster that ease monitoring. Automatic failover of postgres can be done either by repmgr (repmgrd) or by pgpool. There is a graphical monitoring/operational interface available (written in nodejs / react).
 
 There are two different ways to use those docker images:
 
@@ -11,6 +11,9 @@ There are two different ways to use those docker images:
 * The more classical pgpool setup in watchdog mode is documented in [pgpool watchdog](doc/pgpoolwatchdog.md). In pgpool watchdog mode there are two nodes, postgres is made HA via streaming replication and pgpool itself is made HA via the watchdog functionality, based on a virtual IP. postgres, pgpool and the monitoring tool all run in docker but not in a swarm.
 
 In both case some ansible scripts are available to automated the deployment on two or three virtual machines (centos 7).
+
+In both case the automated failover is optional. It can either be done by pgpool or by repmgr (but not both at the same time). If one chose to let repmgrd do the automatic failover (REPMGRD_FAILOVER_MODE=automatic), then pgpool failover_command will be left empty: in this case pgpool will not do the failover when it detects a primary failure but will wait until a new master is promoted (by repmgrd). If repmgrd is responsible for the failover then it is important that the grace period before failover (depends on REPMGRD_RECONNECT_ATTEMPTS and REPMGRD_RECONNECT_INTERVAL env variables passed to the postgres containers) must be shorter than the period defined for PGPOOL (PGPOOL_HEALTH_CHECK_MAX_RETRIES and PGPOOL_HEALTH_CHECK_PERIOD env variables given to pgpool's container)
+
 
 The rest of this README is for the docker swarm scenario.
 
@@ -25,7 +28,6 @@ In the swarm, each of the postgres service (pg01 and pg02 and pg03) is sticky to
 
 You must of course replace the value of docker_node_x by the corresponding node id (if you use the ansible scripts it is done for you).
 
-The automated failover is optional. If automated failover is desired, it can either be done by pgpool or by repmgr (but not both at the same time). If one chose to let repmgrd do the automatic failover, then pgpool failover_command configuration must be left empty: in this case pgpool will not do the failover when it detects a primary failure but will wait until a new master is promoted (by repmgrd).
 
 In case pgpool is doing the automatic failover, there is one edge case when both the primary database and pgpool are running on the same swarm node: if this server goes down then docker swarm will start a new instance of pgpool on another node while the primary database will not be restarted (it is sticky to its node). To take care of this case, the entrypoint of pgpool will inspect the repmgr metadata table - repl_nodes - and promote a standby if the primary database (as indicated by repmgr) is not reachable. Note that if the pgpool service is configured with FAILOVER_MODE=manual (either because repmgrd is responsible for automated failover or because one prefer manual failover - see below) no promotion will take place.
 

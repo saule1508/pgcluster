@@ -129,6 +129,37 @@ getIdFromHost(){
   done
 }
 
+log_info(){
+  echo "$(date +"%Y%m%d %H:%M:%S.%s") - INFO - $1"
+}
+
+updateConfig(){
+  CONFIG=$1
+  VALUE=$2
+  log_info "Injecting config $CONFIG with value $VALUE in $CONFIG_FILE"
+  # remove value first
+  sed -i -e "/^${CONFIG}\s*=/d" $CONFIG_FILE
+  echo "${CONFIG} = ${VALUE}" >> $CONFIG_FILE
+}
+
+ 
+
+injectConfigsFromEnv(){
+  # inject configuration from env variables prefixed with PGPOOL_
+  OLD_IFS=$IFS
+  IFS=$'\n'
+  echo "### generated ###" >> $CONFIG_FILE
+  for VAR in $(env)
+  do
+    env_var=$(echo "$VAR" | cut -d= -f1)
+    if [[ $env_var =~ ^PGPOOL_ ]]; then
+      config_name=$(echo "$env_var" | cut -d_ -f2- | tr '[:upper:]' '[:lower:]' )
+      updateConfig "$config_name" "${!env_var}"
+    fi
+  done
+  IFS=$OLD_IFS
+}
+
 
 PG_MASTER_NODE_NAME=${PG_MASTER_NODE_NAME:-pg01}
 echo PG_MASTER_NODE_NAME=${PG_MASTER_NODE_NAME}
@@ -179,20 +210,27 @@ while [ $nbrlines -lt $nbrbackend -a $NBRTRY -gt 0 ] ; do
   echo "Sleep 10 seconds, still $NBRTRY to go..."
   sleep 10
 done
-build_pgpool_status_file ${DBHOST}
-echo REPMGR_MASTER is ${REPMGR_MASTER}
-# issue: assume the master is pg02 and it was stopped outside the control of pgpool (after pgpool was stopped)
-# then pgpool will search for a master for search_primary_node_timeout then it will do a failover
-# however in the failover it will say : falling node = 1, old_primary = 0 and so the failover will do nothing
-echo Get state of REPMGR_MASTER $REPMGR_MASTER
-master_info=$( grep "^${REPMGR_MASTER}:" /tmp/backendsinfo.txt )
-echo $master_info | grep dbup=t
-if [ $? -eq 0 ] ; then
-  masterup=1
-  echo master database is up
+if [ -f /tmp/.not_host_mounted ] ; then
+ # if we can see this file it means that /tmp is not host mounted
+ build_pgpool_status_file ${DBHOST}
+ echo REPMGR_MASTER is ${REPMGR_MASTER}
+ # issue: assume the master is pg02 and it was stopped outside the control of pgpool (after pgpool was stopped)
+ # then pgpool will search for a master for search_primary_node_timeout then it will do a failover
+ # however in the failover it will say : falling node = 1, old_primary = 0 and so the failover will do nothing
+ echo Get state of REPMGR_MASTER $REPMGR_MASTER
+ master_info=$( grep "^${REPMGR_MASTER}:" /tmp/backendsinfo.txt )
+ echo $master_info | grep dbup=t
+ if [ $? -eq 0 ] ; then
+   masterup=1
+   echo master database is up
+ else
+   masterup=0
+   echo master database is down
+ fi
 else
-  masterup=0
-  echo master database is down
+ # so that we skip the logic below
+ echo "/tmp is mounted from the host, will reuse /tmp/pgpool_status" 
+ masterup=1
 fi
 if [ $masterup -eq 0 -a ${FAILOVER_MODE} == "automatic" ] ; then
   echo master database is down and FAILOVER_MODE is auto, wait 1 minute before doing promotion
@@ -734,5 +772,7 @@ memory_cache_enabled = off
 EOF
 
 rm -f /var/run/pgpool/pgpool.pid /var/run/pgpool/.s.PGSQL.9999 /var/run/pgpool/.s.PGSQL.9898 2>/dev/null
-echo "Start pgpool in foreground"
+log_info "inject env variables into config file"
+injectConfigsFromEnv
+log_info "Start pgpool in foreground"
 exec /usr/bin/pgpool -f ${CONFIG_FILE} -n

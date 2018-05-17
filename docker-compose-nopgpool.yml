@@ -1,7 +1,7 @@
 version: '3.2'
 services:
   pg01:
-    image: pg:0.4.0
+    image: pg:${pg_version}
     environment:
       INITIAL_NODE_TYPE: master
       NODE_ID: 1
@@ -18,7 +18,7 @@ services:
       - pg01db:/u01/pg10/data
       - pg01arc:/u02/archive
   pg02:
-    image: pg:0.4.0
+    image: pg:${pg_version}
     environment:
       INITIAL_NODE_TYPE: slave
       NODE_ID: 2
@@ -28,6 +28,9 @@ services:
       MSOWNERPWDLIST: "asset_owner,ingest_owner,playout_owner"
       MSUSERPWDLIST: "asset_user,ingest_user,playout_user"
       REPMGRPWD: rep123
+      REPMGRD_FAILOVER_MODE: automatic
+      REPMGRD_INTERVAL: 5
+      REPMGRED_RECONNECT_ATTEMPTS: 6
       PGMASTER: pg01
     ports:
       - 25432:5432 # postgres port
