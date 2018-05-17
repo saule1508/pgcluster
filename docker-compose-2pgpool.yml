@@ -72,7 +72,7 @@ services:
       FAILOVER_MODE: manual
       # Make sure this is bigger than REPMGRD_ATTEMPTS * REPMGRD_INTERVAL
       PGPOOL_HEALTH_CHECK_MAX_RETRIES: 5
-      PGPOOL_HEALTH_CHECK_PERIOD: 10
+      PGPOOL_HEALTH_CHECK_RETRY_DELAY: 10
     ports:
       - 9999:9999 
     depends_on:
@@ -102,7 +102,7 @@ services:
       FAILOVER_MODE: manual
       # Make sure this is bigger than REPMGRD_ATTEMPTS * REPMGRD_INTERVAL
       PGPOOL_HEALTH_CHECK_MAX_RETRIES: 5
-      PGPOOL_HEALTH_CHECK_PERIOD: 10
+      PGPOOL_HEALTH_CHECK_RETRY_DELAY: 10
     ports:
       - 29999:9999
     depends_on:

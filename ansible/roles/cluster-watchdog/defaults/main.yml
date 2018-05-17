@@ -1,2 +1,9 @@
 postgres_pg_version: 10
 pgpool_ip_failover_netmask: 24
+postgres_repmgrd_failover_mode: automatic
+postgres_pgpool_failover_mode: manual
+postgres_repmgrd_reconnect_attempts: 6
+postgres_repmgrd_reconnect_interval: 5
+postgres_pgpool_healthcheck_max_retries: 10
+postgres_pgpool_healthcheck_retry_delay: 6
+
