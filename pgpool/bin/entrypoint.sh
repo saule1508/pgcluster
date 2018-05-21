@@ -775,4 +775,4 @@ rm -f /var/run/pgpool/pgpool.pid /var/run/pgpool/.s.PGSQL.9999 /var/run/pgpool/.
 log_info "inject env variables into config file"
 injectConfigsFromEnv
 log_info "Start pgpool in foreground"
-exec /usr/bin/pgpool -f ${CONFIG_FILE} -n
+exec /usr/local/bin/pgpool -f ${CONFIG_FILE} -F $CONFIG_DIR/pcp.conf -a $CONFIG_DIR/pool_hba.conf -n
