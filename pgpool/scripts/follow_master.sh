@@ -10,7 +10,7 @@ LOGFILE=/var/log/pg/follow_master.log
 if [ ! -f $LOGFILE ] ; then
  > $LOGFILE
 fi
-echo "executing follow_master.sh at `date`"  | tee -a $LOGFILE
+echo "executing follow_master.sh at `date` on `hostname`"  | tee -a $LOGFILE
 
 NODEID=$1
 HOSTNAME=$2

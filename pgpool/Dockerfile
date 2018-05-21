@@ -1,13 +1,14 @@
 FROM centos:latest
 MAINTAINER ptim007@yahoo.com
 ENV PGVER=10
+ENV PGPOOLVER=3.7.1
 RUN yum update -y ; yum clean all ; rm -rf /var/cache/yum
 RUN groupadd -g 50010 postgres && useradd -u 50010 -g postgres postgres 
 RUN usermod -G wheel -a postgres && echo "postgres" | passwd --stdin postgres
 RUN yum install -y http://www.pgpool.net/yum/rpms/3.7/redhat/rhel-7-x86_64/pgpool-II-release-3.7-1.noarch.rpm
 RUN yum install -y https://download.postgresql.org/pub/repos/yum/10/redhat/rhel-7-x86_64/pgdg-centos10-10-2.noarch.rpm
-RUN yum install -y postgresql${PGVER} pgpool-II-pg${PGVER} pgpool-II-pg${PGVER}-extensions \
-    pgpool-II-pg${PGVER}-debuginfo epel-release sudo vi openssh openssh-clients iproute ; \
+RUN yum install -y postgresql${PGVER} pgpool-II-pg${PGVER}-${PGPOOLVER} pgpool-II-pg${PGVER}-extensions-${PGPOOLVER} \
+    pgpool-II-pg${PGVER}-debuginfo-${PGPOOLVER} epel-release sudo vi openssh openssh-clients iproute ; \
      yum clean all ; rm -rf /var/cache/yum
 # postgres can do sudo
 RUN echo "Defaults:postgres !requiretty" > /etc/sudoers.d/postgres && \

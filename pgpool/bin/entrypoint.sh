@@ -503,7 +503,7 @@ connect_timeout = 10000
 EOF
 if [ $FAILOVER_MODE == "automatic" ] ; then
   cat <<EOF >> $CONFIG_FILE
-failover_command = '/scripts/failover.sh  %d %h %P %m %H %R'
+failover_command = '/scripts/failover.sh %d %h %p %D %m %H %M %P %r %R'
                                    # Executes this command at failover
                                    # Special values:
                                    #   %d = node id
@@ -514,8 +514,8 @@ failover_command = '/scripts/failover.sh  %d %h %P %m %H %R'
                                    #   %H = hostname of the new master node
                                    #   %M = old master node id
                                    #   %P = old primary node id
-                                                                   #   %r = new master port number
-                                                                   #   %R = new master database cluster path
+                                   #   %r = new master port number
+                                   #   %R = new master database cluster path
                                    #   %% = '%' character
 failback_command = 'echo failback %d %h %p %D %m %H %M %P'
                                    # Executes this command at failback.
