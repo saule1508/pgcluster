@@ -43,7 +43,7 @@ services:
     depends_on:
       - pg01
   pg03:
-    image: pg:${pg_version}
+    image: pg:0.7.1
     environment:
       INITIAL_NODE_TYPE: slave
       NODE_ID: 3
@@ -66,7 +66,7 @@ services:
       - pg01
 
   pgpool01:
-    image: pgpool:${pg_version}
+    image: pgpool:0.7.1
     ports:
       - 9999:9999
     environment:
@@ -79,6 +79,7 @@ services:
       PGP_NODE_NAME: pgpool01
       REPMGRPWD: rep123
       FAILOVER_MODE: automatic
+      PGPOOL_HEALTH_CHECK_PERIOD: 10
       PGPOOL_HEALTH_CHECK_MAX_RETRIES: 5
       PGPOOL_HEALTH_CHECK_RETRY_DELAY: 1
       #DELEGATE_IP: 172.18.0.100

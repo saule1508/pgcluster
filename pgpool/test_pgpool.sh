@@ -37,6 +37,18 @@ get_pool_nodes(){
  return 0
 }
 
+get_repmgr_nodes(){
+ sudo rm /tmp/repmgr_nodes
+ CONT=$( docker ps -q --filter="status=running" --filter="name=pgpool01" )
+ docker exec $CONT psql -U repmgr -h pgpool01 -p 9999 repmgr -t -c "select * from nodes order by node_id;" > /tmp/repmgr_nodes
+ if [ $? -ne 0 ] ; then
+   echo ERROR 
+   return 1
+ fi
+ cat /tmp/repmgr_nodes
+ return 0
+}
+
 check_pool_nodes(){
  EXPECTED_STATUS=$1
  EXPECTED_ROLE=$2
@@ -64,7 +76,51 @@ check_pool_nodes(){
       exit 1
    fi 
  done
- echo check pool nodes OK
+ ret=$?
+ if [ $ret -eq 0 ] ; then 
+   echo check pool nodes OK
+   return 0
+ else
+   echo ERROR in check pool nodes
+   return $ret
+ fi
+}
+
+check_repmgr_nodes(){
+ EXPECTED_ACTIVE=$1
+ EXPECTED_TYPE=$2
+ get_repmgr_nodes 
+ if [ $? -ne 0 ] ; then
+   echo ERROR in get_repmgr_nodes
+   exit 1
+ fi
+ echo Check status $EXPECTED_ACTIVE and role $EXPECTED_TYPE
+ cat /tmp/repmgr_nodes | egrep -v "node_id|---|^\(|^$" | while read line
+ do
+   NODE=$( echo $line | cut -c1 )
+   FIELD=$((NODE))
+   NODE_ACTIVE_EXPECTED=$( echo $EXPECTED_ACTIVE | cut -f$FIELD -d",")
+   NODE_TYPE_EXPECTED=$( echo $EXPECTED_TYPE | cut -f$FIELD -d",")
+   NODE_ACTIVE=$(echo $line | cut -f3 -d"|" | sed -e "s/ //g")
+   NODE_TYPE=$(echo $line | cut -f5 -d"|" | sed -e "s/ //g")
+   echo Node $NODE active is $NODE_ACTIVE and role is $NODE_TYPE
+   if [ $NODE_TYPE_EXPECTED != $NODE_TYPE ] ; then
+      echo ERROR node type expected not OK for $NODE
+      exit 1
+   fi 
+   if [ $NODE_ACTIVE_EXPECTED != $NODE_ACTIVE ] ; then
+      echo ERROR node active expected not OK for $NODE
+      exit 1
+   fi 
+ done
+ ret=$?
+ if [ $ret -eq 0 ] ; then 
+   echo check repmgr nodes OK
+   return 0
+ else
+   echo ERROR in check repmgr nodes
+   return $ret
+ fi
 }
 
 docker stack rm pgcluster
@@ -81,21 +137,59 @@ wait_for_db pg03
 echo Sleep 30 to wait for pgpool
 sleep 30
 check_pool_nodes up,up,up primary,standby,standby
+if [ $? -ne 0 ] ; then
+ exit 1
+fi
+check_repmgr_nodes t,t,t primary,standby,standby
+if [ $? -ne 0 ] ; then
+ exit 1
+fi
 echo "Stop pg01"
 CONT=$( docker ps -q --filter="status=running" --filter="name=pg01" )
 docker exec $CONT supervisorctl stop postgres
-echo Sleep 40 to let failover happen
-sleep 40
+echo Sleep 60 to let failover happen
+sleep 60
 check_pool_nodes down,up,up standby,primary,standby
+if [ $? -ne 0 ] ; then
+ exit 1
+fi
+check_repmgr_nodes f,t,t primary,primary,standby
+if [ $? -ne 0 ] ; then
+ exit 1
+fi
 CONT=$( docker ps -q --filter="status=running" --filter="name=pgpool01" )
+echo doing pcp_recovery_node of 0
 docker exec $CONT pcp_recovery_node -h pgpool01 -p 9898 -w 0
 check_pool_nodes up,up,up standby,primary,standby
+if [ $? -ne 0 ] ; then
+ exit 1
+fi
+check_repmgr_nodes t,t,t standby,primary,standby
+if [ $? -ne 0 ] ; then
+ exit 1
+fi
 echo "Stop pg02"
 CONT=$( docker ps -q --filter="status=running" --filter="name=pg02" )
 docker exec $CONT supervisorctl stop postgres
-echo Sleep 40 to let failover happen
-sleep 40
+echo Sleep 60 to let failover happen
+sleep 60
 check_pool_nodes up,down,up primary,standby,standby
+if [ $? -ne 0 ] ; then
+ exit 1
+fi
+check_repmgr_nodes t,f,t primary,primary,standby
+if [ $? -ne 0 ] ; then
+ exit 1
+fi
 CONT=$( docker ps -q --filter="status=running" --filter="name=pgpool01" )
+echo doing pcp_recovery_node for 1
 docker exec $CONT pcp_recovery_node -h pgpool01 -p 9898 -w 1
 check_pool_nodes up,up,up primary,standby,standby
+if [ $? -ne 0 ] ; then
+ exit 1
+fi
+check_repmgr_nodes t,t,t primary,standby,standby
+if [ $? -ne 0 ] ; then
+  exit 1
+fi
+exit 0
