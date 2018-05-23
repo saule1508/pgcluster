@@ -134,8 +134,8 @@ echo "Check for db pg02 to be ready"
 wait_for_db pg02
 echo "Check for db pg03 to be ready"
 wait_for_db pg03
-echo Sleep 30 to wait for pgpool
-sleep 30
+echo Sleep 60 to wait for pgpool
+sleep 60
 check_pool_nodes up,up,up primary,standby,standby
 if [ $? -ne 0 ] ; then
  exit 1
