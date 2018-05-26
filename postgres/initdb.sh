@@ -181,7 +181,10 @@ promote_command='repmgr -f /etc/repmgr/10/repmgr.conf standby promote'
 follow_command='repmgr -f /etc/repmgr/10/repmgr.conf standby follow -W --upstream-node-id=%n'
 
 EOF
-
+if [ $REPMGRD_FAILOVER_MODE == "automatic" ] ; then
+cat << EOF > /etc/repmgr/10/repmgr.conf
+event_notification_command='/scripts/repmgrd_event.sh %n %e %s "%t" "%d" %p %c %a'
+EOF
 #
 # stuff below will be done only once, when the database has not been initialized
 #
