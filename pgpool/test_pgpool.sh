@@ -144,6 +144,7 @@ check_repmgr_nodes t,t,t primary,standby,standby
 if [ $? -ne 0 ] ; then
  exit 1
 fi
+exit
 echo "Stop pg01"
 CONT=$( docker ps -q --filter="status=running" --filter="name=pg01" )
 docker exec $CONT supervisorctl stop postgres

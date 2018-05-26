@@ -1,7 +1,7 @@
 version: '3.2'
 services:
   pg01:
-    image: pg:0.7.1
+    image: pg:0.7.2
     environment:
       INITIAL_NODE_TYPE: master
       NODE_ID: 1
@@ -23,7 +23,7 @@ services:
     networks:
       - pgcluster_network
   pg02:
-    image: pg:0.7.1
+    image: pg:0.7.2
     environment:
       INITIAL_NODE_TYPE: slave
       NODE_ID: 2
@@ -47,7 +47,7 @@ services:
     depends_on:
       - pg01
   pg03:
-    image: pg:0.7.1
+    image: pg:0.7.2
     environment:
       INITIAL_NODE_TYPE: slave
       NODE_ID: 3
@@ -72,12 +72,12 @@ services:
       - pg01
 
   pgpool01:
-    image: pgpool:0.7.1
+    image: pgpool:0.7.2
     ports:
       - 9999:9999
     environment:
       PGMASTER_NODE_NAME: pg01
-      PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER,1:pg02:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER,2:pg03:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER
+      PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg10/data:DISALLOW_TO_FAILOVER,1:pg02:5432:1:/u01/pg10/data:DISALLOW_TO_FAILOVER,2:pg03:5432:1:/u01/pg10/data:DISALLOW_TO_FAILOVER
       #PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER,1:pg02:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER
                 # csv list of backend postgres databases, each backend db contains (separated by :)
                 # number (start with 0):host name:pgpool port (default 9999):data dir (default /u01/pg10/data):flag ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
@@ -85,7 +85,7 @@ services:
       PGP_NODE_NAME: pgpool01
       REPMGRPWD: rep123
       FAILOVER_MODE: manual
-      PGPOOL_HEALTH_CHECK_PERIOD: 15
+      PGPOOL_HEALTH_CHECK_PERIOD: 0
       PGPOOL_FAILOVER_ON_BACKEND_ERROR: "no"
       #PGPOOL_HEALTH_CHECK_MAX_RETRIES: 5
       #PGPOOL_HEALTH_CHECK_RETRY_DELAY: 2
@@ -109,7 +109,7 @@ services:
       - 8080:8080
     #command: tail -f /etc/passwd
     environment:
-      PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER,1:pg02:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER,2:pg03:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER
+      PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg10/data:DISALLOW_TO_FAILOVER,1:pg02:5432:1:/u01/pg10/data:DISALLOW_TO_FAILOVER,2:pg03:5432:1:/u01/pg10/data:DISALLOW_TO_FAILOVER
       REPMGRPWD: rep123
       DBHOST: pgpool01
     networks:

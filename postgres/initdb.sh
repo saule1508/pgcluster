@@ -182,9 +182,10 @@ follow_command='repmgr -f /etc/repmgr/10/repmgr.conf standby follow -W --upstrea
 
 EOF
 if [ $REPMGRD_FAILOVER_MODE == "automatic" ] ; then
-cat << EOF > /etc/repmgr/10/repmgr.conf
+  cat << EOF >> /etc/repmgr/10/repmgr.conf
 event_notification_command='/scripts/repmgrd_event.sh %n %e %s "%t" "%d" %p %c %a'
 EOF
+fi
 #
 # stuff below will be done only once, when the database has not been initialized
 #
