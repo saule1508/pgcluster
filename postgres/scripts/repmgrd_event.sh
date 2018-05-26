@@ -24,5 +24,13 @@ if [ $EVENT_TYPE == "repmgrd_failover_follow" ] ; then
   echo attach node $NODE_ID 
   pcp_attach_node -h pgpool01 -p 9898 -w $(( NODE_ID-1 ))
 fi
+if [ $EVENT_TYPE == "standby_failure" ] ; then
+  echo detach node $NODE_ID
+  pcp_detach_node -h pgpool01 -p 9898 -w $(( NODE_ID-1 ))
+fi
+if [ $EVENT_TYPE == "standby_recovery" ] ; then
+  echo attach node $NODE_ID
+  pcp_attach_node -h pgpool01 -p 9898 -w $(( NODE_ID-1 ))
+fi
 
 
