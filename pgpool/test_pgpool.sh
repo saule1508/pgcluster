@@ -1,5 +1,16 @@
 #!/bin/bash
 
+if [ $# -ne 1 ] ; then
+  echo Please specify repmgrd or pgpool as parameter to determine failover mode
+  exit
+fi
+if [ "$1" == "repmgrd" ] ; then
+  DOCKERFILE="docker-compose-test-repmgrdfailover.yml"
+else
+  DOCKERFILE="docker-compose-test-pgpoolfailover.yml"
+fi
+
+
 wait_for_db(){
  echo Wait for $1
  CONT=$( docker ps -q --filter="status=running" --filter="name=$1" )
@@ -26,9 +37,11 @@ wait_for_db(){
 }
 
 get_pool_nodes(){
- sudo rm /tmp/pool_nodes
- CONT=$( docker ps -q --filter="status=running" --filter="name=pgpool01" )
- docker exec $CONT psql -U repmgr -h pgpool01 -p 9999 repmgr -t -c "show pool_nodes;" > /tmp/pool_nodes
+ if [ -f /tmp/pool_nodes ] ; then
+   sudo rm /tmp/pool_nodes
+ fi
+ CONT=$( docker ps -q --filter="status=running" --filter="name=pgpool" )
+ docker exec $CONT psql -U repmgr -h pgpool -p 9999 repmgr -t -c "show pool_nodes;" > /tmp/pool_nodes
  if [ $? -ne 0 ] ; then
    echo ERROR 
    return 1
@@ -39,8 +52,8 @@ get_pool_nodes(){
 
 get_repmgr_nodes(){
  sudo rm /tmp/repmgr_nodes
- CONT=$( docker ps -q --filter="status=running" --filter="name=pgpool01" )
- docker exec $CONT psql -U repmgr -h pgpool01 -p 9999 repmgr -t -c "select * from nodes order by node_id;" > /tmp/repmgr_nodes
+ CONT=$( docker ps -q --filter="status=running" --filter="name=pgpool" )
+ docker exec $CONT psql -U repmgr -h pgpool -p 9999 repmgr -t -c "select * from nodes order by node_id;" > /tmp/repmgr_nodes
  if [ $? -ne 0 ] ; then
    echo ERROR 
    return 1
@@ -126,7 +139,7 @@ check_repmgr_nodes(){
 docker stack rm pgcluster
 sleep 10
 ./delvol.sh
-docker stack deploy -c docker-compose-test.yml pgcluster
+docker stack deploy -c $DOCKERFILE pgcluster
 docker service ls
 echo "Check for db pg01 to be ready"
 wait_for_db pg01
@@ -144,7 +157,6 @@ check_repmgr_nodes t,t,t primary,standby,standby
 if [ $? -ne 0 ] ; then
  exit 1
 fi
-exit
 echo "Stop pg01"
 CONT=$( docker ps -q --filter="status=running" --filter="name=pg01" )
 docker exec $CONT supervisorctl stop postgres
@@ -158,9 +170,9 @@ check_repmgr_nodes f,t,t primary,primary,standby
 if [ $? -ne 0 ] ; then
  exit 1
 fi
-CONT=$( docker ps -q --filter="status=running" --filter="name=pgpool01" )
+CONT=$( docker ps -q --filter="status=running" --filter="name=pgpool" )
 echo doing pcp_recovery_node of 0
-docker exec $CONT pcp_recovery_node -h pgpool01 -p 9898 -w 0
+docker exec $CONT pcp_recovery_node -h pgpool -p 9898 -w 0
 check_pool_nodes up,up,up standby,primary,standby
 if [ $? -ne 0 ] ; then
  exit 1
@@ -182,9 +194,9 @@ check_repmgr_nodes t,f,t primary,primary,standby
 if [ $? -ne 0 ] ; then
  exit 1
 fi
-CONT=$( docker ps -q --filter="status=running" --filter="name=pgpool01" )
+CONT=$( docker ps -q --filter="status=running" --filter="name=pgpool" )
 echo doing pcp_recovery_node for 1
-docker exec $CONT pcp_recovery_node -h pgpool01 -p 9898 -w 1
+docker exec $CONT pcp_recovery_node -h pgpool -p 9898 -w 1
 check_pool_nodes up,up,up primary,standby,standby
 if [ $? -ne 0 ] ; then
  exit 1

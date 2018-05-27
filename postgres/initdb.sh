@@ -153,13 +153,15 @@ echo "*:*:repmgr:repmgr:${REPMGRPWD}" > /home/postgres/.pgpass
 echo "*:*:replication:repmgr:${REPMGRPWD}" >> /home/postgres/.pgpass
 chmod 600 /home/postgres/.pgpass
 
+# patch script /scripts/repmgrd_event.sh 
+sed -i -e "s/##REPMGRD_FAILOVER_MODE##/${REPMGRD_FAILOVER_MODE}/" /scripts/repmgrd_event.sh
 #build repmgr.conf
-sudo touch /etc/repmgr/10/repmgr.conf && sudo chown postgres:postgres /etc/repmgr/10/repmgr.conf
-cat <<EOF > /etc/repmgr/10/repmgr.conf
+sudo touch /etc/repmgr/${PGVER}/repmgr.conf && sudo chown postgres:postgres /etc/repmgr/${PGVER}/repmgr.conf
+cat <<EOF > /etc/repmgr/${PGVER}/repmgr.conf
 node_id=${NODE_ID}
 node_name=${NODE_NAME}
 conninfo='host=${NODE_NAME} dbname=repmgr user=repmgr password=${REPMGRPWD} connect_timeout=2'
-data_directory='/u01/pg10/data'
+data_directory='/u01/pg${PGVER}/data'
 use_replication_slots=1
 restore_command = 'cp /u02/archive/%f %p'
 
@@ -168,24 +170,20 @@ log_facility=STDERR
 failover=${REPMGRD_FAILOVER_MODE}
 reconnect_attempts=${REPMGRD_RECONNECT_ATTEMPS:-6}
 reconnect_interval=${REPMGRD_INTERVAL:-5}
+event_notification_command='/scripts/repmgrd_event.sh %n "%e" %s "%t" "%d" %p %c %a'
 monitor_interval_secs=5
 
-pg_bindir='/usr/pgsql-10/bin'
+pg_bindir='/usr/pgsql-${PGVER}/bin'
 
 service_start_command = 'sudo supervisorctl start postgres'
 service_stop_command = 'sudo supervisorctl stop postgres'
 service_restart_command = 'sudo supervisorctl restart postgres'
 service_reload_command = 'pg_ctl reload'
 
-promote_command='repmgr -f /etc/repmgr/10/repmgr.conf standby promote'
-follow_command='repmgr -f /etc/repmgr/10/repmgr.conf standby follow -W --upstream-node-id=%n'
+promote_command='repmgr -f /etc/repmgr/${PGVER}/repmgr.conf standby promote'
+follow_command='repmgr -f /etc/repmgr/${PGVER}/repmgr.conf standby follow -W --upstream-node-id=%n'
 
 EOF
-if [ $REPMGRD_FAILOVER_MODE == "automatic" ] ; then
-  cat << EOF >> /etc/repmgr/10/repmgr.conf
-event_notification_command='/scripts/repmgrd_event.sh %n %e %s "%t" "%d" %p %c %a'
-EOF
-fi
 #
 # stuff below will be done only once, when the database has not been initialized
 #

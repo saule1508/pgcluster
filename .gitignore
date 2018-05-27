@@ -1,2 +1,3 @@
 node_modules/
-./manager/build/
+manager/build/server
+manager/build/client

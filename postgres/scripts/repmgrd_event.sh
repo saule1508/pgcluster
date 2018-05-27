@@ -13,24 +13,31 @@
 #   name of the next available node (bdr_failover and bdr_recovery)
 
 NODE_ID=$1
-EVENT_TYPE=$2
+EVENT_TYPE="$2"
 SUCCESS=$3
+if [ ! -f /var/log/pgcluster/repmgrd_event.log ] ; then
+  touch /var/log/pgcluster/repmgrd_event.log
+fi
+# following variable will be injected by initdb.sh based on env variable
+REPMGRD_FAILOVER_MODE="##REPMGRD_FAILOVER_MODE##"
+
+if [ $EVENT_TYPE == "standby_recovery" -a $SUCCESS -eq 1 ] ; then
+  echo attach node $NODE_ID because $EVENT_TYPE >> /var/log/pgcluster/repmgrd_event.log
+  pcp_attach_node -h pgpool -p 9898 -w $(( NODE_ID-1 ))
+fi
+
+if [ "$REPMGRD_FAILOVER_MODE" == "manual" ] ; then
+  exit 0
+fi
 
 if [ $EVENT_TYPE == "repmgrd_failover_promote" ] ; then
-  echo promote node $NODE_ID
-  pcp_promote_node -h pgpool01 -p 9898 -w $(( NODE_ID-1 ))
+  pcp_promote_node -h pgpool -p 9898 -w $(( NODE_ID-1 ))
 fi
 if [ $EVENT_TYPE == "repmgrd_failover_follow" ] ; then
-  echo attach node $NODE_ID 
-  pcp_attach_node -h pgpool01 -p 9898 -w $(( NODE_ID-1 ))
+  echo detach node $NODE_ID because $EVENT_TYPE >> /var/log/pgcluster/repmgrd_event.log
+  pcp_attach_node -h pgpool -p 9898 -w $(( NODE_ID-1 ))
 fi
-if [ $EVENT_TYPE == "standby_failure" ] ; then
-  echo detach node $NODE_ID
-  pcp_detach_node -h pgpool01 -p 9898 -w $(( NODE_ID-1 ))
+if [ $EVENT_TYPE == "standby_failure" ] ; then
+  echo detach node $NODE_ID because $EVENT_TYPE >> /var/log/pgcluster/repmgrd_event.log
+  pcp_detach_node -h pgpool -p 9898 -w $(( NODE_ID-1 ))
 fi
-if [ $EVENT_TYPE == "standby_recovery" ] ; then
-  echo attach node $NODE_ID
-  pcp_attach_node -h pgpool01 -p 9898 -w $(( NODE_ID-1 ))
-fi
-
-
