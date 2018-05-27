@@ -15,8 +15,9 @@
 NODE_ID=$1
 EVENT_TYPE="$2"
 SUCCESS=$3
-if [ ! -f /var/log/pgcluster/repmgrd_event.log ] ; then
-  touch /var/log/pgcluster/repmgrd_event.log
+if [ ! -f /var/log/repmgrd_event.log ] ; then
+  sudo touch /var/log/repmgrd_event.log
+  sudo chown postgres:postgres /var/log/repmgrd_event.log
 fi
 # following variable will be injected by initdb.sh based on env variable
 REPMGRD_FAILOVER_MODE="##REPMGRD_FAILOVER_MODE##"
