@@ -10,9 +10,9 @@ There are two different ways to use those docker images:
 
 * The more classical pgpool setup in watchdog mode is documented in [pgpool watchdog](doc/pgpoolwatchdog.md). In pgpool watchdog mode there are two nodes, postgres is made HA via streaming replication and pgpool itself is made HA via the watchdog functionality, based on a virtual IP. postgres, pgpool and the monitoring tool all run in docker but not in a swarm.
 
-In both case some ansible scripts are available to automated the deployment on two or three virtual machines (centos 7).
+In both case some ansible scripts are available to automate the deployment on two or three virtual machines (centos 7).
 
-In both case the automated failover is optional. It can either be done by pgpool or by repmgr (but not both at the same time). If one chose to let repmgrd do the automatic failover (REPMGRD_FAILOVER_MODE=automatic), then pgpool failover_command will be left empty: in this case pgpool will not do the failover when it detects a primary failure but will wait until a new master is promoted (by repmgrd). If repmgrd is responsible for the failover then it is important that the grace period before failover (depends on REPMGRD_RECONNECT_ATTEMPTS and REPMGRD_RECONNECT_INTERVAL env variables passed to the postgres containers) must be shorter than the period defined for PGPOOL (PGPOOL_HEALTH_CHECK_MAX_RETRIES and PGPOOL_HEALTH_CHECK_RETRY_DELAY env variables given to pgpool's container)
+In both case the automatic failover is optional. It can either be done by pgpool or by repmgr (but not both at the same time). If one chose to let repmgrd do the automatic failover (REPMGRD_FAILOVER_MODE=automatic), then pgpool failover_command will be left empty: in this case pgpool will not do the failover when it detects a primary failure but will wait until a new master is promoted (by repmgrd). If repmgrd is responsible for the failover then it is important that the grace period before failover (depends on REPMGRD_RECONNECT_ATTEMPTS and REPMGRD_RECONNECT_INTERVAL env variables passed to the postgres containers) must be shorter than the period defined for PGPOOL (PGPOOL_HEALTH_CHECK_MAX_RETRIES and PGPOOL_HEALTH_CHECK_RETRY_DELAY env variables given to pgpool's container)
 
 
 The rest of this README is for the docker swarm scenario.
