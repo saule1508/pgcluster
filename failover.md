@@ -40,7 +40,13 @@ start it again
 
 repmgr detects it is up (event : standby_recovery) and set to active. pgpool does nothing. We could re-attach the db via the event of repmgrd.
 
+remove service pgcluster_pg03 (pg03 is standby) => repmgr does not catch the event (repmgrd is stopped together with postgres), pgpool detach pg03 from the pool
 
+recreate the service (by re-deploying the stack) => pgpool does not re-attach the node to the pool. repmgrd does not generate any event because it starts after postgres
+
+remove service pgcluster_pg01 (pg01 is primary): pg02 get promoted to primary, pg03 follows, pg01 is inactive in repmgr and detached from the pool: so all is OK
+
+recreate the service: pg01 comes back, it is still detached from pgpool and from repmgr => pcp_recovery needed
 
 
 
