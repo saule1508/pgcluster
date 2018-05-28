@@ -205,4 +205,31 @@ check_repmgr_nodes t,t,t primary,standby,standby
 if [ $? -ne 0 ] ; then
   exit 1
 fi
+echo "Stop pg03 (standby database)"
+CONT=$( docker ps -q --filter="status=running" --filter="name=pg03" )
+docker exec $CONT supervisorctl stop postgres
+echo Sleep 30 to let failover happen
+sleep 30
+check_pool_nodes up,up,down primary,standby,standby
+if [ $? -ne 0 ] ; then
+ exit 1
+fi
+check_repmgr_nodes t,t,f primary,standby,standby
+if [ $? -ne 0 ] ; then
+ exit 1
+fi
+echo Restart pg03
+CONT=$( docker ps -q --filter="status=running" --filter="name=pg03" )
+docker exec $CONT supervisorctl start postgres
+echo Sleep 30 to let node rejoin happen
+sleep 30
+check_pool_nodes up,up,up primary,standby,standby
+if [ $? -ne 0 ] ; then
+ exit 1
+fi
+check_repmgr_nodes t,t,t primary,standby,standby
+if [ $? -ne 0 ] ; then
+ exit 1
+fi
+
 exit 0

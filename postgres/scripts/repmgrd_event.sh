@@ -15,15 +15,22 @@
 NODE_ID=$1
 EVENT_TYPE="$2"
 SUCCESS=$3
-if [ ! -f /var/log/repmgrd_event.log ] ; then
-  sudo touch /var/log/repmgrd_event.log
-  sudo chown postgres:postgres /var/log/repmgrd_event.log
+
+LOGFILE=/var/log/repmgrd_event.log
+
+if [ ! -f $LOGFILE ] ; then
+  sudo touch $LOGFILE
+  sudo chown postgres:postgres $LOGFILE
 fi
+log_info(){
+  echo "INFO - $( date +"%Y%m%d %H:%M:%S.%s" ) - $1" >> $LOGFILE
+}
 # following variable will be injected by initdb.sh based on env variable
 REPMGRD_FAILOVER_MODE="##REPMGRD_FAILOVER_MODE##"
 
+log_info "got event $EVENT_TYPE for NODE $NODE_ID success is $SUCCESS"
 if [ $EVENT_TYPE == "standby_recovery" -a $SUCCESS -eq 1 ] ; then
-  echo attach node $NODE_ID because $EVENT_TYPE >> /var/log/pgcluster/repmgrd_event.log
+  log_info "attach node $NODE_ID because $EVENT_TYPE"
   pcp_attach_node -h pgpool -p 9898 -w $(( NODE_ID-1 ))
 fi
 
