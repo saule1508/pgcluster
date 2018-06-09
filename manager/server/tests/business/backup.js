@@ -17,41 +17,38 @@ describe('backupExists',function(){
 
   it('backupExists() should throw an error when not stubbed',function(){
     this.getFilesForHostStub.restore();
-    let catched = false;
     backupExists('pg01','20180604_backup')
-    .then((data)=>{
-       expect(catched).to.be.true;
+    .then((found)=>{
+      assert.fail("expected to go in catch block");
     })
     .catch((error)=>{
-       catched = true;
+       let catched = true;
        expect(catched).to.be.true;
     })
   });
 
   it('backupExists() should return true if directory exists',function(){
 
-    backupExists('pg01','test')
-    .then((data)=>{
-       expect(data).to.be.true;
-    })
-    .catch((error)=>{
-       console.log('catched: ' + error);
-       found = false;
-       expect(found).to.be.false;
-    })
+      backupExists('pg01','test')
+      .then((found)=>{
+        expect(found).to.be.true;
+      })
+     .catch((e)=>{
+        console.log('catched');
+        console.log(e);
+        assert.fails("should not be catched");
+     })
   });
 
   it('backupExists() should return false if directory does not exist',function(){
+      backupExists('pg01','dummydir')
+      .then((found)=>{
+        expect(found).to.be.false;
+      })
+     .catch((e)=>{
+        assert.fails("should not be catched");
+     })
 
-    backupExists('pg01','somedir')
-    .then((data)=>{
-       expect(data).to.be.false;
-    })
-    .catch((error)=>{
-       console.log(error);
-       found = false;
-       expect(found).to.be.false;
-    })
   });
 
   it('backupExists() should return false when directories list is empty',function(){
@@ -60,16 +57,28 @@ describe('backupExists',function(){
     .returns(new Promise((resolve)=>resolve(expectedResponse)));
 
     backupExists('pg01','20180604_backup')
-    .then((data)=>{
-       expect(data).to.be.false;
+    .then((found)=>{
+      expect(found).to.be.false;
     })
-    .catch((error)=>{
-       console.log('catching ');
-       console.log(error);
-       found = false;
-       expect(found).to.be.true;
+    .catch((e)=>{
+      assert.fails("should not be catched");
     })
   });
+  it('backupExists() should throw when getFilesFromHost throws an error',function(){
+    this.getFilesForHostStub.restore();
+    this.getFilesForHostStub = sinon.stub(utils,'getFilesForHost')
+    .returns(new Promise((resolve,reject)=>reject("something bad")));
+
+    backupExists('pg01','20180604_backup')
+    .then((found)=>{
+      assert.fails("Exception should be catched");
+    })
+    .catch((e)=>{
+      expect(true).to.be.true;
+    })
+  });
+
+
 })
 
 

@@ -30,8 +30,21 @@ const getBackups = () => {
   })
 }
 
-const backupExists = (host,backup) => {
+const backupExists = async (host,backup) => {
   const getFilesForHost = require('./utils.js').getFilesForHost;
+  
+  let data;
+  try {
+    data = await getFilesForHost(host,`${directory}`);
+  } catch(error){
+    throw(error);
+  }
+  let found = data.result.some((el)=>{
+    return (el === backup);
+  });
+  return found;
+
+  /*
   return new Promise((resolve,reject)=>{
     getFilesForHost(host,`${directory}`)
     .then((data)=>{
@@ -45,6 +58,7 @@ const backupExists = (host,backup) => {
       return reject(error.error);
     })
   })
+  */
 }
 
 module.exports = {
