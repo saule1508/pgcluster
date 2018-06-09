@@ -1,8 +1,9 @@
+const directory = '/u02/backup';
+
 const getBackups = () => {
 
   const pools = require('../config/pgpool').pools;
   const getFilesForHost = require('./utils.js').getFilesForHost;
-  const directory = '/u02/backup';
 
   let backups = {};
   return new Promise((resolve,reject)=>{
@@ -29,6 +30,24 @@ const getBackups = () => {
   })
 }
 
+const backupExists = (host,backup) => {
+  const getFilesForHost = require('./utils.js').getFilesForHost;
+  return new Promise((resolve,reject)=>{
+    getFilesForHost(host,`${directory}`)
+    .then((data)=>{
+      let found = data.result.some((el)=>{
+        return (el === backup);
+      });
+      return resolve(found);
+    })
+    .catch((error)=>{
+      console.log('catched in business ' + error);
+      return reject(error.error);
+    })
+  })
+}
+
 module.exports = {
-  getBackups: getBackups
+  getBackups: getBackups,
+  backupExists: backupExists
 }
