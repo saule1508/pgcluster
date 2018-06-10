@@ -1,9 +1,9 @@
-const SQL_ACTIVITY_STAT = "select * from pg_stat_activity;";
-const SQL_REPL_NODES = "select * from nodes;";
-const SQL_SHOW_POOL_NODES = "show pool_nodes;";
+const SQL_ACTIVITY_STAT = 'select * from pg_stat_activity;';
+const SQL_REPL_NODES = 'select * from nodes;';
+const SQL_SHOW_POOL_NODES = 'show pool_nodes;';
 
 const getStatActivity = () => {
-  let pool = require("../config/pgppool.js");
+  let pool = require('../config/pgppool.js');
   let q = new Promise((resolve, reject) => {
     pool.query(SQL_ACTIVITY_STAT, [], (error, result) => {
       if (error) {
@@ -29,13 +29,13 @@ const getReplNodesFromDB = async db => {
 };
 
 const getReplNodes = async () => {
-  //console.log("first try with pgpool");
-  let pgpool = require("../config/pgppool").pool;
+  let pgpool = require('../config/pgppool').pool;
   try {
     let result = await getReplNodesFromDB(pgpool);
     return Promise.resolve(result);
   } catch (e) {
-    console.log("cannot connect to pgpool");
+    return Promise.reject('Cannot connect to pgpool');
+    /*
     let pools = require("../config/pgpool").pools;
     let result;
     for (var i = 0; i < pools.length && ! result; i++) {
@@ -46,7 +46,7 @@ const getReplNodes = async () => {
         console.log(`cannot connect to ${pools[i].host}`);
       }
     }
-    return Promise.reject({ error: "Cannot connect to pgpool and any DB" });
+    */
   }
 };
 
@@ -75,7 +75,7 @@ const getReplNodes = () => {
 }
 */
 const getPoolNodes = () => {
-  let pgppool = require("../config/pgppool").pool;
+  let pgppool = require('../config/pgppool').pool;
   let q = new Promise((resolve, reject) => {
     pgppool
       .connect()
@@ -92,7 +92,7 @@ const getPoolNodes = () => {
           });
       })
       .catch(err => {
-        console.log("pool connect error", err);
+        console.log('pool connect error', err);
         reject(err);
       });
   });
@@ -100,23 +100,23 @@ const getPoolNodes = () => {
 };
 
 const dbStates = () => {
-  let pools = require("../config/pgpool").pools;
+  let pools = require('../config/pgpool').pools;
 
-  let pool = require("../config/pgpool");
+  let pool = require('../config/pgpool');
   let states = [];
   return new Promise((resolve, reject) => {
     pools.forEach((el, idx) => {
       let state = { idx: idx, host: el.host };
       pool.query(
         idx,
-        "select pg_is_in_recovery() as in_recovery",
+        'select pg_is_in_recovery() as in_recovery',
         [],
         (err, result) => {
           if (err) {
             console.log(err);
-            state.status = "red";
+            state.status = 'red';
           } else {
-            state.status = "green";
+            state.status = 'green';
             state.in_recovery = result.rows[0].in_recovery;
           }
           states.push(state);
@@ -130,37 +130,37 @@ const dbStates = () => {
 };
 
 const replicationStats = () => {
-  let pools = require("../config/pgpool").pools;
+  let pools = require('../config/pgpool').pools;
 
-  let pool = require("../config/pgpool");
+  let pool = require('../config/pgpool');
   let states = [];
   return new Promise((resolve, reject) => {
     pools.forEach((el, idx) => {
       let res;
       pool.query(
         idx,
-        "select pg_is_in_recovery() as in_recovery",
+        'select pg_is_in_recovery() as in_recovery',
         [],
         (err, result) => {
           if (err) {
-            states.push({ idx: idx, host: el.host, status: "red" });
+            states.push({ idx: idx, host: el.host, status: 'red' });
             if (states.length === pools.length) {
               return resolve(states);
             }
           } else {
             let in_recovery = result.rows[0].in_recovery;
             let SQL = `select * from ${
-              in_recovery ? "pg_stat_wal_receiver" : "pg_stat_replication"
+              in_recovery ? 'pg_stat_wal_receiver' : 'pg_stat_replication'
             }`;
             console.log(SQL);
             pool.query(idx, SQL, [], (err, result) => {
               if (err) {
-                console.log("error in " + SQL);
+                console.log('error in ' + SQL);
                 console.log(err);
                 states.push({
                   idx: idx,
                   host: el.host,
-                  status: "green",
+                  status: 'green',
                   in_recovery: in_recovery,
                   error: err
                 });
@@ -168,7 +168,7 @@ const replicationStats = () => {
                 states.push({
                   idx: idx,
                   host: el.host,
-                  status: "green",
+                  status: 'green',
                   in_recovery: in_recovery,
                   data: result.rows[0]
                 });

@@ -79,6 +79,18 @@ router.get('/backups', (req, res) => {
     });
 });
 
+router.get('/backups/:host/:name', (req, res) => {
+  const buExists = require('../business/backup.js').backupExists;
+  backupExists(req.params.host,req.params.name)
+    .then(result => {
+      
+      return res.status(200).send(result);
+    })
+    .catch(error => {
+      return res.status(404).send(error);
+    });
+});
+
 router.get('/pgp_watchdog', (req, res) => {
   const getPgpoolWDStatus = require('../business/index').getPgpoolWDStatus;
   let result;

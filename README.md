@@ -66,7 +66,7 @@ You can then enter the container (with docker exec -ti <container_id> /bin/bash)
 
 see the script build.sh, it build the image postgres (pg) and the image pgpool and the manager image (the manager image contains both the server and the client app).
 
-## develop
+## develop client
 
 To develop the manager application, you can start the stack and then, on your workstation start the client application. 
 
@@ -78,6 +78,12 @@ export REACT_APP_SERVERIP=<ip of the server>
 yarn start
 ```
 
+## develop server
+
+Use a docker compose containing two postgres, one pgpool and the manager. In the manager section, maps your source directory from your source desktop
+to /opt/manager. Put also a dummy command, like bash, to keep the container running
+
+
 to change the server part, one can change the docker-compose and put a dummy command for the manager service in order to keep it running
 
 ```
@@ -87,7 +93,7 @@ command: tail -f /etc/passwd
 and then get into the manager container with docker exec -ti. One can stop/start the backend manager app with node server.js But before the env variable PG_BACKEND_NODE_LIST must be set.
 
 ```
-export PG_BACKEND_NODE_LIST=0:pg01:5432:1:/u01/pg96/data:ALLOW_TO_FAILOVER,1:pg02:5432:1:/u01/pg96/data:ALLOW_TO_FAILOVER
+export PG_BACKEND_NODE_LIST=0:pg01:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER,1:pg02:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER
 export REPMGRPWD=rep123
 
 cd /opt/manager/server
