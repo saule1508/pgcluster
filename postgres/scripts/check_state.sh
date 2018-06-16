@@ -53,7 +53,7 @@ if [ $res -eq 1 ] ; then
   echo "attach node back since it is in recovery streaming from $PRIMARY"
   pcp_attach_node -h pgpool -p 9898 -w $(( NODE_ID-1 ))
   if [ $? -eq 0 ] ; then
-    echo "OK attached node $node back since it is in recovery and streaming from $PRIMARY""
+    echo "OK attached node $node back since it is in recovery and streaming from $PRIMARY"
     exit 0
   fi
   echo "ERROR attach node failed for node $node"

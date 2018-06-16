@@ -1,273 +1,227 @@
-var express = require('express')
-var wsrouter = express.Router();
+const pg = require("../DAO/pg.js");
+const { pollInterval } = require("../config/config.js");
+const express = require("express");
+const { spawn } = require("child_process");
 
+const wsrouter = express.Router();
 
-
-wsrouter.ws('/dbstates', function(ws, req) {
-  let interval ;
-  let pollInterval = require('../config/config.js').pollInterval;
-  let pg = require('../DAO/pg.js');
-
-  let getStates = () => {
+wsrouter.ws("/dbstates", (ws, req) => {
+  const getStates = () => {
     pg.dbStates()
-      .then((data)=>{
-        let response = {'result': data, 'timestamp': new Date()};    
-        //console.log(response);
+      .then((data) => {
+        const response = { result: data, timestamp: new Date() };
         ws.send(JSON.stringify(response));
       })
-      .catch((err)=>{
-        console.log('got error');
+      .catch((err) => {
+        console.log("got error");
         console.log(err);
         let msg = err.detail ? err.detail : null;
-        if (! msg){
-          msg = 'server error ' + (err.code ? err.code + ' - ' : ' - ' ) + (err.errno ? err.errno : '');
+        if (!msg) {
+          msg = `server error
+            ${err.code ? err.code : ""} - 
+            ${err.errno ? err.errno : ""}`;
         }
-        ws.send(JSON.stringify({'message': msg,'error': err } ));
-      })
-  }
+        ws.send(JSON.stringify({ message: msg, error: err }));
+      });
+  };
 
   getStates();
-  interval = setInterval(getStates, pollInterval);
+  const interval = setInterval(getStates, pollInterval);
 
-  ws.on('close', function(msg) {
-    console.log('close with ' + msg);
-    if (interval){
+  ws.on("close", (msg) => {
+    console.log(`close with ${msg}`);
+    if (interval) {
       clearInterval(interval);
     } else {
-      console.log('no interval to clear ??');
+      console.log("no interval to clear ??");
     }
   });
 
-  ws.on('error', (err)=>{
-    if (interval){
+  ws.on("error", (err) => {
+    if (interval) {
       clearInterval(interval);
     }
-    console.log('web socker error in /dbstates');
+    console.log("web socker error in /dbstates");
     console.log(err);
-  })
-  
-
+  });
 });
 
-
-wsrouter.ws('/repl_nodes', function(ws, req) {
-  let interval ;
-  let pollInterval = require('../config/config.js').pollInterval;
-  let pg = require('../DAO/pg.js');
-
-	let getData = () => {
+wsrouter.ws("/repl_nodes", (ws, req) => {
+  const getData = () => {
     pg.getReplNodes()
-			.then((data)=>{
-				let response = {'result': data.rows, 'timestamp': new Date()};		
-				ws.send(JSON.stringify(response));
-			})
-			.catch((err)=>{
+      .then((data) => {
+        const response = { result: data.rows, timestamp: new Date() };
+        ws.send(JSON.stringify(response));
+      })
+      .catch((err) => {
         let msg = err.detail ? err.detail : null;
-        if (! msg){
-          msg = 'server error ' + (err.code ? err.code + ' - ' : ' - ' ) + (err.errno ? err.errno : '');
+        if (!msg) {
+          msg =
+            `server error ${err.code ? `${err.code} - ` : " - "}${err.errno ? err.errno : ""}`;
         }
-				ws.send(JSON.stringify({'message': msg,'error': err } ));
-			})
-  }
+        ws.send(JSON.stringify({ message: msg, error: err }));
+      });
+  };
 
-
-  ws.on('message', (msg)=>{
-    //console.log('message %s',msg);
-    //ws.send(new Date().toString());
-  })
+  ws.on("message", () => {
+    // console.log('message %s',msg);
+    // ws.send(new Date().toString());
+  });
   getData();
-  interval = setInterval(getData, pollInterval);
+  const interval = setInterval(getData, pollInterval);
 
-  ws.on('close', function(msg) {
-  	console.log('close with ' + msg);
-    if (interval){
+  ws.on("close", (msg) => {
+    console.log(`close with ${msg}`);
+    if (interval) {
       clearInterval(interval);
     } else {
-      console.log('no interval to clear ??');
+      console.log("no interval to clear ??");
     }
   });
 
-  ws.on('error', (err)=>{
-    if (interval){
+  ws.on("error", (err) => {
+    if (interval) {
       clearInterval(interval);
     }
-    console.log('web socker error in /repl_nodes');
+    console.log("web socker error in /repl_nodes");
     console.log(err);
-  })
-  
-
+  });
 });
 
-wsrouter.ws('/pool_nodes', function(ws, req) {
-  let interval ;
-  let pollInterval = require('../config/config.js').pollInterval;
-  let pg = require('../DAO/pg.js');
-
-	let getData = () => {
+wsrouter.ws("/pool_nodes", (ws, req) => {
+  const getData = () => {
     pg.getPoolNodes()
-			.then((data)=>{
-				let response = {'result': data.rows, 'timestamp': new Date()};		
-				ws.send(JSON.stringify(response));
-			})
-			.catch((err)=>{
-        console.log('catched from from getPoolNodes');
+      .then((data) => {
+        const response = { result: data.rows, timestamp: new Date() };
+        ws.send(JSON.stringify(response));
+      })
+      .catch((err) => {
+        console.log("catched from from getPoolNodes");
         let msg = err.detail ? err.detail : null;
-        if (! msg){
-          msg = 'server error' + (err.code ? err.code + ' - ' : ' - ' ) + (err.errno ? err.errno : '');
+        if (!msg) {
+          msg =
+            `server error${err.code ? `${err.code} - ` : " - "}${err.errno ? err.errno : ""}`;
         }
-				ws.send(JSON.stringify({'message': msg,'error': err } ));
-			})
-  }
+        ws.send(JSON.stringify({ message: msg, error: err }));
+      });
+  };
 
-
-  ws.on('message', (msg)=>{
-    console.log('message %s',msg);
-    //ws.send(new Date().toString());
-  })
+  ws.on("message", (msg) => {
+    console.log("message %s", msg);
+    // ws.send(new Date().toString());
+  });
   getData();
-  interval = setInterval(getData, pollInterval);
+  const interval = setInterval(getData, pollInterval);
 
-  ws.on('close', function(msg) {
-  	console.log('close with ' + msg);
-    if (interval){
+  ws.on("close", (msg) => {
+    console.log(`close with ${msg}`);
+    if (interval) {
       clearInterval(interval);
     } else {
-      console.log('no interval to clear ??');
+      console.log("no interval to clear ??");
     }
   });
-  ws.on('error', (err)=>{
-    if (interval){
+  ws.on("error", (err) => {
+    if (interval) {
       clearInterval(interval);
     }
-    console.log('web socker error in /pool_nodes');
+    console.log("web socker error in /pool_nodes");
     console.log(err);
-  })
-  
-
-});
-
-wsrouter.ws('/bus_health', function(ws, req) {
-  let interval ;
-  let pollInterval = require('../config/config.js').pollInterval;
-  let bus_health = require('../services/index.js').bus_health;
-
-  ws.on('message', (msg)=>{
-    console.log('message %s',msg);
-    //ws.send(new Date().toString());
-  })
-
-  interval = setInterval(()=>{
-    let service=req.query.service;
-    bus_health(service)
-     .then((data)=>{
-				let response = {'result': data, 'timestamp': new Date()};
-				ws.send(JSON.stringify(response));
-     })
-		.catch((err)=>{
-				console.log(err);
-				ws.send(JSON.stringify(err));
-			})
-	}, pollInterval);
-
-  ws.on('close', function(msg) {
-  	console.log('close with ' + msg);
-    if (interval){
-      clearInterval(interval);
-    } else {
-      console.log('no interval to clear ??');
-    }
   });
-  
-
 });
 
-wsrouter.ws('/shell', function(ws, req) {
+wsrouter.ws("/shell", (ws, req) => {
+  const { getArgsFromString } = require("../business/utils.js");
 
-  const { spawn } = require('child_process');
-  const getArgsFromString = require('../business/utils.js').getArgsFromString;
-  console.log('in /shell');
-  ws.on('message', (msg)=>{
+  console.log("in /shell");
+  ws.on("message", (msg) => {
     console.log(`message is ${msg}`);
-    let args = getArgsFromString(msg);
+    const args = getArgsFromString(msg);
     console.log(args);
-    let cmdArgs = ['-p','222','-o','StrictHostKeyChecking=no','-o','UserKnownHostsFile=/dev/null', `postgres@${args.host}`,'-C'];
-    switch (args.action){
-      case 'backup': 
-        cmdArgs.push('/scripts/backup.sh');
-      	break;
-      case 'restore':
-        cmdArgs.push('/scripts/restore.sh');
-	      break;
-      case 'delete':
-        cmdArgs.push('/scripts/delete_backup.sh');
-	      break;
-      case 'pcp_attach':
-        cmdArgs.push('/scripts/pcp_attach.sh');
+    const cmdArgs = [
+      "-p",
+      "222",
+      "-o",
+      "StrictHostKeyChecking=no",
+      "-o",
+      "UserKnownHostsFile=/dev/null",
+      `postgres@${args.host}`,
+      "-C",
+    ];
+    switch (args.action) {
+      case "backup":
+        cmdArgs.push("/scripts/backup.sh");
+        break;
+      case "restore":
+        cmdArgs.push("/scripts/restore.sh");
+        break;
+      case "delete":
+        cmdArgs.push("/scripts/delete_backup.sh");
+        break;
+      case "pcp_attach":
+        cmdArgs.push("/scripts/pcp_attach.sh");
         cmdArgs.push(args.pcp_node_id);
         break;
-      case 'pcp_detach':
-        cmdArgs.push('/scripts/pcp_detach.sh');
+      case "pcp_detach":
+        cmdArgs.push("/scripts/pcp_detach.sh");
         cmdArgs.push(args.pcp_node_id);
         break;
-      case 'pcp_recovery_node':
-        cmdArgs.push('/scripts/pcp_recovery_node.sh');
+      case "pcp_recovery_node":
+        cmdArgs.push("/scripts/pcp_recovery_node.sh");
         cmdArgs.push(args.pcp_node_id);
         break;
-      case 'pg_stop':
-        cmdArgs.push('/scripts/pg_stop.sh');
+      case "pg_stop":
+        cmdArgs.push("/scripts/pg_stop.sh");
         break;
-      case 'pg_start':
-        cmdArgs.push('/scripts/pg_start.sh');
+      case "pg_start":
+        cmdArgs.push("/scripts/pg_start.sh");
         break;
-      case 'repmgr_unregister':
-        cmdArgs.push('/scripts/repmgr_unregister.sh');
+      case "repmgr_unregister":
+        cmdArgs.push("/scripts/repmgr_unregister.sh");
         break;
       default:
-        ws.send('Invalid shell action '+ args.action);
+        ws.send(`Invalid shell action  ${args.action}`);
         return ws.close();
     }
-    if (args.name){
-      cmdArgs.push('-n',args.name);
+    if (args.name) {
+      cmdArgs.push("-n", args.name);
     }
-    if (args.butype && args.action !== 'delete'){
-      cmdArgs.push('-t',args.butype);
+    if (args.butype && args.action !== "delete") {
+      cmdArgs.push("-t", args.butype);
     }
-    if (args.force === 'yes'){
-      cmdArgs.push('-f');
+    if (args.force === "yes") {
+      cmdArgs.push("-f");
     }
     console.log(cmdArgs);
 
-    const bu = spawn('ssh',cmdArgs);
-    
-    bu.stdout.on('data',(data)=>{
+    const bu = spawn("ssh", cmdArgs);
+
+    bu.stdout.on("data", (data) => {
       ws.send(data.toString());
-    })
-    bu.stderr.on('data',(data)=>{
+    });
+    bu.stderr.on("data", (data) => {
       ws.send(data.toString());
-    })
-    bu.on('close',(code)=>{
+    });
+    bu.on("close", (code) => {
       console.log(`shell exited with code ${code}`);
-      ws.send(`bu exited with code ${code}`);
+      ws.send(`shell exited with code ${code}`);
       ws.close();
-    })
-    bu.on('error',(error)=>{
+    });
+    bu.on("error", (error) => {
       console.log(`spawn error ${error}`);
-      ws.send('bu error');
+      ws.send(`shell error: ${error}`);
       ws.close();
-    })
-    
-  })
-
-  ws.on('close', function(msg) {
-  	console.log('client close with ' + msg);
+    });
   });
-  
-  ws.on('error', (err)=>{
-    console.log('web socker error in /backup');
-    console.log(err);
-  })
 
+  ws.on("close", (msg) => {
+    console.log(`client close with ${msg}`);
+  });
+
+  ws.on("error", (err) => {
+    console.log("web socker error in shell");
+    console.log(err);
+  });
 });
 
-
-module.exports = wsrouter
+module.exports = wsrouter;

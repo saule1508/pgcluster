@@ -42,7 +42,7 @@ if [ $EVENT_TYPE == "repmgrd_failover_promote" ] ; then
   pcp_promote_node -h pgpool -p 9898 -w $(( NODE_ID-1 ))
 fi
 if [ $EVENT_TYPE == "repmgrd_failover_follow" ] ; then
-  echo detach node $NODE_ID because $EVENT_TYPE >> /var/log/pgcluster/repmgrd_event.log
+  echo attach node $NODE_ID because $EVENT_TYPE >> /var/log/pgcluster/repmgrd_event.log
   pcp_attach_node -h pgpool -p 9898 -w $(( NODE_ID-1 ))
 fi
 if [ $EVENT_TYPE == "standby_failure" ] ; then

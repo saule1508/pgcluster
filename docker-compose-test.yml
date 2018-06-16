@@ -65,7 +65,7 @@ services:
     depends_on:
       - pg01
 
-  pgpool01:
+  pgpool:
     image: pgpool:${pg_version:-latest}
     ports:
       - 9999:9999
@@ -75,11 +75,13 @@ services:
                 # csv list of backend postgres databases, each backend db contains (separated by :)
                 # number (start with 0):host name:pgpool port (default 9999):data dir (default /u01/pg10/data):flag ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
                 # not needed when there is a single postgres DB
-      PGP_NODE_NAME: pgpool01
+      PGP_NODE_NAME: pgpool
       REPMGRPWD: rep123
       FAILOVER_MODE: automatic
       PGPOOL_HEALTH_CHECK_MAX_RETRIES: 6
       PGPOOL_HEALTH_CHECK_RETRY_DELAY: 5
+      PGPOOL_FAILOVER_ON_BACKEND_ERROR: "on"
+      PGPOOL_HEALTH_CHECK_PERIOD: 35
       #DELEGATE_IP: 172.18.0.100
       #TRUSTED_SERVERS: 172.23.1.250
       #PGP_HEARTBEATS: "0:pgpool01:9694,1:pgpool02:9694"
@@ -94,14 +96,14 @@ services:
       - pg02
       - pg03
   manager:
-    image: manager:${manager_version:-latest}
+    image: manager:${pg_version:-latest}
     ports:
       - 8080:8080
-    #command: tail -f /etc/passwd
+    command: tail -f /etc/passwd
     environment:
       PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER,1:pg02:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER,2:pg03:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER
       REPMGRPWD: rep123
-      DBHOST: pgpool01
+      DBHOST: pgpool
     networks:
       - pgcluster_network
     volumes:
