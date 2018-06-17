@@ -1,6 +1,6 @@
 # pg-cluster
 
-Postgres streaming replication with pgpool and/or repmgr for the automated failover and docker swarm for the failover of pgpool. 
+Postgres streaming replication with pgpool and/or repmgr for the automated failover and docker swarm for the failover of pgpool. The same images can be used outside docker swarm in which case pgpool is made HA via the traditional watchdog mode (with a VIP).
 
 The postgres image contains a ssh server, repmgr, postgres (!) and supervisord. Postgres is replicated with streaming replication, repmgr is used because it brings well documented and tested scripts and it adds some metadata about the cluster that ease monitoring. Automatic failover of postgres can be done either by repmgr (repmgrd) or by pgpool. Both options seem to have some pros and cons. The recommandation for now is to use pgpool for automatic failover.
 
@@ -18,10 +18,10 @@ In both case the automatic failover is optional. It can either be done by pgpool
 
 When repmgrd is responsible for the automatic failover, I see two ways to have pgpool notified of actions by repmgrd:
 
-* A script /script/repmgrd_event.sh is hooked in the config of repmgr so that when a repmgrd_failover_promote event occurs the pcp_promote_node command is executed. In this case the flag DISABLE_TO_FAILOVER must be used in pgpool config
-* The flag ENABLE_TO_FAILOVER is used in pgpool but the failover_command is left empty; when pgpool detects a primary failure it will search for a new primary until if finds it (because repmgrd did a failover)
+* A script /script/repmgrd_event.sh is hooked in the config of repmgr so that when a repmgrd_failover_promote event occurs the pcp_promote_node command is executed. In this case the flag ALLOW_TO_FAILOVER must be used in pgpool config
+* the failover_command in pgpool config is left empty; when pgpool detects a primary failure it will search for a new primary until if finds it (because repmgrd did a failover)
 
-Note that I tried to set the flag DISALLOW_TO_FAILOVER also but the issue is that when a standby database fails one has to sent the pcp_detach_node command to pgpool but it is not allowed when DISALLOW_TO_FAILOVER is set
+Note that I tried to set the flag DISALLOW_TO_FAILOVER but there are problems: it is not allowed to use the pcp_detach_node command when DISALLOW_TO_FAILOVER is set. But when a standby fails it would remain attached to the pgpool (?)
 
 For now I am using pgpool for automatic failover. In order to have automatic reconfiguration of a failed master or of a failed standby, there is a script /scripts/check_state.sh in the docker image that could be scheduled via cron (cron on the host, executing the script check_state via docker exec in each container)
 
