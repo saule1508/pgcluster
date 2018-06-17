@@ -11,7 +11,7 @@ services:
       MSOWNERPWDLIST: "myservice_owner"
       MSUSERPWDLIST: "myservice_user"
       REPMGRPWD: rep123
-      REPMGRD_FAILOVER_MODE: manual
+      REPMGRD_FAILOVER_MODE: automatic
       PGMASTER: pg01
     ports:
       - 15432:5432 # postgres port
@@ -31,7 +31,7 @@ services:
       MSOWNERPWDLIST: "myservice_owner"
       MSUSERPWDLIST: "myservice_user"
       REPMGRPWD: rep123
-      REPMGRD_FAILOVER_MODE: manual
+      REPMGRD_FAILOVER_MODE: automatic
       PGMASTER: pg01
     ports:
       - 25432:5432 # postgres port
@@ -53,7 +53,7 @@ services:
       MSOWNERPWDLIST: "myservice_owner"
       MSUSERPWDLIST: "myservice_user"
       REPMGRPWD: rep123
-      REPMGRD_FAILOVER_MODE: manual
+      REPMGRD_FAILOVER_MODE: automatic
       PGMASTER: pg01
     ports:
       - 35432:5432 # postgres port
@@ -77,11 +77,11 @@ services:
                 # not needed when there is a single postgres DB
       PGP_NODE_NAME: pgpool
       REPMGRPWD: rep123
-      FAILOVER_MODE: automatic
+      FAILOVER_MODE: manual
       PGPOOL_HEALTH_CHECK_MAX_RETRIES: 6
       PGPOOL_HEALTH_CHECK_RETRY_DELAY: 5
-      PGPOOL_FAILOVER_ON_BACKEND_ERROR: "on"
-      PGPOOL_HEALTH_CHECK_PERIOD: 35
+      PGPOOL_FAILOVER_ON_BACKEND_ERROR: "off"
+      PGPOOL_HEALTH_CHECK_PERIOD: 0
       #DELEGATE_IP: 172.18.0.100
       #TRUSTED_SERVERS: 172.23.1.250
       #PGP_HEARTBEATS: "0:pgpool01:9694,1:pgpool02:9694"
@@ -99,7 +99,6 @@ services:
     image: manager:${pg_version:-latest}
     ports:
       - 8080:8080
-    # to test the nodejs app, uncomment next line. Then once the container is running, exec into it and start node manually.
     #command: tail -f /etc/passwd
     environment:
       PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER,1:pg02:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER,2:pg03:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER
