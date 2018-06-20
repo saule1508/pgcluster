@@ -1,7 +1,7 @@
 FROM centos:latest
 MAINTAINER ptim007@yahoo.com
 ENV PGVER=10
-ENV PGPOOLVER=3.7.1
+ENV PGPOOLVER=3.7.4
 RUN yum update -y ; yum clean all ; rm -rf /var/cache/yum
 RUN groupadd -g 50010 postgres && useradd -u 50010 -g postgres postgres 
 RUN usermod -G wheel -a postgres && echo "postgres" | passwd --stdin postgres

@@ -12,6 +12,7 @@ services:
       MSUSERPWDLIST: "myservice_user"
       REPMGRPWD: rep123
       REPMGRD_FAILOVER_MODE: manual
+      REPMGRD: "false"
       PGMASTER: pg01
     ports:
       - 15432:5432 # postgres port
@@ -32,34 +33,13 @@ services:
       MSUSERPWDLIST: "myservice_user"
       REPMGRPWD: rep123
       REPMGRD_FAILOVER_MODE: manual
+      REPMGRD: "false"
       PGMASTER: pg01
     ports:
       - 25432:5432 # postgres port
     volumes:
       - pg02db:/u01/pg10/data
       - pg02arc:/u02/archive
-    networks:
-      - pgcluster_network
-    depends_on:
-      - pg01
-  pg03:
-    image: pg:${pg_version:-latest}
-    environment:
-      INITIAL_NODE_TYPE: slave
-      NODE_ID: 3
-      NODE_NAME: pg03
-      MSLIST: "myservice" 
-              # for each micro-service two db users are created, for ex. asset_owner and asset_user, etc.
-      MSOWNERPWDLIST: "myservice_owner"
-      MSUSERPWDLIST: "myservice_user"
-      REPMGRPWD: rep123
-      REPMGRD_FAILOVER_MODE: manual
-      PGMASTER: pg01
-    ports:
-      - 35432:5432 # postgres port
-    volumes:
-      - pg03db:/u01/pg10/data
-      - pg03arc:/u02/archive
     networks:
       - pgcluster_network
     depends_on:
@@ -71,19 +51,19 @@ services:
       - 9999:9999
     environment:
       PGMASTER_NODE_NAME: pg01
-      PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER,1:pg02:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER,2:pg03:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER
+      PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER,1:pg02:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER
                 # csv list of backend postgres databases, each backend db contains (separated by :)
                 # number (start with 0):host name:pgpool port (default 9999):data dir (default /u01/pg10/data):flag ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
                 # not needed when there is a single postgres DB
       PGP_NODE_NAME: pgpool
       REPMGRPWD: rep123
       FAILOVER_MODE: automatic
+      PGPOOL_HEALTH_CHECK_PERIOD: 5
       PGPOOL_HEALTH_CHECK_MAX_RETRIES: 3
       PGPOOL_HEALTH_CHECK_RETRY_DELAY: 1
       PGPOOL_FAILOVER_ON_BACKEND_ERROR: "off"
-      PGPOOL_HEALTH_CHECK_PERIOD: 5
-      PGPOOL_NUM_INIT_CHILDREN: 50
-      PGPOOL_LOAD_BALANCE_MODE: "no"
+      PGPOOL_LOAD_BALANCE_MODE: "off"
+      PGPOOL_NUM_INIT_CHILDREN: 2
       #DELEGATE_IP: 172.18.0.100
       #TRUSTED_SERVERS: 172.23.1.250
       #PGP_HEARTBEATS: "0:pgpool01:9694,1:pgpool02:9694"
@@ -91,7 +71,7 @@ services:
                 # csv list of other pgpool nodes, each node contains (separated by :)
                 # number (start with 0):host name:pgpool port (default 9999)
                 # not needed when there is a single pgpool node
-    #command: tail -f /etc/passwd
+    command: tail -f /etc/passwd
     networks:
       - pgcluster_network
     depends_on:

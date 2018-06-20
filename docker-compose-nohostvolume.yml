@@ -1,0 +1,89 @@
+version: '3.2'
+services:
+  pg01:
+    image: localhost:5000/pg:${pg_version}
+    environment:
+      INITIAL_NODE_TYPE: master
+      NODE_ID: 1
+      NODE_NAME: pg01
+      ARCHIVELOG: 1
+      MSLIST: "asset,ingest,playout" 
+              # for each micro-service two db users are created, for ex. asset_owner and asset_user, etc.
+      MSOWNERPWDLIST: "asset_owner,ingest_owner,playout_owner"
+      MSUSERPWDLIST: "asset_user,ingest_user,playout_user"
+      REPMGRPWD: rep123
+      REPMGRD_FAILOVER_MODE: manual
+      REPMGRD_ATTEMPTS: 5
+      REPMGRD_INTERVAL: 3
+    ports:
+      - 15432:5432 # postgres port
+    volumes:
+      - pg01db:/u01/pg10/data
+      - pg01archive:/u02/archive
+      - pg01backup:/u02/backup
+      - /sys/fs/cgroup:/sys/fs/cgroup
+    #logging:
+    #  driver: "journald"
+
+  pg02:
+    image: localhost:5000/pg:${pg_version}
+    environment:
+      INITIAL_NODE_TYPE: slave
+      NODE_ID: 2
+      NODE_NAME: pg02
+      ARCHIVELOG: 1
+      MSLIST: "asset,ingest,playout" 
+              # for each micro-service two db users are created, for ex. asset_owner and asset_user, etc.
+      MSOWNERPWDLIST: "asset_owner,ingest_owner,playout_owner"
+      MSUSERPWDLIST: "asset_user,ingest_user,playout_user"
+      REPMGRPWD: rep123
+      REPMGRD_FAILOVER_MODE: manual
+      REPMGRD_ATTEMPTS: 5
+      REPMGRD_INTERVAL: 3
+    ports:
+      - 25432:5432 # postgres port
+    volumes:
+      - pg02db:/u01/pg10/data
+      - pg02archive:/u02/archive
+      - pg02backup:/u02/backup
+    depends_on:
+      - pg01
+
+  pgpool01:
+    #build:
+    #  context: .
+    #  dockerfile: Dockerfile.pgpool
+    image: localhost:5000/pgpool:${pg_version}
+    environment:
+      PGMASTER_NODE_NAME: pg01
+      PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER,1:pg02:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER
+                # csv list of backend postgres databases, each backend db contains (separated by :)
+                # number (start with 0):host name:pgpool port (default 9999):data dir (default /u01/pg10/data):flag ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
+                # not needed when there is a single postgres DB
+      PGP_NODE_NAME: pgpool01
+      REPMGRPWD: rep123
+      #DELEGATE_IP: 172.18.0.100
+      #TRUSTED_SERVERS: 192.168.1.1
+      #PGP_HEARTBEATS: "0:pgpool01:9694,1:pgpool02:9694"
+      #PGP_OTHERS: "0:pgpool02:9999"
+                # csv list of other pgpool nodes, each node contains (separated by :)
+                # number (start with 0):host name:pgpool port (default 9999)
+                # not needed when there is a single pgpool node
+      FAILOVER_MODE: automatic
+      # Make sure this is bigger than REPMGRD_ATTEMPTS * REPMGRD_INTERVAL
+      #PGPOOL_HEALTH_CHECK_MAX_RETRIES: 5
+      #PGPOOL_HEALTH_CHECK_RETRY_DELAY: 10
+    #command: tail -f /etc/hosts
+    ports:
+      - 9999:9999 
+    depends_on:
+      - pg01
+      - pg02
+
+volumes:
+  pg01db:
+  pg01archive:
+  pg01backup:
+  pg02db:
+  pg02archive:
+  pg02backup:

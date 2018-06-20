@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ $INITIAL_NODE_TYPE == "single" ] ; then
-  echo "single node type, do not start repmgr"
+if [ "$INITIAL_NODE_TYPE" == "single" -o "a${REPMGRD} == "afalse" -o "a${REPMGRD} == "ano" ] ; then
+  echo "single node type is $INITIAL_NODE_TYPE or REPMGRD is ${REPMGRD}: do not start repmgr"
   tail -f /scripts/start_repmgr.sh
 else
   echo "sleep 60 before starting repmgrd"
