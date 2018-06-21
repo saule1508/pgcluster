@@ -1,16 +1,5 @@
 #!/bin/bash
 
-if [ $# -ne 1 ] ; then
-  echo Please specify repmgrd or pgpool as parameter to determine failover mode
-  exit
-fi
-if [ "$1" == "repmgrd" ] ; then
-  DOCKERFILE="docker-compose-test-repmgrdfailover.yml"
-else
-  DOCKERFILE="docker-compose-test-pgpoolfailover.yml"
-fi
-
-
 wait_for_db(){
  echo Wait for $1
  CONT=$( docker ps -q --filter="status=running" --filter="name=$1" )
@@ -36,9 +25,23 @@ wait_for_db(){
  return 0
 }
 
+stop_pg(){
+  PG2STOP=$1
+  echo "Stop $PG2STOP"
+  CONT=$( docker ps -q --filter="status=running" --filter="name=${PG2STOP}" )
+  docker exec $CONT supervisorctl stop postgres
+}
+
+start_pg(){
+  PG2START=$1
+  echo "Start $PG2START"
+  CONT=$( docker ps -q --filter="status=running" --filter="name=${PG2START}" )
+  docker exec $CONT supervisorctl start postgres
+}
+
 get_pool_nodes(){
  if [ -f /tmp/pool_nodes ] ; then
-   sudo rm /tmp/pool_nodes
+   rm /tmp/pool_nodes
  fi
  CONT=$( docker ps -q --filter="status=running" --filter="name=pgpool" )
  docker exec $CONT psql -U repmgr -h pgpool -p 9999 repmgr -t -c "show pool_nodes;" > /tmp/pool_nodes
@@ -51,7 +54,7 @@ get_pool_nodes(){
 }
 
 get_repmgr_nodes(){
- sudo rm /tmp/repmgr_nodes
+ rm /tmp/repmgr_nodes
  CONT=$( docker ps -q --filter="status=running" --filter="name=pgpool" )
  docker exec $CONT psql -U repmgr -h pgpool -p 9999 repmgr -t -c "select * from nodes order by node_id;" > /tmp/repmgr_nodes
  if [ $? -ne 0 ] ; then
@@ -72,7 +75,7 @@ check_pool_nodes(){
  get_pool_nodes 
  if [ $? -ne 0 ] ; then
    echo ERROR in get_pool_nodes
-   exit 1
+   return 1
  fi
  echo Check status $EXPECTED_STATUS and role $EXPECTED_ROLE
  cat /tmp/pool_nodes | egrep -v "pgpool|node_id|---|^\(|^$" | while read line
@@ -142,100 +145,40 @@ check_repmgr_nodes(){
  fi
 }
 
-docker stack rm pgcluster
-sleep 10
-./delvol.sh
-docker stack deploy -c $DOCKERFILE pgcluster
-docker service ls
-echo "Check for db pg01 to be ready"
-wait_for_db pg01
-echo "Check for db pg02 to be ready"
-wait_for_db pg02
-echo "Check for db pg03 to be ready"
-wait_for_db pg03
-echo Sleep 60 to wait for pgpool
-sleep 60
-check_pool_nodes up,up,up primary,standby,standby
-if [ $? -ne 0 ] ; then
- exit 1
-fi
-check_repmgr_nodes t,t,t primary,standby,standby
-if [ $? -ne 0 ] ; then
- exit 1
-fi
-echo "Stop pg01"
-CONT=$( docker ps -q --filter="status=running" --filter="name=pg01" )
-docker exec $CONT supervisorctl stop postgres
-echo Sleep 60 to let failover happen
-sleep 60
-check_pool_nodes down,up,up standby,primary,standby
-if [ $? -ne 0 ] ; then
- exit 1
-fi
-check_repmgr_nodes f,t,t primary,primary,standby
-if [ $? -ne 0 ] ; then
- exit 1
-fi
-CONT=$( docker ps -q --filter="status=running" --filter="name=pgpool" )
-echo doing pcp_recovery_node of 0
-docker exec $CONT pcp_recovery_node -h pgpool -p 9898 -w 0
-check_pool_nodes up,up,up standby,primary,standby
-if [ $? -ne 0 ] ; then
- exit 1
-fi
-check_repmgr_nodes t,t,t standby,primary,standby
-if [ $? -ne 0 ] ; then
- exit 1
-fi
-echo "Stop pg02"
-CONT=$( docker ps -q --filter="status=running" --filter="name=pg02" )
-docker exec $CONT supervisorctl stop postgres
-echo Sleep 60 to let failover happen
-sleep 60
-check_pool_nodes up,down,up primary,standby,standby
-if [ $? -ne 0 ] ; then
- exit 1
-fi
-check_repmgr_nodes t,f,t primary,primary,standby
-if [ $? -ne 0 ] ; then
- exit 1
-fi
-CONT=$( docker ps -q --filter="status=running" --filter="name=pgpool" )
-echo doing pcp_recovery_node for 1
-docker exec $CONT pcp_recovery_node -h pgpool -p 9898 -w 1
-check_pool_nodes up,up,up primary,standby,standby
-if [ $? -ne 0 ] ; then
- exit 1
-fi
-check_repmgr_nodes t,t,t primary,standby,standby
-if [ $? -ne 0 ] ; then
-  exit 1
-fi
-echo "Stop pg03 (standby database)"
-CONT=$( docker ps -q --filter="status=running" --filter="name=pg03" )
-docker exec $CONT supervisorctl stop postgres
-echo Sleep 30 to let failover happen
-sleep 30
-check_pool_nodes up,up,down primary,standby,standby
-if [ $? -ne 0 ] ; then
- exit 1
-fi
-check_repmgr_nodes t,t,f primary,standby,standby
-if [ $? -ne 0 ] ; then
- exit 1
-fi
-echo Restart pg03
-CONT=$( docker ps -q --filter="status=running" --filter="name=pg03" )
-docker exec $CONT supervisorctl start postgres
-echo Sleep 30 to let node rejoin happen
-sleep 30
-check_pool_nodes up,up,up primary,standby,standby
-if [ $? -ne 0 ] ; then
- exit 1
-fi
-check_repmgr_nodes t,t,t primary,standby,standby
-if [ $? -ne 0 ] ; then
- exit 1
-fi
+recover_node(){
+  NODE=$1
 
-exit 0
+  CONT=$( docker ps -q --filter="status=running" --filter="name=pgpool" )
+  echo doing pcp_recovery_node of $NODE
+  docker exec $CONT pcp_recovery_node -h pgpool -p 9898 -w $NODE
+}
+
+# test if we can write
+can_write(){
+  # get container
+  CONT=$(docker ps -q --filter="status=running" --filter="name=pgpool" )
+  docker exec $CONT psql -U repmgr -h pgpool -p 9999 -c "create table test(id serial); drop table test;"
+  return $?
+}
+
+# number of records in a table owned by repmgr
+count_records(){
+  table=$1
+  # get container
+  CONT=$(docker ps -q --filter="status=running" --filter="name=pgpool" )
+  docker exec $CONT psql -U repmgr -h pgpool -p 9999 \
+   -t -c "select count(*) from $table;"
+}
+
+# long psql connection that can be started in background
+# it will insert a first record, then sleep X seconds, then insert a second records
+long_connection(){
+  SLEEP=${1:-60}
+  # get container
+  CONT=$(docker ps -q --filter="status=running" --filter="name=pgpool" )
+  docker exec $CONT psql -U repmgr -h pgpool -p 9999 \
+    -c "drop table if exists long_connection; create table long_connection(ts timestamp);insert into long_connection(ts) SELECT CURRENT_TIMESTAMP; SELECT pg_sleep($SLEEP); insert into long_connection(ts) SELECT CURRENT_TIMESTAMP;"
+  return $?
+}
+
+
