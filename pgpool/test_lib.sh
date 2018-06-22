@@ -153,6 +153,23 @@ recover_node(){
   docker exec $CONT pcp_recovery_node -h pgpool -p 9898 -w $NODE
 }
 
+attach_node(){
+  NODE=$1
+
+  CONT=$( docker ps -q --filter="status=running" --filter="name=pgpool" )
+  echo doing pcp_attach_node of $NODE
+  docker exec $CONT pcp_attach_node -h pgpool -p 9898 -w $NODE
+}
+
+# this will re-attach a failed standby
+# i.e a standby that was detached from the pool and later comes back
+check_state() {
+  HOST=$1
+  CONT=$( docker ps -q --filter="status=running" --filter="name=$HOST" )
+  echo doing check_state in $HOST
+  docker exec $CONT /scripts/check_state.sh
+}
+
 # test if we can write
 can_write(){
   # get container

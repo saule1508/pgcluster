@@ -85,4 +85,9 @@ if [ $nbr -ne 2 ] ; then
   echo expected to have 2 records in long_connection table, but got $nbr
   exit 1
 fi
+check_pool_nodes up,down primary,standby
+start_pg pg02
+check_state pg02
+check_pool_nodes up,up primary,standby
+
 exit 0
