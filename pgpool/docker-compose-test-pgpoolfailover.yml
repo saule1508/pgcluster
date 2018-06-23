@@ -1,7 +1,7 @@
 version: '3.2'
 services:
   pg01:
-    image: pg:0.7.4
+    image: pg:${pg_version}
     environment:
       INITIAL_NODE_TYPE: master
       NODE_ID: 1
@@ -23,7 +23,7 @@ services:
     networks:
       - pgcluster_network
   pg02:
-    image: pg:0.7.4
+    image: pg:${pg_version}
     environment:
       INITIAL_NODE_TYPE: slave
       NODE_ID: 2
@@ -47,7 +47,7 @@ services:
     depends_on:
       - pg01
   pg03:
-    image: pg:0.7.4
+    image: pg:${pg_version}
     environment:
       INITIAL_NODE_TYPE: slave
       NODE_ID: 3
@@ -72,7 +72,7 @@ services:
       - pg01
 
   pgpool:
-    image: pgpool:0.7.2
+    image: pgpool:${pg_version}
     ports:
       - 9999:9999
     environment:
@@ -105,7 +105,7 @@ services:
       - pg02
       - pg03
   manager:
-    image: manager:0.7.4
+    image: manager:${pg_version}
     ports:
       - 8080:8080
     #command: tail -f /etc/passwd
