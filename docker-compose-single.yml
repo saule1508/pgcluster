@@ -1,7 +1,7 @@
-version: '3'
+version: '3.2'
 services:
   pg01:
-    image: pg:${pg_version}
+    image: pg:${pg_version:-0.7.4}
     environment:
       NODE_ID: 1
       NODE_NAME: pg01
@@ -13,18 +13,22 @@ services:
       MSUSERPWDLIST: "asset_user,ingest_user,playout_user"
     ports:
       - 5432:5432 # postgres port
+    networks:
+      - pgcluster_network
     volumes:
       - pg01db:/u01/pg10/data
       - pg01arc:/u02/archive
       - pg01backup:/u02/backup
-  pgpool01:
-    image: pgpool:${pg_version}
+  pgpool:
+    image: pgpool:${pg_version:-0.7.4}
+    command: tail -f /etc/hosts
     environment:
       PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER
                 # csv list of backend postgres databases, each backend db contains (separated by :)
                 # number (start with 0):host name:pgpool port (default 9999):data dir (default /u01/pg96/data):flag ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
-      PGP_NODE_NAME: pgpool01
       REPMGRPWD: rep123
+      PGPOOL_FAIL_OVER_ON_BACKEND_ERROR: "no"
+      PGPOOL_LOAD_BALANCE_MODE: "no"
       #DELEGATE_IP: 172.18.0.100
       #TRUSTED_SERVERS: 172.23.1.250
       #PGP_HEARTBEATS: "0:pgpool01:9694,1:pgpool02:9694"
@@ -34,9 +38,31 @@ services:
                 # not needed when there is a single pgpool node
     ports:
       - 9999:9999
+    networks:
+      - pgcluster_network
     depends_on:
       - pg01
+  manager:
+    image: manager:${pg_version:-0.7.4}
+    ports:
+      - 8080:8080
+    # to test the nodejs app, uncomment next line. Then once the container is running, exec into it and start node manually.
+    #command: tail -f /etc/passwd
+    environment:
+      PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER
+      REPMGRPWD: rep123
+      DBHOST: pgpool
+    networks:
+      - pgcluster_network
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
 volumes:
   pg01db:
   pg01arc:
   pg01backup:
+
+networks:
+  pgcluster_network:
+    external: true
+

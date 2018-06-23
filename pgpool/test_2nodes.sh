@@ -20,6 +20,10 @@ source ./test_lib.sh
 docker stack rm pgcluster
 sleep 10
 ./delvol.sh
+if [ $? -ne 0 ] ; then
+  echo Failed to delete docker volumes
+  exit 1
+fi
 docker stack deploy -c $DOCKERFILE pgcluster
 docker service ls
 echo "Check for db pg01 to be ready"
@@ -81,9 +85,15 @@ long_connection 60 &
 stop_pg pg02
 sleep 70
 nbr=$(count_records long_connection)
-if [ $nbr -ne 2 ] ; then
+if [ $? -ne 0 ] ; then
+  echo "error in count_records long_connection"
+  exit 1
+fi
+if [ $nbr -ne 2 ] ; then
   echo expected to have 2 records in long_connection table, but got $nbr
   exit 1
+else
+  echo got $nbr records in table long_connection
 fi
 check_pool_nodes up,down primary,standby
 start_pg pg02

@@ -1,11 +1,12 @@
 const SQL_ACTIVITY_STAT = 'select * from pg_stat_activity;';
 const SQL_REPL_NODES = 'select * from nodes;';
 const SQL_SHOW_POOL_NODES = 'show pool_nodes;';
+const pgppool = require('../config/pgppool').pool;
+const { pools } = require('../config/pgpool');
 
 const getStatActivity = () => {
-  let pool = require('../config/pgppool.js');
-  let q = new Promise((resolve, reject) => {
-    pool.query(SQL_ACTIVITY_STAT, [], (error, result) => {
+  const q = new Promise((resolve, reject) => {
+    pgppool.query(SQL_ACTIVITY_STAT, [], (error, result) => {
       if (error) {
         reject(error);
       } else {
@@ -16,22 +17,19 @@ const getStatActivity = () => {
   return q;
 };
 
-const getReplNodesFromDB = async db => {
-  return new Promise((resolve, reject) => {
-    db.query(SQL_REPL_NODES, [], (error, result) => {
-      if (error) {
-        reject(error);
-      } else {
-        resolve(result);
-      }
-    });
+const getReplNodesFromDB = async db => new Promise((resolve, reject) => {
+  db.query(SQL_REPL_NODES, [], (error, result) => {
+    if (error) {
+      reject(error);
+    } else {
+      resolve(result);
+    }
   });
-};
+});
 
 const getReplNodes = async () => {
-  let pgpool = require('../config/pgppool').pool;
   try {
-    let result = await getReplNodesFromDB(pgpool);
+    const result = await getReplNodesFromDB(pgppool);
     return Promise.resolve(result);
   } catch (e) {
     return Promise.reject('Cannot connect to pgpool');
@@ -50,48 +48,23 @@ const getReplNodes = async () => {
   }
 };
 
-/*
-const getReplNodes = () => {
-	let pgpool = require('../config/pgppool').pool;
-	let q = new Promise((resolve,reject)=>{
-		pgpool.connect().
-			then((client)=>{
-				client.query(SQL_REPL_NODES)
-					.then((res)=>{
-						client.release();
-					  resolve(res);
-					})
-					.catch((err)=>{
-						client.release();
-						reject(err);
-					})
-			})
-			.catch((err)=>{
-				console.log('pool connect error', err);
-				reject(err);
-			})
-	});
-	return q;
-}
-*/
 const getPoolNodes = () => {
-  let pgppool = require('../config/pgppool').pool;
-  let q = new Promise((resolve, reject) => {
+  const q = new Promise((resolve, reject) => {
     pgppool
       .connect()
-      .then(client => {
+      .then((client) => {
         client
           .query(SQL_SHOW_POOL_NODES)
-          .then(res => {
+          .then((res) => {
             client.release();
             resolve(res);
           })
-          .catch(err => {
+          .catch((err) => {
             client.release();
             reject(err);
           });
       })
-      .catch(err => {
+      .catch((err) => {
         console.log('pool connect error', err);
         reject(err);
       });
@@ -100,14 +73,11 @@ const getPoolNodes = () => {
 };
 
 const dbStates = () => {
-  let pools = require('../config/pgpool').pools;
-
-  let pool = require('../config/pgpool');
-  let states = [];
+  const states = [];
   return new Promise((resolve, reject) => {
     pools.forEach((el, idx) => {
-      let state = { idx: idx, host: el.host };
-      pool.query(
+      const state = { idx, host: el.host };
+      pgppool.query(
         idx,
         'select pg_is_in_recovery() as in_recovery',
         [],
@@ -123,54 +93,50 @@ const dbStates = () => {
           if (states.length === pools.length) {
             return resolve(states);
           }
-        }
+        },
       );
     });
   });
 };
 
 const replicationStats = () => {
-  let pools = require('../config/pgpool').pools;
-
-  let pool = require('../config/pgpool');
-  let states = [];
-  return new Promise((resolve, reject) => {
+  const states = [];
+  return new Promise((resolve) => {
     pools.forEach((el, idx) => {
-      let res;
-      pool.query(
+      el.pool.query(
         idx,
         'select pg_is_in_recovery() as in_recovery',
         [],
         (err, result) => {
           if (err) {
-            states.push({ idx: idx, host: el.host, status: 'red' });
+            states.push({ idx, host: el.host, status: 'red' });
             if (states.length === pools.length) {
               return resolve(states);
             }
           } else {
-            let in_recovery = result.rows[0].in_recovery;
-            let SQL = `select * from ${
-              in_recovery ? 'pg_stat_wal_receiver' : 'pg_stat_replication'
+            const inRecovery = result.rows[0].in_recovery;
+            const SQL = `select * from ${
+              inRecovery ? 'pg_stat_wal_receiver' : 'pg_stat_replication'
             }`;
             console.log(SQL);
-            pool.query(idx, SQL, [], (err, result) => {
-              if (err) {
-                console.log('error in ' + SQL);
+            el.pool.query(idx, SQL, [], (err2, result2) => {
+              if (err2) {
+                console.log(`error in ${SQL}`);
                 console.log(err);
                 states.push({
-                  idx: idx,
+                  idx,
                   host: el.host,
                   status: 'green',
-                  in_recovery: in_recovery,
-                  error: err
+                  in_recovery: inRecovery,
+                  error: err2,
                 });
               } else {
                 states.push({
-                  idx: idx,
+                  idx,
                   host: el.host,
                   status: 'green',
-                  in_recovery: in_recovery,
-                  data: result.rows[0]
+                  in_recovery: inRecovery,
+                  data: result2.rows,
                 });
               }
               if (states.length === pools.length) {
@@ -178,16 +144,16 @@ const replicationStats = () => {
               }
             });
           }
-        }
+        },
       );
     });
   });
 };
 
 module.exports = {
-  getStatActivity: getStatActivity,
-  getReplNodes: getReplNodes,
-  getPoolNodes: getPoolNodes,
-  dbStates: dbStates,
-  replicationStats: replicationStats
+  getStatActivity,
+  getReplNodes,
+  getPoolNodes,
+  dbStates,
+  replicationStats,
 };

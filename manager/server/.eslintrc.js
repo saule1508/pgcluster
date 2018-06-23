@@ -4,14 +4,14 @@ module.exports = {
     'plugin:jest/recommended',
   ],
   rules: {
-    quotes: [2,"double",{"avoidEscape": true}]
+    quotes: [2,"single",{"avoidEscape": true}]
   },
   plugins: [
     'import',
-    'jest',
+    'jest'
   ],
   env: {
     node: true,
-    'jest/globals': true,
-  },
+    'jest/globals': true
+  }
 };

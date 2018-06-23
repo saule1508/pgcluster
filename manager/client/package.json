@@ -5,6 +5,7 @@
   "dependencies": {
     "bootstrap": "^3.3.7",
     "bootstrap-sass": "^3.3.7",
+    "eslint": "^4.19.1",
     "moment": "^2.18.1",
     "node-sass-chokidar": "^0.0.3",
     "react": "^16.2.0",
@@ -19,6 +20,10 @@
     "shx": "^0.2.2"
   },
   "devDependencies": {
+    "eslint-config-airbnb": "17.0.0",
+    "eslint-plugin-import": "^2.12.0",
+    "eslint-plugin-jsx-a11y": "^6.0.3",
+    "eslint-plugin-react": "^7.9.1",
     "prettier": "1.10.2",
     "react-scripts": "1.1.0"
   },
@@ -30,5 +35,5 @@
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
-  "proxy": "http://127.0.0.1:8080"
+  "proxy": "http://192.168.122.146:8080"
 }

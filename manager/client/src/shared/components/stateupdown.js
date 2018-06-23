@@ -1,14 +1,14 @@
-import React, { Component } from 'react'
-import PropTypes from 'prop-types'
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 
-const StateUpDown = ( { color } ) => 
-  (
-    <div style={{fontWeight: 'bold', color: color}}>{color === 'green' ? 'V' : 'X'}</div>
-  )
-
+const StateUpDown = ({ color }) => (
+  <div style={{ fontWeight: 'bold', color: color }}>
+    {color === 'green' ? 'V' : 'X'}
+  </div>
+);
 
 StateUpDown.propTypes = {
   color: PropTypes.oneOf(['green', 'yellow', 'red'])
-}
+};
 
-export default StateUpDown
+export default StateUpDown;

@@ -167,7 +167,7 @@ check_state() {
   HOST=$1
   CONT=$( docker ps -q --filter="status=running" --filter="name=$HOST" )
   echo doing check_state in $HOST
-  docker exec $CONT /scripts/check_state.sh
+  docker exec --user postgres $CONT /scripts/check_state.sh
 }
 
 # test if we can write
