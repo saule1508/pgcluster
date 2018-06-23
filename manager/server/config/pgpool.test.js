@@ -2,7 +2,8 @@ const { getPoolForHost } = require('./pgpool');
 
 test('it returns a pool for host pg01',()=>{
   const pool = getPoolForHost('pg01');
-  expect(pool).toBe(expect.anything());
+  console.log(pool);
+  expect(pool.options.host).toBe('pg01');
 })
 
 test('it returns null for host pg05',()=>{

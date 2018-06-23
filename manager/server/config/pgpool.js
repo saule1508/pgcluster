@@ -21,8 +21,20 @@ const connect = (idx = 0,callback) => {
   return pools[idx].pool.connect(callback);
 };
 
+// give the pool for one host
+const getPoolForHost = (host) => {
+  const pool = pools.filter((el)=>{
+    return (el.host === host)
+  });
+  if (pool.length !== 1){
+    return null;
+  }
+  return pool[0].pool;
+}
+
 module.exports = {
   pools: pools,
   query: query,
-  connect: connect
+  connect: connect,
+  getPoolForHost
 }
