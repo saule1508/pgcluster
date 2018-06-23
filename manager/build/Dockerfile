@@ -1,9 +1,9 @@
 FROM centos:7 as builder
 MAINTAINER p.timmermans@evs.com
 RUN yum upgrade -y && yum clean all && rm -rf /var/cache/yum
-ADD https://nodejs.org/dist/v8.9.0/node-v8.9.0-linux-x64.tar.xz / 
-RUN tar xvf /node-v8.9.0-linux-x64.tar.xz && rm /node-v8.9.0-linux-x64.tar.xz 
-ENV PATH $PATH:/node-v8.9.0-linux-x64/bin
+ADD https://nodejs.org/dist/v10.5.0/node-v10.5.0-linux-x64.tar.xz ./
+RUN tar xvf /node-v10.5.0-linux-x64.tar.xz && rm /node-v10.5.0-linux-x64.tar.xz 
+ENV PATH $PATH:/node-v10.5.0-linux-x64/bin
 RUN npm install -g yarn
 #RUN yum install -y git && yum clean all && mkdir /root/.ssh
 ADD ssh_keys /root/.ssh
@@ -20,8 +20,8 @@ RUN mv /tmp/client/build /opt/manager/app
 
 FROM centos:7 
 RUN yum upgrade -y && yum install -y openssh-clients && yum clean all && rm -rf /var/cache/yum
-COPY --from=builder /node-v8.9.0-linux-x64 /node-v8.9.0-linux-x64
-ENV PATH $PATH:/node-v8.9.0-linux-x64/bin
+COPY --from=builder /node-v10.5.0-linux-x64 /node-v10.5.0-linux-x64
+ENV PATH $PATH:/node-v10.5.0-linux-x64/bin
 ADD ssh_keys /root/.ssh
 RUN chmod 700 /root/.ssh && chmod 600 /root/.ssh/* && chmod 644 /root/.ssh/known_hosts
 COPY --from=builder /opt/manager /opt/manager

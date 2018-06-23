@@ -6,9 +6,6 @@ THISDIR=`pwd`
 NOCACHE=true
 APPNAME=manager
 
-BRANCH=${1:-develop}
-echo BRANCH is $BRANCH
-
 VERSION=`cat ../version.txt`
 echo version is $VERSION
 rm -rf server client 2>/dev/null
