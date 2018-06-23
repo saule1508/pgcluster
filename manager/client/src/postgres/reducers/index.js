@@ -130,7 +130,6 @@ export const getReplicationStatus = state => {
     }
     backends[el.host].data = el.data || null;
     backends[el.host].status = el.status;
-    backends[el.host].status = el.status;
     backends[el.host].in_recovery = el.in_recovery;
   });
   state.postgres.pool_nodes.rows.forEach(el => {

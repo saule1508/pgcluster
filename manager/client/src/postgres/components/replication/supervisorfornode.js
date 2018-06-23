@@ -3,7 +3,6 @@ import StateUpDown from '../../../shared/components/stateupdown';
 import propTypes from 'prop-types';
 
 export const SupervisorForNode = props => {
-  console.log(props);
   if (!props.node) {
     return null;
   }

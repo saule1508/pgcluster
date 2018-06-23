@@ -2,10 +2,22 @@ import React, { Component } from "react";
 import ShellConsoleModal from "../../../shared/components/shellconsolemodal.js";
 import StateUpDown from "../../../shared/components/stateupdown";
 
-const Stats = data => {
+const Stats = ( {data} ) => {
+  if (! data ){
+    return <div>no data</div> 
+  }  
+  const rows = data.map((row, idx) => {
+    return (<Stat key={idx} {...row} />);
+  });
+  
+  return <div>{rows}</div>;
+};
+
+const Stat = data => {
   let rows = [];
   for (var prop in data) {
-    let val;
+    
+    /*
     if (typeof data[prop] === "object" && data[prop]) {
       val = data[prop]["milliseconds"]
         ? data[prop]["milliseconds"] + " ms"
@@ -13,12 +25,44 @@ const Stats = data => {
     } else {
       val = data[prop];
     }
-    rows.push(
-      <tr key={prop}>
-        <td>{prop}</td>
-        <td>{val}</td>
-      </tr>
-    );
+    */
+   if (prop === 'pid' || prop === 'usesysid' || prop === 'usename' 
+    || prop === 'client_hostname' || prop === 'client_port'){
+      null ;
+    } else if (prop === "write_lag" || prop === "replay_lag" || prop === "flush_lag") {
+      const val = data[prop];
+      if (val){
+        let result = '';
+        if (val.hasOwnProperty('milliseconds')){
+          result=`${val.milliseconds} ms`;
+        }
+        if (val.hasOwnProperty('seconds')){
+          result=`${val.seconds} s ${result}`;
+        }
+        if (val.hasOwnProperty('minutes')){
+          result=`${val.minutes} min ${result}`;
+        }
+        if (val.hasOwnProperty('hours')){
+          result=`${val.hours} h ${result}`;
+        }
+        if (val.hasOwnProperty('days')){
+          result=`${val.hours} days ${result}`;
+        }
+        rows.push(
+          <tr key={prop}>
+            <td>{prop}</td>
+            <td>{result}</td>
+          </tr>
+        );
+      }
+    } else {
+      rows.push(
+        <tr key={prop}>
+          <td>{prop}</td>
+          <td>{data[prop]}</td>
+        </tr>
+      );
+    } 
   }
   return (
     <table className="table table-bordered table-condensed">
@@ -212,7 +256,7 @@ const Backend = ({ host, backend, onConsoleAction }) => {
         </tbody>
       </table>
 
-      <Stats {...backend.data} />
+      <Stats data={backend.data} />
     </div>
   );
 };
@@ -302,20 +346,20 @@ class ReplicationStats extends Component {
       default:
         prompt = null;
     }
-	if (this.state.console_action){
-		content.push(
-		<ShellConsoleModal
-			key="console"
-			action={this.state.console_action}
-			modalActive={this.state.console_action ? true : false}
-			handleHideModal={this.onCloseConsole}
-			onClose={this.onCloseConsole}
-			onSuccess={this.onCloseConsole}
-			args={args}
-			prompt={prompt}
-		/>
-		);
-	}
+    if (this.state.console_action) {
+      content.push(
+        <ShellConsoleModal
+          key="console"
+          action={this.state.console_action}
+          modalActive={this.state.console_action ? true : false}
+          handleHideModal={this.onCloseConsole}
+          onClose={this.onCloseConsole}
+          onSuccess={this.onCloseConsole}
+          args={args}
+          prompt={prompt}
+        />
+      );
+    }
 
     for (var e in this.props.replication_status) {
       if (this.props.replication_status.hasOwnProperty(e)) {

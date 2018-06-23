@@ -40,7 +40,6 @@ class DBStates extends Component {
         ? process.env.REACT_APP_SERVERIP + ":8080"
         : "localhost:8080";
     }
-    console.log("componentDidMount");
     if (this.ws) {
       console.log("this.ws is not null");
     }

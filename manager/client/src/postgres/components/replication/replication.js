@@ -10,15 +10,18 @@ class Replication extends Component {
   render() {
     return (
       <div>
+        {/* TODO: remove when pgpool is not in watchdog */}
         <div className="row" style={{ marginBottom: 20, marginTop: 20 }}>
           <div className="col-md-12">
             <PgpoolWatchDogContainer />
           </div>
         </div>
+
         <div className="row" style={{ marginBottom: 20, marginTop: 20 }}>
           <div className="col-md-4 col-lg-4">
             <DBStatesContainer />
           </div>
+          
           <div className="col-md-4 col-lg-4">
             <ReplContainer />
           </div>
@@ -31,13 +34,15 @@ class Replication extends Component {
           <div className="col-md-12">
             <NodesChecksContainer />
           </div>
+        
         </div>
-
+        
         <div className="row" style={{ marginBottom: 20, marginTop: 20 }}>
           <div className="col-md-12">
             <ReplicationStatsContainer />
           </div>
         </div>
+        
       </div>
     );
   }

@@ -6,7 +6,6 @@ import Disk from './disk';
 import propTypes from 'prop-types';
 
 const ChecksForNode = props => {
-  console.log(props);
   if (!props.node) {
     return null;
   }

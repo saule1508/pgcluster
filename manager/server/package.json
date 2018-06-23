@@ -20,7 +20,8 @@
     "express": "^4.15.2",
     "express-ws": "^3.0.0",
     "node-js": "^1.0.0",
-    "pg": "7.3.0",
+    "pg": "7.4.3",
+    "postgres-interval": "^1.1.1",
     "prettier": "^1.13.5",
     "request": "^2.81.0"
   },

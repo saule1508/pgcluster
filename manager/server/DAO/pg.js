@@ -3,6 +3,7 @@ const SQL_REPL_NODES = 'select * from nodes;';
 const SQL_SHOW_POOL_NODES = 'show pool_nodes;';
 const pgppool = require('../config/pgppool').pool;
 const { pools } = require('../config/pgpool');
+const { getStats, isInRecovery } = require('./replication.js');
 
 const getStatActivity = () => {
   const q = new Promise((resolve, reject) => {
@@ -17,15 +18,16 @@ const getStatActivity = () => {
   return q;
 };
 
-const getReplNodesFromDB = async db => new Promise((resolve, reject) => {
-  db.query(SQL_REPL_NODES, [], (error, result) => {
-    if (error) {
-      reject(error);
-    } else {
-      resolve(result);
-    }
+const getReplNodesFromDB = async db =>
+  new Promise((resolve, reject) => {
+    db.query(SQL_REPL_NODES, [], (error, result) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(result);
+      }
+    });
   });
-});
 
 const getReplNodes = async () => {
   try {
@@ -74,81 +76,31 @@ const getPoolNodes = () => {
 
 const dbStates = () => {
   const states = [];
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     pools.forEach((el, idx) => {
       const state = { idx, host: el.host };
-      pgppool.query(
-        idx,
-        'select pg_is_in_recovery() as in_recovery',
-        [],
-        (err, result) => {
-          if (err) {
-            console.log(err);
-            state.status = 'red';
-          } else {
-            state.status = 'green';
-            state.in_recovery = result.rows[0].in_recovery;
-          }
-          states.push(state);
+      isInRecovery(el.host)
+        .then((inRecovery) => {
+          states.push({
+            idx, host: el.host, status: 'green', in_recovery: inRecovery,
+          });
           if (states.length === pools.length) {
             return resolve(states);
           }
-        },
-      );
+        })
+        .catch(() => {
+          states.push({
+            idx, host: el.host, status: 'red',
+          });
+          if (states.length === pools.length) {
+            return resolve(states);
+          }
+        });
     });
   });
 };
 
-const replicationStats = () => {
-  const states = [];
-  return new Promise((resolve) => {
-    pools.forEach((el, idx) => {
-      el.pool.query(
-        idx,
-        'select pg_is_in_recovery() as in_recovery',
-        [],
-        (err, result) => {
-          if (err) {
-            states.push({ idx, host: el.host, status: 'red' });
-            if (states.length === pools.length) {
-              return resolve(states);
-            }
-          } else {
-            const inRecovery = result.rows[0].in_recovery;
-            const SQL = `select * from ${
-              inRecovery ? 'pg_stat_wal_receiver' : 'pg_stat_replication'
-            }`;
-            console.log(SQL);
-            el.pool.query(idx, SQL, [], (err2, result2) => {
-              if (err2) {
-                console.log(`error in ${SQL}`);
-                console.log(err);
-                states.push({
-                  idx,
-                  host: el.host,
-                  status: 'green',
-                  in_recovery: inRecovery,
-                  error: err2,
-                });
-              } else {
-                states.push({
-                  idx,
-                  host: el.host,
-                  status: 'green',
-                  in_recovery: inRecovery,
-                  data: result2.rows,
-                });
-              }
-              if (states.length === pools.length) {
-                return resolve(states);
-              }
-            });
-          }
-        },
-      );
-    });
-  });
-};
+const replicationStats = () => getStats();
 
 module.exports = {
   getStatActivity,
