@@ -46,9 +46,9 @@ if [ $? -ne 0 ] ; then
   echo "ERROR - pgpool cannot be accessed"
   exit 1
 fi
-read node port status weight role <<< $str
+read node port status weight status_name role <<< $str
 if [ $status -ne $PGP_STATUS_DOWN ] ; then
-  echo "pgpool status for node $node is $status and role $role, nothing to do"
+  echo "pgpool status for node $node is $status_name and role $role, nothing to do"
   exit 0
 fi
 echo "Node $node is down (role is $role)"
@@ -65,11 +65,11 @@ echo "Primary node is $PRIMARY_HOST"
 
 # check if this node is a failed master (degenerated master)
 # if yest then pcp_recovery_node or node rejoin is needed
-if [ $role == "primary" ] ; the
+if [ $role == "primary" ] ; then
   echo "This node is a primary and it is down: recovery needed"
   # sanity check
   if [ $PRIMARY_NODE_ID -ne $PGP_NODE_ID ] ; then
-     echo "Unpextected state, this node $PGP_NODE_ID is a primary according to pcp_node_info but pool_nodes said $PRIMARY_NODE_ID is master
+     echo "Unpextected state, this node $PGP_NODE_ID is a primary according to pcp_node_info but pool_nodes said $PRIMARY_NODE_ID is master"
      exit 1
   fi
   echo "First try node rejoin"
