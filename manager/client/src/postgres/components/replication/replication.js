@@ -1,4 +1,6 @@
 import React, { Component } from "react";
+import propTypes from 'prop-types';
+
 import DBStatesContainer from "../DBStatesContainer.js";
 import PgpoolContainer from "../PgpoolContainer.js";
 import ReplContainer from "../ReplContainer.js";
@@ -10,13 +12,13 @@ class Replication extends Component {
   render() {
     return (
       <div>
-        {/* TODO: remove when pgpool is not in watchdog */}
-        <div className="row" style={{ marginBottom: 20, marginTop: 20 }}>
-          <div className="col-md-12">
-            <PgpoolWatchDogContainer />
-          </div>
-        </div>
-
+        {this.props.withWatchdog ? (
+          <div className="row" style={{ marginBottom: 20, marginTop: 20 }}>
+            <div className="col-md-12">
+              <PgpoolWatchDogContainer />
+            </div>
+          </div>) : ''
+        }
         <div className="row" style={{ marginBottom: 20, marginTop: 20 }}>
           <div className="col-md-4 col-lg-4">
             <DBStatesContainer />
@@ -42,10 +44,13 @@ class Replication extends Component {
             <ReplicationStatsContainer />
           </div>
         </div>
-        
       </div>
     );
   }
+}
+
+Replication.propTypes = {
+  withWatchdog: propTypes.bool.isRequired
 }
 
 export default Replication;

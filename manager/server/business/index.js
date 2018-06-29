@@ -1,4 +1,7 @@
-const bus_health = service => {
+const { spawn } = require('child_process');
+const dblist = require('../config/config.js').pg;
+
+const bus_health = (service) => {
   const request = require('request-promise');
   return request
     .get({ uri: 'http://' + service + ':8080/health', json: true })
@@ -12,12 +15,12 @@ const bus_health = service => {
     });
 };
 
-const formatPgpoolWD = arr => {
-  let result = {};
+const formatPgpoolWD = (arr) => {
+  const result = {};
   let currentItem;
   let nodeIndex = -1;
   let nodeArray = [];
-  arr.forEach(el => {
+  arr.forEach((el) => {
     if (el.startsWith('Watchdog Cluster Information')) {
       currentItem = 'wd_cluster_info';
     }
@@ -28,11 +31,11 @@ const formatPgpoolWD = arr => {
       nodeIndex++;
       nodeArray.push({ idx: nodeIndex });
     }
-    line = el.split(':');
+    const line = el.split(':');
     if (line.length !== 2) {
       return;
     }
-    let k = line[0]
+    const k = line[0]
       .trim()
       .toLowerCase()
       .replace(/ /g, '_');
@@ -42,12 +45,11 @@ const formatPgpoolWD = arr => {
       result[k] = line[1].trim().replace(',', '');
     }
   });
-  result['nodes'] = nodeArray;
+  result.nodes = nodeArray;
   return result;
 };
 
 const getFromSSH = (dbhost, args) => {
-  const { spawn } = require('child_process');
 
   return new Promise((resolve, reject) => {
     let response = '';
@@ -59,38 +61,55 @@ const getFromSSH = (dbhost, args) => {
       '-o',
       'UserKnownHostsFile=/dev/null',
       `postgres@${dbhost}`,
-      '-C'
+      '-C',
     ].concat(args);
 
     const shell = spawn('ssh', cmdArgs);
     let error = '';
-    shell.stdout.on('data', data => {
+    shell.stdout.on('data', (data) => {
       response = `${response}${data.toString()}`;
     });
-    shell.stderr.on('data', data => {
+    shell.stderr.on('data', (data) => {
       console.log(`got error ${data.toString()}`);
       error = `${error}${data.toString()}`;
     });
-    shell.on('close', code => {
+    shell.on('close', (code) => {
       console.log(`shell exited with code ${code}`);
       if (code === 0) {
         resolve({ node: dbhost, rows: response.split('\n') });
       } else {
-        reject(`code ${code} ${error}`);
+        reject(new Error(`code ${code} ${error}`));
       }
     });
-    shell.on('error', error => {
-      console.log(`spawn error ${error}`);
+    shell.on('error', (e) => {
+      console.log(`spawn error ${e}`);
     });
   });
 };
 
-const getPgpoolWDStatusFromDB = dbhost => {
-  const { spawn } = require('child_process');
+const getPgpoolWDStatus = async () => {
+  let response = null;
+  let error = null;
+  let done = false;
+  for (var i = 0; i < dblist.length && !done; i++) {
+    try {
+      let result = await getPgpoolWDStatusFromDB(dblist[i].host);
+      done = true;
+      result.node_fetched_from = dblist[i].host;
+      response = result;
+    } catch (e) {
+      error = e;
+    }
+  }
+  if (done) {
+    return Promise.resolve(response);
+  }
+  return Promise.reject(error);
+};
 
-  //  const pools = require('../config/pgpool').pools;
-  //  const getFilesForHost = require('./utils.js').getFilesForHost;
-  //  const directory = '/u02/backup';
+const getPgpoolWDStatusFromDB = (dbhost) => {
+  let noWatchDog = false;
+
   return new Promise((resolve, reject) => {
     let response = '';
     const cmdArgs = [
@@ -111,42 +130,30 @@ const getPgpoolWDStatusFromDB = dbhost => {
       '-v'
     ];
     const shell = spawn('ssh', cmdArgs);
-    shell.stdout.on('data', data => {
+    shell.stdout.on('data', (data) => {
       response = `${response}${data.toString()}`;
     });
-    shell.stderr.on('data', data => {
-      console.log(`got error ${data.toString()}`);
-    });
-    shell.on('close', code => {
-      console.log(`shell exited with code ${code}`);
-      if (code === 0) {
-        resolve(formatPgpoolWD(response.split('\n')));
-      } else {
-        reject({ error: code });
+    shell.stderr.on('data', (data) => {
+      const msg = data.toString();
+      console.log(`got error ${msg}`);
+      if (msg.includes('watcdhog is not enabled')) {
+        noWatchDog = true;
       }
     });
-    shell.on('error', error => {
+    shell.on('close', (code) => {
+      console.log(`shell exited with code ${code}`);
+      if (noWatchDog) {
+        return reject(new Error('watchdog disabled'));
+      }
+      if (code === 0) {
+        return resolve(formatPgpoolWD(response.split('\n')));
+      }
+      return reject(new Error(`error: ${code}`));
+    });
+    shell.on('error', (error) => {
       console.log(`spawn error ${error}`);
     });
   });
-};
-
-const getPgpoolWDStatus = async () => {
-  const dblist = require('../config/config.js').pg;
-  let response;
-  let done = false;
-  for (var i = 0; i < dblist.length && !done; i++) {
-    try {
-      let result = await getPgpoolWDStatusFromDB(dblist[i].host);
-      done = true;
-      result.node_fetched_from = dblist[i].host;
-      response = result;
-    } catch (e) {
-      console.log(e);
-      response = e;
-    }
-  }
-  return response;
 };
 
 const getChecks = async () => {
@@ -196,7 +203,7 @@ const getChecks = async () => {
 };
 
 module.exports = {
-  bus_health: bus_health,
-  getPgpoolWDStatus: getPgpoolWDStatus,
-  getChecks: getChecks
+  bus_health,
+  getPgpoolWDStatus,
+  getChecks
 };

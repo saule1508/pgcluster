@@ -59,6 +59,7 @@ const REPLICATION_STATS_INITIAL_STATE = {
 const PGPOOL_WATCHDOG_INITIAL_STATE = {
   timeStamp: null,
   loading: false,
+  withWatchdog: true, // will be set to null if action returns an exception with message 'watchdog disabled'
   error: null,
   total_nodes: null,
   remote_nodes: null,
@@ -275,7 +276,8 @@ let pgpool_watchdog = (state = PGPOOL_WATCHDOG_INITIAL_STATE, action) => {
     case FETCH_PGPOOL_WATCHDOG_FAILURE:
       return Object.assign({}, state, {
         loading: false,
-        error: action.payload
+        error: action.payload,
+        withWatchdog : action.payload.message && action.payload.message === 'watchdog disabled' ? false : true
       });
     case FETCH_PGPOOL_WATCHDOG_SUCCESS:
       return Object.assign({}, state, {

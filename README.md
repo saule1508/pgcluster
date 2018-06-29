@@ -150,6 +150,8 @@ The following environment variables are important to properly set-up pgpool
 * PGP_HEARTBEATS: "0:pgpool01:9694,1:pgpool02:9694" When using the watchdog
 * PGP_OTHERS: "0:pgpool02:9999" on the first pgpool, "0:pgpool01:9999" on the other pgpool. Only in watchdog mode. 
 
+Any environment variable prefixed with PGPOOL_ will be injected in the pgpool config file, for example PGPOOL_LOAD_BALANCE_MODE=off will inject load_balance_mode=off in the config.
+
 
 ## users and passords
 

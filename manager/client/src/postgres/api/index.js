@@ -94,13 +94,19 @@ export const getPgpoolWatchDog = () => {
   return fetch(URL, { method: 'GET' })
     .then(response => {
       if (!response.ok) {
-        throw response.statusText;
+        console.log('response KO');
+        if (response.status === 503){
+          // TODO: decode response to see if it is really watchdog disabled
+          return Promise.reject(new Error('watchdog disabled')) ;
+        }
+        return Promise.reject(new Error(`Internal error : ${response.status} ${response.statusText}`));
       }
       return response.json();
     })
-    .catch(err => {
+    .catch((err) => {
+      console.log('catched');
       throw err;
-    });
+    })
 };
 
 export const getChecks = () => {
@@ -108,7 +114,7 @@ export const getChecks = () => {
   return fetch(URL, { method: 'GET' })
     .then(response => {
       if (!response.ok) {
-        throw response.statusText;
+        throw response.json();
       }
       return response.json();
     })
