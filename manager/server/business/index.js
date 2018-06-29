@@ -130,6 +130,11 @@ const getPgpoolWDStatusFromDB = (dbhost) => {
       '-v'
     ];
     const shell = spawn('ssh', cmdArgs);
+    // if no connection after 5 secs, kill it so an error is returned
+    setTimeout(() => {
+      shell.kill();
+    }, 5000);
+
     shell.stdout.on('data', (data) => {
       response = `${response}${data.toString()}`;
     });
