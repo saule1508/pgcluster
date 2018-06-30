@@ -3,12 +3,18 @@ import Replication from './replication'
 
 const mapStateToProps = (state) => {
   return {
-    withWatchDog: state.postgres.pgp_watchdog.withWatchDog,
+    withWatchDog: state.postgres.pgpool_watchdog.withWatchdog,
   }
 }
 
-const ReplicationStatsContainer = connect(
-  mapStateToProps,
+const mapDispatchToProps = (dispatch, state) => {
+  return {
+    }
+};
+
+
+const ReplicationContainer = connect(
+  mapStateToProps,mapDispatchToProps
 )(Replication)
 
 

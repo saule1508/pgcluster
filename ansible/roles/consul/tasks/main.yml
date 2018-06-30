@@ -1,5 +1,8 @@
 ---
 
+  # TODO: automatically create groups consul, consul_servers and consul_clients
+  #       but for now we must rely on the inventory
+
   # let us use a group called consul
   - add_host:
       name: "{{ item }}"
@@ -7,6 +10,25 @@
     with_items: "{{ groups.all }}"
     when: groups.consul is undefined
     changed_when: false
+
+  - add_host:
+      name: "{{ item }}"
+      groups: consul_servers
+    with_items: "{{ groups.consul[0] }}"
+    when: groups.consul_servers is undefined
+    changed_when: false
+
+  - add_host:
+      name: "{{ item }}"
+      groups: consul_clients
+    with_items: "{{ groups.consul[1] }}"
+    when: groups.consul_clients is undefined and (groups['consul'] | length) == 2
+
+  - add_host:
+      name: "{{ item }}"
+      groups: consul_servers
+    with_items: "{{ groups.consul[1] }}"
+    when: groups.consul_clients is undefined and (groups['consul'] | length ) > 2
 
 
   - set_fact:
@@ -18,6 +40,14 @@
     when: "{{ groups['consul'] | length }} > 1"
 
   - debug: var=groups['consul']
+
+  - set_fact:
+      consul_server_type: "client"
+    when: inventory_hostname in groups['consul_clients']
+
+  - set_fact:
+      consul_server_type: "server"
+    when: inventory_hostname in groups['consul_servers']
 
   - name: consul - install unzip
     yum:
@@ -77,33 +107,55 @@
   - name: consul - create dirs
     file: path={{ item  }} state=directory mode=0755 owner=consul
     with_items:
-    - /etc/consul.d/bootstrap
     - /etc/consul.d/server
     - /etc/consul.d/client
     - /var/consul
-
-  - set_fact:
-      consul_bootstrap_server: "{{ inventory_hostname == groups['consul'][0] }}"
 
   - name: consul - systemd
     template:
       src: "consul-systemd.service.j2"
       dest: /etc/systemd/system/consul.service
     vars:
-      consul_server_type: "{{ consul_bootstrap_server | ternary('bootstrap', 'server') }}"
+      consul_server_type: "{{ consul_server_type }}"
 
-
-  - name: consul - config
+  - name: consul - server config
     template:
-      src: "consul-config.json.j2"
-      dest: /etc/consul.d/{{ consul_bootstrap_server | ternary('bootstrap', 'server') }}/config.json
+      src: "consul-server-config.json.j2"
+      dest: /etc/consul.d/server/config.json
     vars:
-      bootstrap: "{{ consul_bootstrap_server | ternary('true', 'false') }}"
-      #join_server: "{{ consul_bootstrap_server | ternary('', consul_join_server) }}"
       advertise_addr: "{{ consul_advertise_address }}"
 
-#  - name: consul - start service
-#    service: name=consul state=restarted
+  - name: consul - client config
+    template:
+      src: "consul-client-config.json.j2"
+      dest: /etc/consul.d/client/config.json
+    vars:
+      advertise_addr: "{{ consul_advertise_address }}"
+
+  - name: install firewalld services
+    copy:
+      src: consul.xml
+      dest: /usr/lib/firewalld/services/consul.xml
+
+  - name: reload firewalld
+    systemd:
+      name: firewalld
+      state: reloaded
+
+
+  - name: activate firewalld services
+    firewalld:
+      service: consul
+      state: enabled
+      permanent: yes
+    notify:
+      - restart firewalld
+
+  - name: consul - start service
+    service: 
+      name: consul
+      enabled: yes
+      state: restarted
 
 
 ...

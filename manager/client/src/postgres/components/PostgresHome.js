@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { Route, Link, Redirect } from 'react-router-dom'
 import StatActivityContainer from './StatActivityContainer'
-import Replication from './replication/replication'
+import ReplicationContainer from './replication/replicationcontainer'
 import Backup from './backup/backupscontainer'
 
 
@@ -33,10 +33,10 @@ class PostgresHome extends Component{
         <h2>Postgres</h2>
         <Header />
         <Redirect from="/" to="/postgres/replication" />
-        <Route exact path="/postgres" component={Replication} />
+        <Route exact path="/postgres" component={ReplicationContainer} />
         <Route path='/postgres/stat_activity' component={StatActivityContainer} /> 
         <Route path='/postgres/backup' exact={false} component={Backup} />
-        <Route path='/postgres/replication' exact={false} component={Replication} />      
+        <Route path='/postgres/replication' exact={false} component={ReplicationContainer} />      
       </div>
     )
   }

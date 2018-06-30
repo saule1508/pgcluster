@@ -20,6 +20,11 @@ docker run -d \
   -e PGP_OTHERS=${PGP_OTHERS} \
   -e REPMGRDPWD=${REPMGRDPWD:-rep123} \
   -e FAILOVER_MODE=${PGPOOL_FAILOVER_MODE:-automatic} \
+  -e PGPOOL_LOAD_BALANCE_MODE=off \
+  -e PGPOOL_FAIL_OVER_ON_BACKEND_ERROR=off \
+  -e PGPOOL_HEALTH_CHECK_PERIOD=10 \
+  -e PGPOOL_HEALTH_CHECK_INTERVAL=1 \
+  -e PGPOOL_HEALTH_CHECK_MAX_RETRY=3 \
   --restart=always \
   --name=pgpool0${NODE_ID} \
   {{ docker_url }}pgpool:{{ images.pgpool.tag }}
