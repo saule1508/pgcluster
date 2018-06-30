@@ -41,7 +41,7 @@ check_is_streaming_from(){
   return 1
 }
 
-str=$( pcp_node_info -h pgpool -p 9898 -w $PGP_NODE_ID-1 )
+str=$( pcp_node_info -h pgpool -p 9898 -w $PGP_NODE_ID )
 if [ $? -ne 0 ] ; then
   echo "ERROR - pgpool cannot be accessed"
   exit 1
