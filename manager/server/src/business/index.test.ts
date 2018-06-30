@@ -1,4 +1,4 @@
-const { getPgpoolWDStatus } = require('./index.js');
+const getPgpoolWDStatus = require('./index').getPgpoolWDStatus;
 
 test('it should throw an exception when there is no watchdog mode',()=>{
 

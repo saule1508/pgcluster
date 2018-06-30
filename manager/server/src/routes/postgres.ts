@@ -1,9 +1,8 @@
 const express = require('express');
-
 const router = express.Router();
 const pg = require('../DAO/pg.js');
 
-router.get('/repl_nodes', (req, res) => {
+router.get('/repl_nodes', (_req, res: any) => {
   pg.getReplNodes()
     .then(data => res.status(200).send(data))
     .catch((err) => {
@@ -52,14 +51,14 @@ router.get('/replication_stats', (req, res) => {
     });
 });
 
-router.get('/backups', (req, res) => {
+router.get('/backups', (req: Request, res: Response) => {
   const getBackups = require('../business/backup.js').getBackups;
   getBackups()
     .then(result => res.status(200).send(result))
     .catch(error => res.status(501).send(error));
 });
 
-router.get('/backups/:host/:name', (req, res) => {
+router.get('/backups/:host/:name', (req: Request, res: Response) => {
   const buExists = require('../business/backup.js').backupExists;
   backupExists(req.params.host, req.params.name)
     .then(result => res.status(200).send(result))
@@ -89,4 +88,4 @@ router.get('/checks', (req, res) => {
     });
 });
 
-module.exports = router;
+export default router;

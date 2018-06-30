@@ -1,4 +1,4 @@
-const { replicationStats, dbStates } = require('./pg.js');
+const { replicationStats, dbStates } = require('./pg');
 const { closeAll } = require('../config/pgpool');
 /*
 it('replicationStats with 3 nodes should return an array of 3 and for the master contains stats for all standbyes', () => {

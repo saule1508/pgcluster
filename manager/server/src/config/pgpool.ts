@@ -1,5 +1,5 @@
 const Pool = require('pg').Pool;
-const config = require('./config.js').pg;
+const config = require('./config').pg;
 
 const pools = [];
 config.map((el, idx) => {

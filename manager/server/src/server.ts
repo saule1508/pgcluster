@@ -1,10 +1,10 @@
-const express = require("express");
+import express from "express";
 
 const app = express();
 const expressWs = require("express-ws")(app);
-const routesDocker = require("./routes/docker.js");
-const routesPostgres = require("./routes/postgres.js");
-const routesWs = require("./routes/ws.js");
+import routesDocker from "./routes/docker";
+import routesPostgres from "./routes/postgres.js";
+import routesWs from "./routes/ws.js";
 
 app.use(express.static("app"));
 

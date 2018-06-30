@@ -1,5 +1,5 @@
-let Pool = require('pg').Pool;
-let config = require('./config.js').pgp;
+const { Pool } = require('pg');
+const config = require('./config').pgp;
 
 let pool = new Pool(config);
 pool.on('error', err => {

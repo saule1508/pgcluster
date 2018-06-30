@@ -222,4 +222,4 @@ wsrouter.ws('/shell', (ws, req) => {
   });
 });
 
-module.exports = wsrouter;
+export default wsrouter;

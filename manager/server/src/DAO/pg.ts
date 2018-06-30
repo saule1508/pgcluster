@@ -3,7 +3,7 @@ const SQL_REPL_NODES = 'select * from nodes;';
 const SQL_SHOW_POOL_NODES = 'show pool_nodes;';
 const pgppool = require('../config/pgppool').pool;
 const { pools } = require('../config/pgpool');
-const { getStats, isInRecovery } = require('./replication.js');
+const { getStats, isInRecovery } = require('./replication');
 
 const getStatActivity = () => {
   const q = new Promise((resolve, reject) => {

@@ -9,8 +9,8 @@ RUN npm install -g yarn
 ADD ssh_keys /root/.ssh
 RUN chmod 700 /root/.ssh && chmod 600 /root/.ssh/* && chmod 644 /root/.ssh/known_hosts
 ADD server /opt/server
-RUN cd /opt/server && yarn install --production=true
-RUN mv /opt/server /opt/manager
+RUN cd /opt/server && yarn install && ( npm run build-ts | true )
+RUN mv /opt/server/dist /opt/manager
 ADD client /tmp/client
 RUN cd /tmp/client && yarn install 
 #RUN find /tmp/client/src -name "*.js" -exec sed -i -e "s/ console.log/ \/\/console.log/" {} \; && \

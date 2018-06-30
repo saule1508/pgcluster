@@ -1,19 +1,6 @@
 const { spawn } = require('child_process');
-const dblist = require('../config/config.js').pg;
+import { pg as dblist } from '../config/config';
 
-const bus_health = (service) => {
-  const request = require('request-promise');
-  return request
-    .get({ uri: 'http://' + service + ':8080/health', json: true })
-    .then(response => {
-      console.log('in then');
-      return response;
-    })
-    .catch(error => {
-      console.log('in catch');
-      throw error;
-    });
-};
 
 const formatPgpoolWD = (arr) => {
   const result = {};
@@ -208,7 +195,6 @@ const getChecks = async () => {
 };
 
 module.exports = {
-  bus_health,
-  getPgpoolWDStatus,
-  getChecks
-};
+  getChecks,
+  getPgpoolWDStatus
+}
