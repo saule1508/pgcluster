@@ -11,6 +11,7 @@
 # this script must be in PGDATA
 
 PATH=$PATH:/usr/pgsql-10/bin
+ARCHIVE_DIR=/u02/archive
 
 if [ ! -d /var/log/pg ] ; then
  sudo mkdir -p /var/log/pg
@@ -45,8 +46,8 @@ echo "Stopping postgres on ${replica_host}"
 $ssh_copy "/scripts/pg_stop.sh"
 echo sleeping 20
 sleep 20
-echo "delete database directory on ${replica_host}"
-$ssh_copy "rm -Rf $replica_path/*"
+echo "delete database and archive directories on ${replica_host}"
+$ssh_copy "rm -Rf $replica_path/* ${ARCHIVE_DIR}/*"
 echo let us use repmgr on the replica host to force it to sync again
 $ssh_copy "/usr/pgsql-10/bin/repmgr -h ${primary_host} --username=repmgr -d repmgr -D ${replica_path} -f /etc/repmgr/10/repmgr.conf standby clone -v"
 echo "Start database on ${replica_host} "
