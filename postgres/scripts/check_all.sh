@@ -8,6 +8,10 @@ STATE_UNKNOWN=3
 STATE=-1
 MSG=""
 
+# params:
+#  1: host to check
+#  2: primary db
+# return 1 (success) if host (standby) is streaming from primary
 is_streaming_from(){
  HOST=$1
  PRIMARY=$2
