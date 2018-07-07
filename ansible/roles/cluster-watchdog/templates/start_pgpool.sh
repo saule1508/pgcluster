@@ -9,6 +9,7 @@ set +o allexport
 docker run -d \
   --privileged \
   --net=host \
+  --log-driver=journald --log-opt tag=pgpool \
   -p 9999:9999 \
   -v /tmp:/tmp \
   -e PG_BACKEND_NODE_LIST=${PG_BACKEND_NODE_LIST} \

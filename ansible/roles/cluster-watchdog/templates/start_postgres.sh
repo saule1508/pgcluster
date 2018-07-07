@@ -10,6 +10,7 @@ set +o allexport
 docker run -d \
   --privileged \
   --net=host \
+  --log-driver=journald --log-opt tag=postgres \
   -p 5432:5421 \
   -p 222:222 \
   -v /u01/pg{{ postgres_pg_version }}/data:/u01/pg{{ postgres_pg_version }}/data \

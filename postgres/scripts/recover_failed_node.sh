@@ -59,12 +59,12 @@ if [ $? -ne 0 ] ; then
   echo "cannot connect to postgres via pgpool"
   exit 1
 fi
-PRIMARY_NODE_ID=$( cat /tmp/pool_nodes.log | grep primary | grep -v down | cut -f2 -d"|" | sed -e "s/ //g")
-PRIMARY_HOST=$( cat /tmp/pool_nodes.log | grep primary | grep -v down | cut -f3 -d"|" | sed -e "s/ //g")
+PRIMARY_NODE_ID=$( cat /tmp/pool_nodes.log | grep primary | grep -v down | cut -f1 -d"|" | sed -e "s/ //g")
+PRIMARY_HOST=$( cat /tmp/pool_nodes.log | grep primary | grep -v down | cut -f2 -d"|" | sed -e "s/ //g")
 echo "Primary node is $PRIMARY_HOST"
 
 # check if this node is a failed master (degenerated master)
-# if yest then pcp_recovery_node or node rejoin is needed
+# if yes then pcp_recovery_node or node rejoin is needed
 if [ $role == "primary" ] ; then
   echo "This node is a primary and it is down: recovery needed"
   # sanity check
@@ -106,6 +106,6 @@ if [ $res -eq 1 ] ; then
   echo "ERROR attach node failed for node $node"
   exit 1
 fi
-echo "node is supposed to be a standby but it is not streaming from the primary, lets do pcp_recovery_node"
+echo "node is supposed to be a standby but it is not streaming from the primary, must be a degenerated master, lets do pcp_recovery_node"
 pcp_recovery_node -h pgpool -p 9898 -w $PGP_NODE_ID
 exit $?

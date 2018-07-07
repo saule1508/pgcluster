@@ -8,6 +8,7 @@ set +o allexport
 
 docker run -d \
   --net=host \
+  --log-driver=journald --log-opt tag=manager \
   -v /var/run/docker:/var/run/docker \
   -e PG_BACKEND_NODE_LIST=${PG_BACKEND_NODE_LIST} \
   -e REPMGRDPWD=${REPMGRDPWD:-rep123} \
