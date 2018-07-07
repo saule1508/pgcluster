@@ -25,10 +25,8 @@ fi
 log_info(){
   echo "INFO - $( date +"%Y%m%d %H:%M:%S.%s" ) - $1" >> $LOGFILE
 }
-# following variable will be injected by initdb.sh based on env variable
-REPMGRD_FAILOVER_MODE="##REPMGRD_FAILOVER_MODE##"
 
-log_info "got event $EVENT_TYPE for NODE $NODE_ID success is $SUCCESS"
+log_info "got event $EVENT_TYPE for NODE $NODE_ID success is $SUCCESS, all args: $*"
 if [ $EVENT_TYPE == "standby_recovery" -a $SUCCESS -eq 1 ] ; then
   log_info "attach node $NODE_ID because $EVENT_TYPE"
   pcp_attach_node -h pgpool -p 9898 -w $(( NODE_ID-1 ))
@@ -42,10 +40,10 @@ if [ $EVENT_TYPE == "repmgrd_failover_promote" ] ; then
   pcp_promote_node -h pgpool -p 9898 -w $(( NODE_ID-1 ))
 fi
 if [ $EVENT_TYPE == "repmgrd_failover_follow" ] ; then
-  echo attach node $NODE_ID because $EVENT_TYPE >> /var/log/pgcluster/repmgrd_event.log
+  log_info "attach node $NODE_ID because $EVENT_TYPE"
   pcp_attach_node -h pgpool -p 9898 -w $(( NODE_ID-1 ))
 fi
 if [ $EVENT_TYPE == "standby_failure" ] ; then
-  echo detach node $NODE_ID because $EVENT_TYPE >> /var/log/pgcluster/repmgrd_event.log
+  log_info "detach node $NODE_ID because $EVENT_TYPE" 
   pcp_detach_node -h pgpool -p 9898 -w $(( NODE_ID-1 ))
 fi
