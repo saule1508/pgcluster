@@ -1,4 +1,4 @@
-!/bin/bash
+#!/bin/bash
 
 STATE_OK=0
 STATE_WARNING=1
@@ -28,7 +28,7 @@ is_streaming_from(){
 lines=$(psql -U repmgr -h pgpool -p 9999 -t -c "show pool_nodes;" | grep -v "^$" | sed -e "s/ //g")
 PRIMARY=$(echo "$lines" | grep primary | cut -f2 -d"|")
 NBRSTDBY=$(echo "$lines" | grep standby | wc -l)
-MSG="PRIMARY=$PRIMARY $NBRSTDBY standby"
+MSG="PRIMARY database is $PRIMARY, there are $NBRSTDBY standby -"
 while read line
 do
   IFS='|' read nodeid host port status weight role select_cnt load_balance_node replication_lag <<<$line
@@ -51,12 +51,12 @@ do
       fi
     fi
     COUNT=$(psql -h ${host} -U repmgr repmgr -t -c "select count(*) from pg_stat_replication;")
-    if [ $COUNT -eq $NBRSTDBY ] ; then
-      MSG="$MSG streaming to $COUNT stdby"
-    else
+    if [ $COUNT -ne $NBRSTDBY ] ; then
       STATE=$STATE_ERROR
       MSG="$MSG streaming to $COUNT stdby instead of $NBRSTDBY"
     fi
+    str=$(psql -h ${host} -U repmgr repmgr -t -c "select string_agg(t.streaming,',') from (select state||' to '||application_name||' lag '||coalesce(write_lag,'0')  as streaming from pg_stat_replication) t;")
+    MSG="$MSG $str"
   fi
   if [ "$role" == "standby" ] ; then
     if [ "$in_reco" != " t" ] ; then
@@ -76,6 +76,7 @@ do
       STATE=$STATE_ERROR
     fi
   fi
+  MSG="$MSG -"
 done <<< "$(echo "$lines")"
 echo STATE=$STATE $MSG
 exit $STATE
