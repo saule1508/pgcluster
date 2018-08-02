@@ -32,7 +32,8 @@ if [ $# -lt 3 ]; then
     exit 1
 fi
 
-primary_host=$(hostname -i)
+#primary_host=$(hostname -i)
+primary_host=$NODE_NAME
 replica_host=$2
 replica_path=$3
 (
