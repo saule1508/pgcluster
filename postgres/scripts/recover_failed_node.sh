@@ -8,8 +8,9 @@
 # the script can also be started manually or via cron
 
 # Created by argbash-init v2.6.1
-# ARG_OPTIONAL_BOOLEAN([auto-recover-standby],,[recover a failed standby or just log the info?],[on])
-# ARG_OPTIONAL_BOOLEAN([auto-recover-primary],,[recover a failed primary or just log the info?],[off])
+# ARG_OPTIONAL_BOOLEAN([auto-recover-standby],[],[reattach a standby to pgpool if possible],[on])
+# ARG_OPTIONAL_BOOLEAN([auto-recover-primary],[],[recover the degenerated master],[off])
+# ARG_OPTIONAL_SINGLE([lock-timeout-minutes],[],[minutes after which a lock will be ignored (optional)],[120])
 # ARG_HELP([<The general help message of my script>])
 # ARGBASH_GO()
 # needed because of Argbash --> m4_ignore([
@@ -39,11 +40,15 @@ begins_with_short_option()
 # THE DEFAULTS INITIALIZATION - OPTIONALS
 _arg_auto_recover_standby="on"
 _arg_auto_recover_primary="off"
+_arg_lock_timeout_minutes="120"
 
 print_help ()
 {
 	printf '%s\n' "<The general help message of my script>"
-	printf 'Usage: %s [--(no-)auto-recover-standby] [--(no-)auto-recover-primary] [-h|--help]\n' "$0"
+	printf 'Usage: %s [--(no-)auto-recover-standby] [--(no-)auto-recover-primary] [--lock-timeout-minutes <arg>] [-h|--help]\n' "$0"
+	printf '\t%s\n' "--auto-recover-standby,--no-auto-recover-standby: reattach a standby to pgpool if possible (on by default)"
+	printf '\t%s\n' "--auto-recover-primary,--no-auto-recover-primary: recover the degenerated master (off by default)"
+	printf '\t%s\n' "--lock-timeout-minutes: minutes after which a lock will be ignored (optional) (default: '120')"
 	printf '\t%s\n' "-h,--help: Prints help"
 }
 
@@ -60,6 +65,14 @@ parse_commandline ()
 			--no-auto-recover-primary|--auto-recover-primary)
 				_arg_auto_recover_primary="on"
 				test "${1:0:5}" = "--no-" && _arg_auto_recover_primary="off"
+				;;
+			--lock-timeout-minutes)
+				test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
+				_arg_lock_timeout_minutes="$2"
+				shift
+				;;
+			--lock-timeout-minutes=*)
+				_arg_lock_timeout_minutes="${_key##--lock-timeout-minutes=}"
 				;;
 			-h|--help)
 				print_help
@@ -87,6 +100,9 @@ parse_commandline "$@"
 
 printf "'%s' is %s\\n" 'auto-recover-standby' "$_arg_auto_recover_standby"
 printf "'%s' is %s\\n" 'auto-recover-primary' "$_arg_auto_recover_primary"
+printf "'%s' is %s\\n" 'lock-timeout-minutes' "$_arg_lock_timeout_minutes"
+
+PIDFILE=/home/postgres/recover_failed_node.pid
 
 trap cleanup EXIT
 
@@ -94,7 +110,6 @@ PGP_NODE_ID=$(( NODE_ID-1 ))
 PGP_STATUS_WAITING=1
 PGP_STATUS_UP=2
 PGP_STATUS_DOWN=3
-LOCK_TIMEOUT_MIN=${LOCK_TIMEOUT_MIN:-30}
 
 LOGFILENAME="${PROGNAME%.*}.log"
 
@@ -117,11 +132,38 @@ log_error(){
 }
 
 cleanup(){
+  # remove pid file but only if it is mine, dont remove if another process was running
+  if [ -f $PIDFILE ] ; then
+    MYPID=$$
+    STOREDPID=$(cat $PIDFILE)
+    if [ "${MYPID}" == "${STOREDPID}" ] ; then
+      rm -f $PIDFILE
+    fi
+  fi 
   if [ -z $INSERTED_ID ] ; then
     return
   fi
   log_info "delete from recover_failed with id $INSERTED_ID"
   psql -U repmgr -h pgpool -p 9999 repmgr -t -c "delete from recover_failed_lock where id=${INSERTED_ID};"
+}
+
+# test if there is lock in the recover_failed_lock table
+# return 0 if there is no lock, 1 if there is one
+is_recovery_locked(){
+  #clean-up old records
+  psql -U repmgr -h pgpool -p 9999 repmgr -c "delete from recover_failed_lock where ts < current_timestamp - INTERVAL '1 day';"
+  # check if there is already an operation in progress
+  str=$(psql -U repmgr -h pgpool -p 9999 repmgr -c "select ts,node from recover_failed_lock where ts > current_timestamp - INTERVAL '${_arg_lock_timeout_minutes} min';")
+  if [ $? -ne 0 ] ; then
+    log_error "psql error when selecting from recover_failed_lock table"
+    exit 1
+  fi 
+  echo $str | grep "(0 rows)"
+  if [ $? -eq 0 ] ; then
+    return 0
+  fi
+  log_info "there is a lock record in recover_failed_lock : $str"
+  return 1
 }
 
 # take a lock on the the recovery operation
@@ -131,24 +173,15 @@ cleanup(){
 #  return 0: cannot acquire a lock because an operation is already in progress
   
 lock_recovery(){
-  MSG=$2
+  MSG=$1
   # create table if not exists
   psql -U repmgr -h pgpool -p 9999 repmgr -c "create table if not exists recover_failed_lock(id serial,ts timestamp with time zone default current_timestamp,node varchar(10) not null,message varchar(120));"
   if [ $? -ne 0 ] ; then
     log_error "Cannot create table recover_failed_lock table"
     exit 1
   fi
-  #clean-up old records
-  psql -U repmgr -h pgpool -p 9999 repmgr -c "delete from recover_failed_lock where ts < current_timestamp - INTERVAL '1 day';"
-  # check if there is already an operation in progress
-  str=$(psql -U repmgr -h pgpool -p 9999 repmgr -c "select ts,node from recover_failed_lock where ts > current_timestamp - INTERVAL '${LOCK_TIMEOUT_MIN} min';")
-  if [ $? -ne 0 ] ; then
-    log_error "psql error when selecting from recover_failed_lock table"
-    exit 1
-  fi 
-  echo $str | grep "(0 rows)"
-  if [ $? -ne 0 ] ; then
-    log_info "there is a lock record in recover_failed_lock : $str"
+  is_recovery_locked
+  if [ $? -eq 1 ] ; then
     return 0
   fi
   str=$(psql -U repmgr -h pgpool -p 9999 repmgr -t -c "insert into recover_failed_lock (node,message) values ('${NODE_NAME}','${MSG}') returning id;")
@@ -160,6 +193,7 @@ lock_recovery(){
   log_info "inserted lock in recover_failed_log with id $INSERTED_ID"
   return $INSERTED_ID
 }
+
 
 pg_is_in_recovery(){
   psql -t -c "select pg_is_in_recovery();" | head -1 | awk '{print $1}'
@@ -192,7 +226,8 @@ check_is_streaming_from(){
 # arg: 1 message
 recover_failed_master(){
   # try to acquire a lock
-  lock_recovery $1
+  MSG=$1
+  lock_recovery "$MSG"
   LOCK_ID=$?
   if [ ${LOCK_ID} -eq 0 ] ; then
     log_info "cannot acquire a lock, probably an old operation is in progress ?"
@@ -208,15 +243,56 @@ recover_failed_master(){
   return $ret
 }
 
+recover_standby(){
+  #dont do it if there is a lock on recover_failed_lock
+  is_recovery_lock
+  if [ $? -eq 1 ] ; then
+    return 0
+  fi
+  if [ "$_arg_auto_recover_standby" == "on" ] ; then
+    log_info "attach node back since it is in recovery streaming from $PRIMARY_NODE_ID"
+    pcp_attach_node -h pgpool -p 9898 -w ${PGP_NODE_ID}
+    if [ $? -eq 0 ] ; then
+      log_info "OK attached node $node back since it is in recovery and streaming from $PRIMARY_NODE_ID"
+      exit 0
+    fi
+    log_error "attach node failed for node $node"
+    exit 1
+  else
+    log_info "auto_recover_standby is off, do nothing"
+    exit 0
+  fi
+}
+
+if [ -f $PIDFILE ] ; then
+  PID=$(cat $PIDFILE)
+  ps -p $PID > /dev/null 2>&1
+  if [ $? -eq 0 ] ; then
+    log_info "script already running with PID $PID"
+    exit 0
+  else
+    log_info "PID file is there but script is not running, clean-up $PIDFILE"
+    rm -f $PIDFILE
+  fi
+fi
+echo $$ > $PIDFILE
+if [ $? -ne 0 ] ; then
+  log_error "Could not create PID file"
+  exit 1
+fi
+log_info "Create $PIDFILE with value $$"
+
 str=$( pcp_node_info -h pgpool -p 9898 -w $PGP_NODE_ID )
 if [ $? -ne 0 ] ; then
   log_error "pgpool cannot be accessed"
+  rm -f $PIDFILE
   exit 1
 fi
 
 read node port status weight status_name role <<< $str
 if [ $status -ne $PGP_STATUS_DOWN ] ; then
   log_info "pgpool status for node $node is $status_name and role $role, nothing to do"
+  rm -f $PIDFILE
   exit 0
 fi
 log_info "Node $node is down (role is $role)"
@@ -225,6 +301,7 @@ log_info "Node $node is down (role is $role)"
 psql -h pgpool -p 9999 -U repmgr -c "show pool_nodes;" > /tmp/pool_nodes.log
 if [ $? -ne 0 ] ; then
   log_error "cannot connect to postgres via pgpool"
+  rm -f $PIDFILE
   exit 1
 fi
 PRIMARY_NODE_ID=$( cat /tmp/pool_nodes.log | grep primary | grep -v down | cut -f1 -d"|" | sed -e "s/ //g")
@@ -239,13 +316,18 @@ if [ $role == "primary" ] ; then
   # sanity check
   if [ $PRIMARY_NODE_ID -ne $PGP_NODE_ID ] ; then
      log_error "Unpextected state, this node $PGP_NODE_ID is a primary according to pcp_node_info but pool_nodes said $PRIMARY_NODE_ID is master"
+     rm -f $PIDFILE
      exit 1
   fi
   if [ "$_arg_auto_recover_primary" == "on" ] ; then
     recover_failed_master "primary node reported as down in pgpool"
-    exit $?
+    ret=$?
+    rm -f $PIDFILE
+    exit $ret
   else
     log_info "auto_recover_primary is off, do nothing"
+    rm -f $PIDFILE
+    exit 0
   fi
 fi
 
@@ -254,6 +336,7 @@ log_info "Check if the DB is running, if not do not start it but exit with error
 pg_ctl status
 if [ $? -ne 0 ] ; then
   log_error "the DB is not running"
+  rm -f $PIDFILE
   exit 1
   # we cannot use supervisorctl start postgres
   # because if this script is called from initdb.sh it would recurse
@@ -267,27 +350,21 @@ fi
 check_is_streaming_from $PRIMARY_HOST
 res=$?
 if [ $res -eq 1 ] ; then
-  if [ "$_arg_auto_recover_standby" == "on" ] ; then
-    log_info "attach node back since it is in recovery streaming from $PRIMARY_NODE_ID"
-    pcp_attach_node -h pgpool -p 9898 -w ${PGP_NODE_ID}
-    if [ $? -eq 0 ] ; then
-      log_info "OK attached node $node back since it is in recovery and streaming from $PRIMARY_NODE_ID"
-      exit 0
-    fi
-    log_error "attach node failed for node $node"
-    exit 1
-  else
-    log_info "auto_recover_standby is off, do nothing"
-  fi
+  recover_standby
+  ret=$?
+  rm -f $PIDFILE
+  exit $ret
 fi
 if [ "$_arg_auto_recover_primary" == "on" ] ; then
   log_info "node is standby in pgpool but it is not streaming from the primary, probably a degenerated master. Lets do pcp_recovery_node"
   recover_failed_master "standby node not streaming from the primary"
-  exit $?
+  ret=$?
+  rm -f $PIDFILE
+  exit $ret
 else
   log_info "node is supposed to be a standby but it is not streaming from the primary, however auto_recovery_primary is off so do nothing"
 fi
-
+rm -f $PIDFILE
 exit 0
 
 # ] <-- needed because of Argbash

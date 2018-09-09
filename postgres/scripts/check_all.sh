@@ -5,7 +5,7 @@ STATE_WARNING=1
 STATE_ERROR=2
 STATE_UNKNOWN=3
 
-STATE=-1
+STATE=0
 MSG=""
 
 # params:
@@ -25,10 +25,29 @@ is_streaming_from(){
  fi
 }
 
-lines=$(psql -U repmgr -h pgpool -p 9999 -t -c "show pool_nodes;" | grep -v "^$" | sed -e "s/ //g")
+psql -U repmgr -h pgpool -p 9999 -t -c "show pool_nodes;" > /tmp/pool_nodes.tmp
+if [ $? -ne 0 ] ; then
+  echo "Cannot connect to pgpool"
+  exit $STATE_ERROR
+fi
+lines=$(cat /tmp/pool_nodes.tmp | grep -v "^$" | sed -e "s/ //g")
+echo $lines | grep -q FATAL
+if [ $? -eq 0 ] ; then
+  echo $lines
+  exit $STATE_ERROR
+fi
 PRIMARY=$(echo "$lines" | grep primary | cut -f2 -d"|")
 NBRSTDBY=$(echo "$lines" | grep standby | wc -l)
-MSG="PRIMARY database is $PRIMARY, there are $NBRSTDBY standby -"
+if [ $NBRSTDBY -eq 0 ] ; then
+  echo "No database replication"
+  exit $STATE_OK
+fi
+if [ $NBRSTDBY -eq 1 ] ; then
+  MSG="PRIMARY database is $PRIMARY with $NBRSTDBY standby database - "
+fi
+if [ $NBRSTDBY -gt 1 ] ; then
+  MSG="PRIMARY database is $PRIMARY with $NBRSTDBY standby databases - "
+fi
 while read line
 do
   IFS='|' read nodeid host port status weight role select_cnt load_balance_node replication_lag <<<$line
@@ -46,14 +65,13 @@ do
       STATE=$STATE_ERROR
     else
       MSG="$MSG $host $role OK"
-      if [ $STATE -lt $STATE_OK ] ; then
-        STATE=$STATE_OK
-      fi
     fi
-    COUNT=$(psql -h ${host} -U repmgr repmgr -t -c "select count(*) from pg_stat_replication;")
-    if [ $COUNT -ne $NBRSTDBY ] ; then
+    COUNT=$(psql -h ${host} -U repmgr repmgr -t -c "select count(*) from pg_stat_replication;" | sed -e "s/ //g")
+    if [ $COUNT -eq $NBRSTDBY ] ; then
+      MSG="$MSG ($COUNT downstream nodes)"
+    else
       STATE=$STATE_ERROR
-      MSG="$MSG streaming to $COUNT stdby instead of $NBRSTDBY"
+      MSG="$MSG ($COUNT downstream nodes, expected $NBRSTDBY)"
     fi
     str=$(psql -h ${host} -U repmgr repmgr -t -c "select string_agg(t.streaming,',') from (select state||' to '||application_name||' lag '||coalesce(write_lag,'0')  as streaming from pg_stat_replication) t;")
     MSG="$MSG $str"
@@ -61,22 +79,20 @@ do
   if [ "$role" == "standby" ] ; then
     if [ "$in_reco" != " t" ] ; then
       MSG="$MSG ERROR $host is standby but is_in_recovery is $in_reco"
-      STATE="ERROR"
+      STATE=$STATE_ERROR
     else
       MSG="$MSG $host $role OK"
-      if [ $STATE -lt $STATE_OK ] ; then
-        STATE=$STATE_OK
-      fi
     fi
     ret=$(is_streaming_from $host $PRIMARY)
     if [ $? -eq 1 ] ; then
       MSG="$MSG $ret"
     else
-      MSG"$MSG not streaming from $PRIMARY"
+      MSG="$MSG not streaming from $PRIMARY"
       STATE=$STATE_ERROR
     fi
   fi
   MSG="$MSG -"
 done <<< "$(echo "$lines")"
-echo STATE=$STATE $MSG
+MSG=$(echo $MSG | sed -e "s/ -$//")
+echo $MSG
 exit $STATE

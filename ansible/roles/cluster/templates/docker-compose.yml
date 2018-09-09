@@ -6,47 +6,71 @@ networks:
       name: pgcluster_network
 
 services:
-  pgpool01:
-    image: {{ images.pgpool.name }}:{{ images.pgpool.tag }}
+{% for i in groups['pgpool'] %}
+  pgpool0{{ groups['pgpool'].index(i) + 1 }}:
+    image: {{ docker_url }}{{ images.pgpool.name }}:{{ images.pgpool.tag }}
     environment:
       PG_MASTER_NODE_NAME: pg01
       PG_BACKEND_NODE_LIST: ${PG_BACKEND_NODE_LIST}
-      PGP_NODE_NAME: pgpool01
+      PGP_NODE_NAME: pgpool0{{ groups['pgpool'].index(i) + 1 }}
+{% set comma = joiner(",") %}
+      PGP_HEARTBEATS: {% for item in groups.pgpool -%} {{ comma() }}{{loop.index-1}}:pgpool0{{ loop.index }}:9694
+              {%- endfor %}{{" "}}
+{% set comma = joiner(",") %}
+      PGP_OTHERS: {% set other_index = 0 %}{% for item in groups['pgpool'] -%}{% if item != i %}{{ comma() }}{{other_index}}:pgpool0{{ loop.index }}:9999{% set other_index = other_index + 1 %}{% endif %}{% endfor %}{{" "}}
       REPMGRPWD: ${REPMGRPDW:-rep123}
       NUM_INIT_CHILDREN: 70
-      MAX_POOL: 4
-      LOG_STATEMENT: "off"
-      DEBUG_LEVEL: 0
-      #LOG_STATEMENT: "off"
-      #DEBUG_LEVEL: 0
-      #FAIL_OVER_ON_BACKEND_ERROR: "off"
-      #CONNECTION_CACHE: "on"
+      DELEGATE_IP: {{ pgpool_ip_failover }}/{{ pgpool_ip_failover_netmask }}
+      DELEGATE_IP_INTERFACE: {{ pgpool_ip_failover_interface }}
+      TRUSTED_SERVERS: {{ pgpool_trusted_servers }}
+      DOCKERHOST: ${DOCKERHOST}
     volumes:
       - /etc/localtime:/etc/localtime
     ports:
-      - 9999:9999
+    - published: 19999
+      target: 9999
+      mode: host
+      protocol: tcp
+    - published: 19898
+      target: 9898
+      mode: host
+      protocol: tcp
     deploy:
+{% if (groups['pgpool']|length)>1 %}
+      placement:
+        constraints:
+          - node.id == {{ hostvars[i].docker_node_id }}
+{% endif %}
       mode: replicated
       replicas: 1
       restart_policy:
         condition: on-failure
+{% endfor %}
 
-  pg01:
-    image: {{ images.postgres.name }}:{{ images.postgres.tag }}
+{% for i in groups['postgres'] %}
+  pg0{{ groups['postgres'].index(i) + 1 }}:
+    image: {{ docker_url }}{{ images.postgres.name }}:{{ images.postgres.tag }}
     environment:
-      SERVICE_NAME: pg01
-      INITIAL_NODE_TYPE: master
-      NODE_ID: 1
-      NODE_NAME: pg01
+      INITIAL_NODE_TYPE: {% if groups['postgres'].index(i) == 0 %}master{% else %}slave{% endif %}{{" "}}
+      NODE_ID: {{ groups['postgres'].index(i) + 1 }}
+      NODE_NAME: pg0{{ groups['postgres'].index(i) + 1 }}
       ARCHIVELOG: 1
       MSLIST: ${MSLIST}
       MSOWNERPWDLIST: ${MSOWNERPWDLIST}
       MSUSERPWDLIST: ${MSUSERPWDLIST}
       REPMGRPWD: ${REPMGRPDW:-rep123}
+      REPMGRD_FAILOVER_MODE: ${REPMGRD_FAILOVER_MODE}
+      PGPOOL_FAILOVER_MODE: ${PGPOOL_FAILOVER_MODE}
+      REPMGRD_RECONNECT_ATTEMPTS: ${REPMGRD_RECONNECT_ATTEMPTS}
+      REPMGRD_RECONNECT_INTERVAL: ${REPMGRD_RECONNECT_INTERVAL}
+      PGPOOL_HEALTHCHECK_MAX_RETRIES: ${PGPOOL_HEALTHCHECK_MAX_RETRIES}
+      PGPOOL_HEALTHCHECK_RETRY_DELAY: ${PGPOOL_HEALTHCHECK_RETRY_DELAY}
     deploy:
+{% if (groups['postgres']|length)>1 %}
       placement:
         constraints:
-          - node.id == {{ docker_node_1 }}
+          - node.id == {{ hostvars[i].docker_node_id }}
+{% endif %}
     volumes:
       - /u01/pg10/data:/u01/pg10/data
       - /u02/archive:/u02/archive
@@ -57,43 +81,11 @@ services:
         published: 5432
         protocol: tcp
         mode: host
-
-  pg02:
-    image: {{ images.postgres.name }}:{{ images.postgres.tag }}
-    environment:
-      SERVICE_NAME: pg02
-      INITIAL_NODE_TYPE: slave
-      NODE_ID: 2
-      NODE_NAME: pg02
-      ARCHIVELOG: 1
-      MSLIST: ${MSLIST}
-      MSOWNERPWDLIST: ${MSOWNERPWDLIST}
-      MSUSERPWDLIST: ${MSUSERPWDLIST}
-      REPMGRPWD: ${REPMGRPDW:-rep123}
-    deploy:
-      placement:
-        constraints:
-          - node.id == {{ docker_node_2 }}
-    volumes:
-      mode: replicated
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-    volumes:
-      - /u01/pg10/data:/u01/pg10/data
-      - /u02/archive:/u02/archive
-      - /u02/backup:/u02/backup
-      - /etc/localtime:/etc/localtime
-    ports:
-      - target: 5432
-        published: 5432
-        protocol: tcp
-        mode: host
-
+{% endfor %}
 
   #console
   manager:
-    image: {{ images.manager.name }}:{{ images.manager.tag }}
+    image: {{ docker_url }}{{ images.manager.name }}:{{ images.manager.tag }}
     ports:
       - 8080:8080
     environment:

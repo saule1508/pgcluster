@@ -1,12 +1,7 @@
 NODE_ID={{ groups.cluster.index(inventory_hostname)+1 }}
 PG_NODE_NAME=pg0{{ groups.cluster.index(inventory_hostname)+1 }}
-{% if ( (groups.cluster | length) == 1 ) %}
-PG_INITIAL_NODE_TYPE=single
-{% else %}
-PG_INITIAL_NODE_TYPE={{ initial_node_type }}
-{% endif %}
 {% set comma = joiner(",") %}
-PG_BACKEND_NODE_LIST={% for item in groups.cluster[:2] -%} {{ comma() }}{{loop.index-1}}:pg0{{ loop.index }}:5432:1:/u01/pg96/data:ALLOW_TO_FAILOVER
+PG_BACKEND_NODE_LIST={% for item in groups.cluster[:3] -%} {{ comma() }}{{loop.index-1}}:pg0{{ loop.index }}:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER
                      {%- endfor %}
 
 {% set comma = joiner(",") %}

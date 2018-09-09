@@ -6,24 +6,29 @@
   become: yes
   become_method: sudo
   vars:
-    docker_url: 192.168.1.54:5000/
-    insecure_registries: ["192.168.1.54:5000"]
+    do_swarm: false
+    docker_url: 192.168.1.57:5000/
+    insecure_registries: ["192.168.1.57:5000"]
     images: 
       manager:
-        tag: "0.1.5"
+        tag: "0.7.6"
         id: 41aa6c801612
         file: "manager.0.1.2.tar"
         name: "manager"
       pgpool:
-        tag: "0.4.2"
+        tag: "0.7.6"
         id: "956f1b2dfa2f"
         file: "pgpool.0.3.0.tar"
         name: "pgpool"
       postgres:
-        tag: "0.4.2"
+        tag: "0.7.6"
         id: "bc8a2e178e5e"
         file: "pg.0.4.0.tar"
         name: "pg"
+    pgpool_ip_failover: 192.168.122.250
+    pgpool_ip_failover_netmask: 24
+    pgpool_ip_failover_interface: eth0
+    pgpool_trusted_servers: 192.168.1.39
 
   pre_tasks:
 
@@ -38,9 +43,11 @@
 
   roles:
     - { role: base, tags: ['init'] }
-    - { role: docker-ce, tags: ['init'] }
-    - { role: postgres, tags: ['init'] }
-    - { role: docker_swarm, tags: ['init'] }
+#    - { role: docker-ce, tags: ['init'] }
+#    - { role: postgres, tags: ['init'] }
+    - role: docker_swarm
+      when: do_swarm
     - { role: cluster, tags: ['init'] }
+    - role: haproxy
 
 ...

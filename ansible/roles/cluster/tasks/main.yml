@@ -7,24 +7,40 @@
     with_items: "{{ groups.all }}"
     when: groups.cluster is undefined
 
-  #- debug: var=groups['cluster']
-  - name: get docker node id 
-    shell: docker node inspect self -f \{\{.ID\}\}
-    register: docker_node_id_1
-    when: inventory_hostname == groups.cluster[0]
+  - add_host:
+      name: "{{ item }}"
+      groups: postgres
+    with_items: "{{ groups.all[:3] }}"
+    when: groups.postgres is undefined
+
+  - add_host:
+      name: "{{ item }}"
+      groups: pgpool
+    with_items: "{{ groups.all[:3] }}"
+    when: groups.pgpool is undefined
+
+  #- debug: var=groups['pgpool']
+
+#  - name: get docker node id 
+#    shell: docker node inspect self -f \{\{.ID\}\}
+#    delegate_to: "{{ item }}"
+#    register: docker_node_id
+#    with_items:
+#      - "{{ groups['cluster'] }}"
 
   - name: get docker node id 
     shell: docker node inspect self -f \{\{.ID\}\}
-    register: docker_node_id_2
-    when: inventory_hostname == groups.cluster[1]
-
-  - name: get docker node id 
-    shell: docker node inspect self -f \{\{.ID\}\}
-    delegate_to: "{{ item }}"
     register: docker_node_id
-    with_items:
-      - "{{ groups['cluster'] }}"
+    when: inventory_hostname in groups['cluster']
+#    with_items:
+#      - "{{ groups['cluster'] }}"
 
+  - debug: 
+      var: docker_node_id.stdout
+
+  - set_fact:
+      docker_node_id: "{{ docker_node_id.stdout }}"
+    when: inventory_hostname in groups['cluster']
 
   - name: ensure directory /opt/pgcluster/bin exists
     file:
@@ -34,7 +50,6 @@
       group: pgadmin
       mode: 0755
 
-
   - name: install pgcluster.conf
     template:
       src: pgcluster.conf.j2
@@ -42,9 +57,6 @@
       owner: pgadmin
       group: pgadmin
       mode: 0550
-    vars:
-      initial_node_type: "{{ (inventory_hostname == groups.cluster[0]) | ternary('master','slave') }}"
-
 
   - name: Add IP address of all hosts in /etc/hosts 
     lineinfile:
@@ -85,15 +97,16 @@
 
 #  - debug: var=groups['cluster'][0]
 
-  - set_fact:
-      docker_node_1: "{{ hostvars[groups['cluster'][0]].docker_node_id.results[0].stdout }}"
-      docker_node_2: "{{ hostvars[groups['cluster'][0]].docker_node_id.results[1].stdout }}"
+  #- set_fact:
+  #    docker_node_1: "{{ hostvars[groups['cluster'][0]].docker_node_id.results[0].stdout }}"
+  #    docker_node_2: "{{ hostvars[groups['cluster'][0]].docker_node_id.results[1].stdout }}"
+  #    docker_node_3: "{{ hostvars[groups['cluster'][0]].docker_node_id.results[2].stdout }}"
 
-  - debug:
-      var: docker_node_1
+  #- debug:
+  #    var: docker_node_1
 
-  - debug:
-      var: docker_node_2
+  #- debug:
+  #    var: docker_node_2
 
   - name: install docker-compose.yml
     template: 

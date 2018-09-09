@@ -5,6 +5,7 @@
 #TODO: check if we are on manager node (stack deploy is not allowed on worker node
 set -o allexport
 source /etc/pgcluster/pgcluster.conf
+source /etc/pgwatchdog/pgwatchdog.conf
 set +o allexport
 
 NETWORK_NAME="pgcluster_network"
