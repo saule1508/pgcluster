@@ -17,7 +17,7 @@ services:
       PGP_HEARTBEATS: {% for item in groups.pgpool -%} {{ comma() }}{{loop.index-1}}:pgpool0{{ loop.index }}:9694
               {%- endfor %}{{" "}}
 {% set comma = joiner(",") %}
-      PGP_OTHERS: {% set other_index = 0 %}{% for item in groups['pgpool'] -%}{% if item != i %}{{ comma() }}{{other_index}}:pgpool0{{ loop.index }}:9999{% set other_index = other_index + 1 %}{% endif %}{% endfor %}{{" "}}
+      PGP_OTHERS: {% set other_index = namespace(a=0) %}{% for item in groups['pgpool'] -%}{% if item != i %}{{ comma() }}{{other_index.a}}:pgpool0{{ loop.index }}:9999{% set other_index.a = other_index.a + 1 %}{% endif %}{% endfor %}{{" "}}
       REPMGRPWD: ${REPMGRPDW:-rep123}
       NUM_INIT_CHILDREN: 70
       DELEGATE_IP: {{ pgpool_ip_failover }}/{{ pgpool_ip_failover_netmask }}
