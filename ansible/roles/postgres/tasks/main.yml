@@ -136,18 +136,6 @@
     vars:
       image: "{{ images.postgres }}"
 
-#  - name: load postgres image
-#    docker_image:
-#      name: pg:0.3.3
-
-#  - name: load pgpool image
-#    docker_image:
-#      name: pgpool:0.3.3
-
-#  - name: load manager image
-#    docker_image:
-#      name: manager:0.1.3
-
   - name: load pgpool image
     include: "../../../shared_tasks/load_image.yml"
     vars:

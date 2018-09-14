@@ -43,8 +43,8 @@
 
   roles:
     - { role: base, tags: ['init'] }
-#    - { role: docker-ce, tags: ['init'] }
-#    - { role: postgres, tags: ['init'] }
+    - { role: docker-ce, tags: ['init'] }
+    - { role: postgres, tags: ['init'] }
     - role: docker_swarm
       when: do_swarm
     - { role: cluster, tags: ['init'] }

@@ -1,4 +1,4 @@
-version: '3.2'
+version: '3.4'
 
 networks:
   default:
@@ -92,6 +92,7 @@ services:
       DOCKERHOST: ${DOCKERHOST}
       PG_BACKEND_NODE_LIST: ${PG_BACKEND_NODE_LIST}
       REPMGRPWD: ${REPMGRPDW:-rep123}
+      DBHOST: ${DELEGATE_IP}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /etc/localtime:/etc/localtime:ro
@@ -109,4 +110,3 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
-
