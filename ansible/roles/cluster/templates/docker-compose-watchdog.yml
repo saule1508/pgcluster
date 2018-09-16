@@ -65,6 +65,8 @@ services:
       REPMGRD_RECONNECT_INTERVAL: ${REPMGRD_RECONNECT_INTERVAL}
       PGPOOL_HEALTHCHECK_MAX_RETRIES: ${PGPOOL_HEALTHCHECK_MAX_RETRIES}
       PGPOOL_HEALTHCHECK_RETRY_DELAY: ${PGPOOL_HEALTHCHECK_RETRY_DELAY}
+    add_hosts:
+      - pgpool:${DELEGATE_IP}
     deploy:
 {% if (groups['postgres']|length)>1 %}
       placement:

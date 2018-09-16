@@ -1,23 +1,20 @@
 {
-     {% if single_machine != true %}
-       {% set comma = joiner(",") %}
-       "retry-join": {% for item in groups['consul'] %}
-                        {{ comma() }}{{ hostvars[item]['consul_advertise_address'] }}
-                     {% endfor %}
-     {% else %}
-     "bootstrap": true,
-     {% endif %}
-
-    "server": true,
-    "advertise_addr": "{{ consul_advertise_address }}",
-    "bind_addr": "0.0.0.0",
-    "addresses": {
-        "http": "0.0.0.0",
-        "dns": "0.0.0.0"
-    },
-    "ports": {
-        "dns": 53,
-        "http": 80
-    },
-    "data_dir": "/var/consul"
+  {% set comma = joiner(",") %}
+  "retry-join": [{% for item in groups['consul_servers'] %}{{ comma() }}{{ hostvars[item]['consul_advertise_address'] }} {% endfor %}]
+  "server": {{ consul_server_type == 'server' | ternary(true,false) }},
+  {% if consul_server_type == 'server' %}
+  bootstrap_expect: {{ groups['consul_servers'] | length }},
+  {% endif %}
+  "advertise_addr": "{{ consul_advertise_address }}",
+  "bind_addr": "0.0.0.0",
+  "enable_script_checks": true,
+  "addresses": {
+      "http": "0.0.0.0",
+      "dns": "0.0.0.0"
+  },
+  "ports": {
+      "dns": 53,
+      "http": 8500
+  },
+  "data_dir": "/var/consul"
 }
