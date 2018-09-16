@@ -1,0 +1,36 @@
+---
+- name: install haproxy
+  yum: 
+    name:  haproxy 
+    state: present
+
+- name: enable haproxy
+  systemd: 
+    name: haproxy
+    enabled: yes
+
+- name: set haproxy connect any
+  seboolean:
+    name: haproxy_connect_any
+    state: yes
+    persistent: yes
+
+- name: config haproxy for pgpool
+  blockinfile:
+    dest: /etc/haproxy/haproxy.cfg
+    insertafter: '^\s*maxconn'
+    block: |
+      frontend pgpool
+        bind *:9999
+          mode tcp
+          use_backend pgpool
+      backend pgpool
+        mode tcp
+        server srv1 127.0.0.1:19999
+      frontend pcp
+        bind *:9898
+        mode tcp
+        use_backend pcp
+      backend pcp
+        mode tcp
+        server srv1 127.0.0.1:19898

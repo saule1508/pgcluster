@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+  <short>consul</short>
+  <description>Ports for consul</description>
+  <port port="8300" protocol="tcp"/>
+  <port port="8301-8302" protocol="tcp"/>
+  <port port="8500" protocol="tcp"/>
+  <port port="8600" protocol="tcp"/>
+  <port port="8600" protocol="udp"/>
+</service>

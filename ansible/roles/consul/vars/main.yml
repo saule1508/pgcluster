@@ -1,0 +1,1 @@
+consul_advertise_addr: "{{ hostvars[inventory_hostname]['ansible_' + consul_interface].ipv4.address }}"
