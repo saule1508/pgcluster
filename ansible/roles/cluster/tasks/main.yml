@@ -90,34 +90,36 @@
     with_items:
       - "{{ groups['cluster'] }}"
 
-#  - debug: var=hostvars[item]['ansible_default_ipv4']['address']
-#    with_items: "{{ groups['cluster'] }}"
-
-#  - debug: var=groups['cluster'][0]
-
-  #- set_fact:
-  #    docker_node_1: "{{ hostvars[groups['cluster'][0]].docker_node_id.results[0].stdout }}"
-  #    docker_node_2: "{{ hostvars[groups['cluster'][0]].docker_node_id.results[1].stdout }}"
-  #    docker_node_3: "{{ hostvars[groups['cluster'][0]].docker_node_id.results[2].stdout }}"
-
-  #- debug:
-  #    var: docker_node_1
-
-  #- debug:
-  #    var: docker_node_2
-
-  - name: install docker-compose.yml
+  - name: install docker-compose.yml for swarm watchdog mode
     template: 
-      src: "docker-compose.yml"
-      dest: "/opt/pgcluster/docker-compose.yml"
+      src: "docker-compose-watchdog.yml"
+      dest: "/opt/pgcluster/docker-compose-watchdog.yml"
       owner: pgadmin
       group: pgadmin
       mode: "u=rw,g=r,o=r"
+    when: pgpool_failover_ip is defined
+
+  - name: install docker-compose.yml for swarm non-watchdog mode
+    template: 
+      src: "docker-compose-no-watchdog.yml"
+      dest: "/opt/pgcluster/docker-compose-no-watchdog.yml"
+      owner: pgadmin
+      group: pgadmin
+      mode: "u=rw,g=r,o=r"
+    when: pgpool_failover_ip is defined
 
   - name: copy start script
     copy:
-      src: start_pgcluster.sh
-      dest: /opt/pgcluster/start_pgcluster.sh
+      src: start_pgcluster_nowatchdog.sh
+      dest: /opt/pgcluster/start_pgcluster_nowatchdog.sh
+      owner: pgadmin
+      group: pgadmin
+      mode: 0754
+
+  - name: copy start script for watchdog mode
+    copy:
+      src: start_pgcluster_watchdog.sh
+      dest: /opt/pgcluster/start_pgcluster_watchdog.sh
       owner: pgadmin
       group: pgadmin
       mode: 0754

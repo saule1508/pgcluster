@@ -1,0 +1,97 @@
+version: '3.4'
+
+networks:
+  default:
+    external:
+      name: pgcluster_network
+
+services:
+  pgpool:
+    image: {{ images.pgpool.name }}:{{ images.pgpool.tag }}
+    environment:
+      PG_MASTER_NODE_NAME: pg01
+      PG_BACKEND_NODE_LIST: ${PG_BACKEND_NODE_LIST}
+      PGP_NODE_NAME: pgpool
+      REPMGRPWD: ${REPMGRPDW:-rep123}
+      NUM_INIT_CHILDREN: 70
+      MAX_POOL: 4
+      LOG_STATEMENT: "off"
+      DEBUG_LEVEL: 0
+      #LOG_STATEMENT: "off"
+      #DEBUG_LEVEL: 0
+      #FAIL_OVER_ON_BACKEND_ERROR: "off"
+      #CONNECTION_CACHE: "on"
+    volumes:
+      - /etc/localtime:/etc/localtime
+    ports:
+      - 9999:9999
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+{% for i in groups['postgres'] %}
+  pg0{{ groups['postgres'].index(i) + 1 }}:
+    image: {{ docker_url }}{{ images.postgres.name }}:{{ images.postgres.tag }}
+    environment:
+      INITIAL_NODE_TYPE: {% if groups['postgres'].index(i) == 0 %}master{% else %}slave{% endif %}{{" "}}
+      NODE_ID: {{ groups['postgres'].index(i) + 1 }}
+      NODE_NAME: pg0{{ groups['postgres'].index(i) + 1 }}
+      ARCHIVELOG: 1
+      MSLIST: ${MSLIST}
+      MSOWNERPWDLIST: ${MSOWNERPWDLIST}
+      MSUSERPWDLIST: ${MSUSERPWDLIST}
+      REPMGRPWD: ${REPMGRPDW:-rep123}
+      REPMGRD_FAILOVER_MODE: ${REPMGRD_FAILOVER_MODE}
+      PGPOOL_FAILOVER_MODE: ${PGPOOL_FAILOVER_MODE}
+      REPMGRD_RECONNECT_ATTEMPTS: ${REPMGRD_RECONNECT_ATTEMPTS}
+      REPMGRD_RECONNECT_INTERVAL: ${REPMGRD_RECONNECT_INTERVAL}
+      PGPOOL_HEALTHCHECK_MAX_RETRIES: ${PGPOOL_HEALTHCHECK_MAX_RETRIES}
+      PGPOOL_HEALTHCHECK_RETRY_DELAY: ${PGPOOL_HEALTHCHECK_RETRY_DELAY}
+    deploy:
+{% if (groups['postgres']|length)>1 %}
+      placement:
+        constraints:
+          - node.id == {{ hostvars[i].docker_node_id }}
+{% endif %}
+    volumes:
+      - /u01/pg10/data:/u01/pg10/data
+      - /u02/archive:/u02/archive
+      - /u02/backup:/u02/backup
+      - /etc/localtime:/etc/localtime
+    ports:
+      - target: 5432
+        published: 5432
+        protocol: tcp
+        mode: host
+{% endfor %}
+
+  #console
+  manager:
+    image: {{ images.manager.name }}:{{ images.manager.tag }}
+    ports:
+      - 8080:8080
+    environment:
+      DOCKERHOST: ${DOCKERHOST}
+      PG_BACKEND_NODE_LIST: ${PG_BACKEND_NODE_LIST}
+      REPMGRPWD: ${REPMGRPDW:-rep123}
+      DBHOST: pgpool
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /u02/backup:/u02/backup
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    logging:
+      driver: journald
+      options:
+        tag: manager
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
