@@ -20,9 +20,9 @@ services:
       PGP_OTHERS: {% set other_index = namespace(a=0) %}{% for item in groups['pgpool'] -%}{% if item != i %}{{ comma() }}{{other_index.a}}:pgpool0{{ loop.index }}:9999{% set other_index.a = other_index.a + 1 %}{% endif %}{% endfor %}{{" "}}
       REPMGRPWD: ${REPMGRPDW:-rep123}
       NUM_INIT_CHILDREN: 70
-      DELEGATE_IP: {{ pgpool_ip_failover }}/{{ pgpool_ip_failover_netmask }}
-      DELEGATE_IP_INTERFACE: {{ pgpool_ip_failover_interface }}
-      TRUSTED_SERVERS: {{ pgpool_trusted_servers }}
+      DELEGATE_IP: ${DELEGATE_IP}/${DELEGATE_IP_INTERFACE}
+      DELEGATE_IP_INTERFACE: ${DELEGATE_IP_INTERFACE}
+      TRUSTED_SERVERS: ${TRUSTED_SERVERS}
       DOCKERHOST: ${DOCKERHOST}
     volumes:
       - /etc/localtime:/etc/localtime
