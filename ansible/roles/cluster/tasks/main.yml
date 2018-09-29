@@ -97,16 +97,15 @@
       owner: pgadmin
       group: pgadmin
       mode: "u=rw,g=r,o=r"
-    when: pgpool_failover_ip is defined
+    #when: pgpool_ip_failover is defined
 
   - name: install docker-compose.yml for swarm non-watchdog mode
     template: 
-      src: "docker-compose-no-watchdog.yml"
-      dest: "/opt/pgcluster/docker-compose-no-watchdog.yml"
+      src: "docker-compose-nowatchdog.yml"
+      dest: "/opt/pgcluster/docker-compose-nowatchdog.yml"
       owner: pgadmin
       group: pgadmin
       mode: "u=rw,g=r,o=r"
-    when: pgpool_failover_ip is defined
 
   - name: copy start script
     copy:
@@ -135,6 +134,15 @@
       port: 8080/tcp
       permanent: true
       state: enabled
+
+  - name: firewall ports for pgpool
+    firewalld:
+      port: "{{ item }}/tcp"
+      permanent: true
+      state: enabled
+    with_items:
+      - 9999
+      - 9898
 
 
 ...

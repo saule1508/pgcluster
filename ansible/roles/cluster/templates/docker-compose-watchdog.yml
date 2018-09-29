@@ -20,7 +20,7 @@ services:
       PGP_OTHERS: {% set other_index = namespace(a=0) %}{% for item in groups['pgpool'] -%}{% if item != i %}{{ comma() }}{{other_index.a}}:pgpool0{{ loop.index }}:9999{% set other_index.a = other_index.a + 1 %}{% endif %}{% endfor %}{{" "}}
       REPMGRPWD: ${REPMGRPDW:-rep123}
       NUM_INIT_CHILDREN: 70
-      DELEGATE_IP: ${DELEGATE_IP}/${DELEGATE_IP_INTERFACE}
+      DELEGATE_IP: ${DELEGATE_IP}/${DELEGATE_IP_NETMASK}
       DELEGATE_IP_INTERFACE: ${DELEGATE_IP_INTERFACE}
       TRUSTED_SERVERS: ${TRUSTED_SERVERS}
       DOCKERHOST: ${DOCKERHOST}
@@ -65,7 +65,7 @@ services:
       REPMGRD_RECONNECT_INTERVAL: ${REPMGRD_RECONNECT_INTERVAL}
       PGPOOL_HEALTHCHECK_MAX_RETRIES: ${PGPOOL_HEALTHCHECK_MAX_RETRIES}
       PGPOOL_HEALTHCHECK_RETRY_DELAY: ${PGPOOL_HEALTHCHECK_RETRY_DELAY}
-    add_hosts:
+    extra_hosts:
       - pgpool:${DELEGATE_IP}
     deploy:
 {% if (groups['postgres']|length)>1 %}

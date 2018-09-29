@@ -1,4 +1,4 @@
 #swarm_interface: "{{ hostvars[inventory_hostname]['ansible_default_ipv4'].alias }}"
-swarm_interface: "eth1"
+swarm_interface: "eth0"
 #master_swarm_interface: "{{ hostvars[inventory_hostname]['ansible_default_ipv4'].alias }}"
-master_swarm_interface: "eth1"
+master_swarm_interface: "eth0"

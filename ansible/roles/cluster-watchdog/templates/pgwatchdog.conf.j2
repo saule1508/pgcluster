@@ -7,13 +7,14 @@ PG_INITIAL_NODE_TYPE=single
 PG_INITIAL_NODE_TYPE={{ initial_node_type }}
 {% endif %}
 {% set comma = joiner(",") %}
-PG_BACKEND_NODE_LIST={% for item in groups.cluster[:3] -%} {{ comma() }}{{loop.index-1}}:pg0{{ loop.index }}:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER
+PG_BACKEND_NODE_LIST={% for item in groups.cluster[:3] -%} {{ comma() }}{{loop.index-1}}:pg0{{ loop.index }}:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER{{" "}}
                      {%- endfor %}
+
 {% set comma = joiner(",") %}
 NODE_LIST={% for item in groups.cluster -%}{{ comma() }}{{ hostvars[item].inventory_hostname }}
           {%- endfor %}
 
-DELEGATE_IP={{ pgpool_ip_failover }}/{{ pgpool_ip_failover_netmask }}
+DELEGATE_IP={{ pgpool_ip_failover }}
 DELEGATE_IP_NETMASK={{ pgpool_ip_failover_netmask }}
 DELEGATE_IP_INTERFACE={{ pgpool_ip_failover_interface }}
 TRUSTED_SERVERS={{ pgpool_trusted_servers }}

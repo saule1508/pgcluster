@@ -34,3 +34,8 @@
       backend pcp
         mode tcp
         server srv1 127.0.0.1:19898
+
+- name: start haproxy
+  systemd: 
+    name: haproxy
+    state: started
