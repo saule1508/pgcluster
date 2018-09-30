@@ -50,7 +50,6 @@ const formatPgpoolWD = (arr) => {
 };
 
 const getFromSSH = (dbhost, args) => {
-
   return new Promise((resolve, reject) => {
     let response = '';
     const cmdArgs = [
@@ -140,19 +139,21 @@ const getPgpoolWDStatusFromDB = (dbhost) => {
     });
     shell.stderr.on('data', (data) => {
       const msg = data.toString();
-      console.log(`got error ${msg}`);
+      if (!msg.startsWith('Warning: Permanently added')) {
+        console.trace(`got error ${msg}`);
+      }
       if (msg.includes('watcdhog is not enabled')) {
         noWatchDog = true;
       }
     });
     shell.on('close', (code) => {
-      console.log(`shell exited with code ${code}`);
       if (noWatchDog) {
         return reject(new Error('watchdog disabled'));
       }
       if (code === 0) {
         return resolve(formatPgpoolWD(response.split('\n')));
       }
+      console.trace(`spawn return code ${code}, rejecting`)
       return reject(new Error(`error: ${code}`));
     });
     shell.on('error', (error) => {

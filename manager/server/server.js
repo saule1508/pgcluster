@@ -13,7 +13,7 @@ app.use("/api/postgres", routesPostgres);
 app.use("/ws", routesWs);
 app.use("*", (req, res) => {
   if (!(req.path.startsWith("/api") || req.path.startsWith("/ws"))) {
-    res.sendfile(`${__dirname}/app/index.html`);
+    res.sendFile(`${__dirname}/app/index.html`);
   }
 });
 

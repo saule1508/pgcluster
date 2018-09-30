@@ -28,12 +28,14 @@ wsrouter.ws('/dbstates', (ws, req) => {
   getStates();
   const interval = setInterval(getStates, pollInterval);
 
-  ws.on('close', (msg) => {
-    console.log(`close with ${msg}`);
+  ws.on('close', (code) => {
+    if (code !== 1000) {
+      console.trace(`close with ${code}`);
+    }
     if (interval) {
       clearInterval(interval);
     } else {
-      console.log('no interval to clear ??');
+      console.trace('no interval to clear ??');
     }
   });
 
@@ -69,12 +71,14 @@ wsrouter.ws('/repl_nodes', (ws, req) => {
   getData();
   const interval = setInterval(getData, pollInterval);
 
-  ws.on('close', (msg) => {
-    console.log(`close with ${msg}`);
+  ws.on('close', (code) => {
+    if (code !== 1000) {
+      console.trace(`close with ${code}`);
+    }
     if (interval) {
       clearInterval(interval);
     } else {
-      console.log('no interval to clear ??');
+      console.trace('no interval to clear ??');
     }
   });
 
@@ -111,20 +115,22 @@ wsrouter.ws('/pool_nodes', (ws, req) => {
   getData();
   const interval = setInterval(getData, pollInterval);
 
-  ws.on('close', (msg) => {
-    console.log(`close with ${msg}`);
+  ws.on('close', (code) => {
+    if (code !== 1000) {
+      console.trace(`close with ${code}`);
+    }
     if (interval) {
       clearInterval(interval);
     } else {
-      console.log('no interval to clear ??');
+      console.trace('no interval to clear ??');
     }
   });
   ws.on('error', (err) => {
     if (interval) {
       clearInterval(interval);
     }
-    console.log('web socker error in /pool_nodes');
-    console.log(err);
+    console.trace('web socker error in /pool_nodes');
+    console.trace(err);
   });
 });
 
