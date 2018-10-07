@@ -30,14 +30,14 @@
 
   - name: get docker node id 
     shell: docker node inspect self -f \{\{.ID\}\}
-    register: docker_node_id
+    register: get_docker_node_id
     when: inventory_hostname in groups['cluster']
 
   - debug: 
-      var: docker_node_id
+      var: get_docker_node_id
 
   - set_fact:
-      docker_node_id: "{{ docker_node_id.stdout }}"
+      docker_node_id: "{{ get_docker_node_id.stdout }}"
     when: inventory_hostname in groups['cluster']
 
   - name: ensure directory /opt/pgcluster/bin exists

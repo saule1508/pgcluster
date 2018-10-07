@@ -17,7 +17,7 @@ const PgpoolNode = ( {idx, host_name,delegate_ip,status_name} ) => {
             <td>Delegate IP</td><td>{delegate_ip}</td>
           </tr>
           <tr className={status_name === 'MASTER' ? 'success' : 
-            status_name === 'STANDBY' ? 'success' : 'danger'}>
+            status_name === 'STANDBY' ? '' : 'danger'}>
             <td>Status</td><td>{status_name}</td>
           </tr>
         </tbody>

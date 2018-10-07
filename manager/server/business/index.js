@@ -69,11 +69,14 @@ const getFromSSH = (dbhost, args) => {
       response = `${response}${data.toString()}`;
     });
     shell.stderr.on('data', (data) => {
-      console.log(`got error ${data.toString()}`);
-      error = `${error}${data.toString()}`;
+      const msg = data.toString();
+      if (!msg.startsWith('Warning: Permanently added')) {
+        console.trace(`got error ${msg}`);
+      } else {
+        error = `${error}${data.toString()}`;
+      }
     });
     shell.on('close', (code) => {
-      console.log(`shell exited with code ${code}`);
       if (code === 0) {
         resolve({ node: dbhost, rows: response.split('\n') });
       } else {

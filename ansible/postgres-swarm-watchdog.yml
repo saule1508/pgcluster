@@ -6,26 +6,29 @@
   become: yes
   become_method: sudo
   vars:
-    do_swarm: false
-    docker_url: 192.168.1.39:5000/
-    insecure_registries: ["192.168.1.39:5000"]
+    # do_swarm: set to false to avoid reconfig of the swar, this part is not idempotent and does not work well
+    do_swarm: true
+    docker_url: 192.168.1.57:5000/
+    insecure_registries: ["192.168.1.57:5000"]
     images: 
       manager:
-        tag: "0.7.6"
+        tag: "0.7.7"
         id: "1df033793360"
         name: "manager"
       pgpool:
-        tag: "0.7.6"
+        tag: "0.7.7"
         id: "1df033793360"
         name: "pgpool"
       postgres:
-        tag: "0.7.6"
+        tag: "0.7.7"
         id: "bf1d8c535fff"
         name: "pg"
-    pgpool_ip_failover: 192.168.122.250
+    pgpool_ip_failover: 172.22.1.50
     pgpool_ip_failover_netmask: 24
-    pgpool_ip_failover_interface: eth0
-    pgpool_trusted_servers: 192.168.1.39
+    pgpool_ip_failover_interface: eth1
+    pgpool_trusted_servers: 192.168.1.57
+    swarm_interface: "eth1"
+    master_swarm_interface: "eth1"
 
   pre_tasks:
 

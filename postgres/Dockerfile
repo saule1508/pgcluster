@@ -1,7 +1,7 @@
 FROM centos:7
 MAINTAINER p.timmermans@evs.com
 ENV MAJORVER=10
-ENV MINORVER=4
+ENV MINORVER=5
 ENV PGVER=10
 ENV REPMGRVER=4.1.1
 ENV docker=yes
@@ -19,9 +19,9 @@ RUN yum install -y http://www.pgpool.net/yum/rpms/3.7/redhat/rhel-7-x86_64/pgpoo
 # pgpool extensions
 RUN yum install -y pgpool-II-pg${MAJORVER} pgpool-II-pg${MAJORVER}-extensions; yum clean all; rm -rf /var/cache/yum
 # repmgr: installed from 2ndquadrant repo will install repmgr4
-RUN curl https://dl.2ndquadrant.com/default/release/get/10/rpm | bash
-# RUN yum install -y https://rpm.2ndquadrant.com/site/content/2ndquadrant-repo-10-1-1.el7.noarch.rpm && yum clean all && rm -rf /var/cache/yum
-RUN yum install --enablerepo=2ndquadrant-dl-default-release-pg10 --disablerepo=pgdg10 -y repmgr10-${REPMGRVER} && yum clean all && rm -rf /var/cache/yum
+#RUN curl https://dl.2ndquadrant.com/default/release/get/10/rpm | bash
+#RUN yum install --enablerepo=2ndquadrant-dl-default-release-pg10 --disablerepo=pgdg10 -y repmgr10-${REPMGRVER} && yum clean all && rm -rf /var/cache/yum
+RUN yum install -y repmgr10-${REPMGRVER} && yum clean all && rm -rf /var/cache/yum
 RUN chown postgres:postgres /var/log/repmgr
 RUN mkdir -p /u01/pg${PGVER}/data /u02/backup /u02/archive && chown -R postgres:postgres /u01/pg${PGVER} /u02/backup /u02/archive && chmod 700 /u01/pg${PGVER}/data /u02/archive
 ENV PGDATA /u01/pg${PGVER}/data
