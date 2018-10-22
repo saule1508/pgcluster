@@ -5,9 +5,9 @@ const utils = require('./utils.js');
 it('backupExists() should throw an error when not stubbed',async () =>{
   expect.assertions(1);
   try {
-    const found = await backupExists('pg01','20180604_backup');
+    const found = await backupExists('pg09','20180604_backup');
   } catch(e){
-    expect(e.error).toMatch(/ssh: Could not resolve hostname pg01/);
+    expect(e.error).toMatch(/ssh: Could not resolve hostname pg09/);
   }
 });
 

@@ -8,7 +8,7 @@ const StateUpDown = ({ color }) => (
 );
 
 StateUpDown.propTypes = {
-  color: PropTypes.oneOf(['green', 'yellow', 'red'])
+  color: PropTypes.oneOf(['green', 'yellow', 'orange','red'])
 };
 
 export default StateUpDown;

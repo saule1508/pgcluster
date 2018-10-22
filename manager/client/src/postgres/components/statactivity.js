@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import moment from 'moment'
+import PropTypes from 'prop-types'
 
 class StatActivity extends Component{
 
@@ -72,6 +73,12 @@ class StatActivity extends Component{
     </div>
 		)
 	}
+}
+StatActivity.propTypes = {
+  rows: PropTypes.array.isRequired,
+  loading: PropTypes.bool.isRequired,
+  error: PropTypes.string,
+  timeStamp: PropTypes.string
 }
 
 export default StatActivity

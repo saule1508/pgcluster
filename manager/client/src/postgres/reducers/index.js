@@ -59,7 +59,7 @@ const REPLICATION_STATS_INITIAL_STATE = {
 const PGPOOL_WATCHDOG_INITIAL_STATE = {
   timeStamp: null,
   loading: false,
-  withWatchdog: true, // will be set to null if action returns an exception with message 'watchdog disabled'
+  withWatchdog: true, // will be set to false if action returns an exception with message 'watchdog disabled'
   error: null,
   total_nodes: null,
   remote_nodes: null,

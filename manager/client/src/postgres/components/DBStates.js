@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import ConnectedStatus from "../../shared/components/ConnectedStatus";
+import PropTypes from 'prop-types';
 
 const Backend = ({ backend }) => {
   let color = backend.status === "green" ? "#89C35C" : "red";
@@ -82,9 +83,7 @@ class DBStates extends Component {
   }
 
   componentWillUnmount() {
-    console.log("component Will Unmount");
     if (this.ws) {
-      console.log("close ws");
       this.ws.close();
     }
   }
@@ -123,4 +122,12 @@ class DBStates extends Component {
   }
 }
 
+DBStates.propTypes = {
+    rows: PropTypes.array.isRequired,
+    loading: PropTypes.bool.isRequired,
+    error: PropTypes.string,
+    fetchDBStates: PropTypes.func.isRequired,
+    fetchDBStatesSuccess: PropTypes.func.isRequired,
+    fetchDBStatesFailure: PropTypes.func.isRequired
+}
 export default DBStates;

@@ -142,11 +142,12 @@ const getPgpoolWDStatusFromDB = (dbhost) => {
     });
     shell.stderr.on('data', (data) => {
       const msg = data.toString();
-      if (!msg.startsWith('Warning: Permanently added')) {
-        console.trace(`got error ${msg}`);
-      }
       if (msg.includes('watcdhog is not enabled')) {
         noWatchDog = true;
+      } else {
+        if (!msg.startsWith('Warning: Permanently added')) {
+          console.trace(`got error ${msg}`);
+        }
       }
     });
     shell.on('close', (code) => {
