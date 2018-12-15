@@ -1,0 +1,14 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`StateUpDown should render correctly 1`] = `
+<div
+  style={
+    Object {
+      "color": "orange",
+      "fontWeight": "bold",
+    }
+  }
+>
+  X
+</div>
+`;

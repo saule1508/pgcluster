@@ -4,12 +4,12 @@ const dblist = require('../config/config.js').pg;
 const bus_health = (service) => {
   const request = require('request-promise');
   return request
-    .get({ uri: 'http://' + service + ':8080/health', json: true })
-    .then(response => {
+    .get({ uri: `http://${service}:8080/health`, json: true })
+    .then((response) => {
       console.log('in then');
       return response;
     })
-    .catch(error => {
+    .catch((error) => {
       console.log('in catch');
       throw error;
     });
@@ -19,7 +19,7 @@ const formatPgpoolWD = (arr) => {
   const result = {};
   let currentItem;
   let nodeIndex = -1;
-  let nodeArray = [];
+  const nodeArray = [];
   arr.forEach((el) => {
     if (el.startsWith('Watchdog Cluster Information')) {
       currentItem = 'wd_cluster_info';
@@ -49,53 +49,51 @@ const formatPgpoolWD = (arr) => {
   return result;
 };
 
-const getFromSSH = (dbhost, args) => {
-  return new Promise((resolve, reject) => {
-    let response = '';
-    const cmdArgs = [
-      '-p',
-      '222',
-      '-o',
-      'StrictHostKeyChecking=no',
-      '-o',
-      'UserKnownHostsFile=/dev/null',
-      `postgres@${dbhost}`,
-      '-C',
-    ].concat(args);
+const getFromSSH = (dbhost, args) => new Promise((resolve, reject) => {
+  let response = '';
+  const cmdArgs = [
+    '-p',
+    '222',
+    '-o',
+    'StrictHostKeyChecking=no',
+    '-o',
+    'UserKnownHostsFile=/dev/null',
+    `postgres@${dbhost}`,
+    '-C',
+  ].concat(args);
 
-    const shell = spawn('ssh', cmdArgs);
-    let error = '';
-    shell.stdout.on('data', (data) => {
-      response = `${response}${data.toString()}`;
-    });
-    shell.stderr.on('data', (data) => {
-      const msg = data.toString();
-      if (!msg.startsWith('Warning: Permanently added')) {
-        console.trace(`got error ${msg}`);
-      } else {
-        error = `${error}${data.toString()}`;
-      }
-    });
-    shell.on('close', (code) => {
-      if (code === 0) {
-        resolve({ node: dbhost, rows: response.split('\n') });
-      } else {
-        reject(new Error(`code ${code} ${error}`));
-      }
-    });
-    shell.on('error', (e) => {
-      console.log(`spawn error ${e}`);
-    });
+  const shell = spawn('ssh', cmdArgs);
+  let error = '';
+  shell.stdout.on('data', (data) => {
+    response = `${response}${data.toString()}`;
   });
-};
+  shell.stderr.on('data', (data) => {
+    if (data.toString().startsWith('Warning: Permanently added')) {
+      return;
+    }
+    console.log(`got error ${data.toString()}`);
+    error = `${error}${data.toString()}`;
+  });
+  shell.on('close', (code) => {
+    console.log(`shell exited with code ${code}`);
+    if (code === 0) {
+      resolve({ node: dbhost, rows: response.split('\n') });
+    } else {
+      reject(new Error(`code ${code} ${error}`));
+    }
+  });
+  shell.on('error', (e) => {
+    console.log(`spawn error ${e}`);
+  });
+});
 
 const getPgpoolWDStatus = async () => {
   let response = null;
   let error = null;
   let done = false;
-  for (var i = 0; i < dblist.length && !done; i++) {
+  for (let i = 0; i < dblist.length && !done; i++) {
     try {
-      let result = await getPgpoolWDStatusFromDB(dblist[i].host);
+      const result = await getPgpoolWDStatusFromDB(dblist[i].host);
       done = true;
       result.node_fetched_from = dblist[i].host;
       response = result;
@@ -129,7 +127,7 @@ const getPgpoolWDStatusFromDB = (dbhost) => {
       '-p',
       '9898',
       '-w',
-      '-v'
+      '-v',
     ];
     const shell = spawn('ssh', cmdArgs);
     // if no connection after 5 secs, kill it so an error is returned
@@ -142,12 +140,11 @@ const getPgpoolWDStatusFromDB = (dbhost) => {
     });
     shell.stderr.on('data', (data) => {
       const msg = data.toString();
+      if (!msg.startsWith('Warning: Permanently added')) {
+        console.trace(`got error ${msg}`);
+      }
       if (msg.includes('watcdhog is not enabled')) {
         noWatchDog = true;
-      } else {
-        if (!msg.startsWith('Warning: Permanently added')) {
-          console.trace(`got error ${msg}`);
-        }
       }
     });
     shell.on('close', (code) => {
@@ -157,7 +154,7 @@ const getPgpoolWDStatusFromDB = (dbhost) => {
       if (code === 0) {
         return resolve(formatPgpoolWD(response.split('\n')));
       }
-      console.trace(`spawn return code ${code}, rejecting`)
+      console.trace(`spawn return code ${code}, rejecting`);
       return reject(new Error(`error: ${code}`));
     });
     shell.on('error', (error) => {
@@ -168,25 +165,25 @@ const getPgpoolWDStatusFromDB = (dbhost) => {
 
 const getChecks = async () => {
   const dblist = require('../config/config.js').pg;
-  let response = [];
-  for (var i = 0; i < dblist.length; i++) {
-    let nodechecks = {
+  const response = [];
+  for (let i = 0; i < dblist.length; i++) {
+    const nodechecks = {
       node: dblist[i].host,
       serverTimeStamp: new Date(),
       supervisor: [],
       repmgr: [],
       disk: [],
-      error: null
+      error: null,
     };
     try {
-      let result = await getFromSSH(dblist[i].host, ['/scripts/checks.sh']);
+      const result = await getFromSSH(dblist[i].host, ['/scripts/checks.sh']);
       result.rows.forEach((el, idx) => {
         const cols = el.split(',');
         if (cols[0] === 'supervisor') {
           nodechecks.supervisor.push({
             process: cols[1],
             state: cols[2],
-            info: cols[3]
+            info: cols[3],
           });
         }
         if (cols[0] === 'repmgr') {
@@ -197,7 +194,7 @@ const getChecks = async () => {
             fs: cols[1],
             percused: cols[2],
             kbtotal: cols[3],
-            kbused: cols[4]
+            kbused: cols[4],
           });
         }
       });
@@ -215,5 +212,5 @@ const getChecks = async () => {
 module.exports = {
   bus_health,
   getPgpoolWDStatus,
-  getChecks
+  getChecks,
 };
