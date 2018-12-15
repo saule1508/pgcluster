@@ -6,7 +6,7 @@ import Header from './Header'
 import DashHome from './dash/components/Home.js'
 import DockerHome from './docker/components/DockerHome.js'
 import PostgresHome from './postgres/components/PostgresHome.js'
-import { Switch, Route, Redirect, IndexRoute } from 'react-router-dom'
+import { Switch, Route } from 'react-router-dom'
 
 
 const Main = () => (
