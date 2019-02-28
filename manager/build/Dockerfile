@@ -15,7 +15,7 @@ ADD client /tmp/client
 RUN cd /tmp/client && yarn install 
 #RUN find /tmp/client/src -name "*.js" -exec sed -i -e "s/ console.log/ \/\/console.log/" {} \; && \
 #    find /tmp/client/src -name "*.js" -exec sed -i -e "s/^console.log/\/\/console.log/" {} \;
-RUN cd /tmp/client && yarn run prebuild-css && yarn build-css && yarn build
+RUN cd /tmp/client && yarn build
 RUN mv /tmp/client/build /opt/manager/app
 
 FROM centos:7 

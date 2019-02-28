@@ -32,10 +32,9 @@
     "react-scripts": "2.1.1"
   },
   "scripts": {
-    "prebuild-css": "shx cp -R node_modules/bootstrap-sass/assets/fonts src/styles/",
-    "build-css": "node-sass-chokidar --include-path ./src --include-path ./node_modules src/ -o src/",
+    "prestart": "shx cp -R node_modules/bootstrap-sass/assets/fonts src/styles/",
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "prestart && react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
     "lint": "eslint src/**/*.js"
@@ -45,7 +44,7 @@
       "enzyme-to-json/serializer"
     ]
   },
-  "proxy": "http://127.0.0.1:8080",
+  "proxy": "http://172.19.11.221:8080",
   "browserslist": [
     ">0.2%",
     "not dead",
