@@ -7,7 +7,7 @@ THISDIR=`pwd`
 NOCACHE=true
 APPNAME=manager
 
-VERSION=$( cat ../version.txt )
+VERSION=$( cat ../../version.txt )
 echo version is $VERSION
 rm -rf server client 2>/dev/null
 cp -r ../server ./
