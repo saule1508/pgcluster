@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import StateUpDown from '../../../shared/components/stateupdown';
 import SupervisorForNode from './supervisorfornode';
 import RepmgrNodeChecks from './repmgrnodechecks';
 import Disk from './disk';
@@ -23,9 +22,6 @@ const ChecksForNode = props => {
 };
 
 class NodesChecks extends Component {
-  constructor(props) {
-    super(props);
-  }
 
   componentDidMount() {
     this.props.fetchNodesChecks();

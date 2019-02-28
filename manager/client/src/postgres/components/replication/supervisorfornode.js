@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import StateUpDown from '../../../shared/components/stateupdown';
 import propTypes from 'prop-types';
 

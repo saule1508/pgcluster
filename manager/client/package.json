@@ -6,6 +6,7 @@
     "bootstrap": "^3.3.7",
     "bootstrap-sass": "^3.3.7",
     "moment": "^2.22.2",
+    "node-sass": "^4.11.0",
     "react": "^16.2.1",
     "react-bootstrap": "^0.32.4",
     "react-dom": "^16.6.3",
@@ -27,15 +28,17 @@
     "eslint-plugin-jsx-a11y": "^6.1.2",
     "eslint-plugin-prettier": "^3.0.0",
     "eslint-plugin-react": "^7.11.1",
+    "mock-socket": "^8.0.4",
     "prettier": "^1.14.3",
-    "react-scripts": "2.1.1"
+    "react-scripts": "2.1.1",
+    "react-test-renderer": "^16.5.2"
   },
   "scripts": {
-    "prestart": "shx cp -R node_modules/bootstrap-sass/assets/fonts src/styles/",
     "start": "react-scripts start",
-    "prebuild": "shx cp -R node_modules/bootstrap-sass/assets/fonts src/styles/",
-    "build": "prestart && react-scripts build",
+    "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
+    "prestart": "shx cp -R node_modules/bootstrap-sass/assets/fonts src/styles/",
+    "prebuild": "shx cp -R node_modules/bootstrap-sass/assets/fonts src/styles/",
     "eject": "react-scripts eject",
     "lint": "eslint src/**/*.js"
   },

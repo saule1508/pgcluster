@@ -1,13 +1,14 @@
 /* eslint-disable linebreak-style */
-import React from 'react';
-import PropTypes from 'prop-types';
-import DBStatesContainer from '../DBStatesContainer';
-import PgpoolContainer from '../PgpoolContainer';
-import ReplContainer from '../ReplContainer';
-import ReplicationStatsContainer from './replicationstatscontainer';
-// import SupervisorCtlContainer from "./supervisorctlcontainer.js";
-import NodesChecksContainer from './nodescheckscontainer';
-import PgpoolWatchDogContainer from './pgpool_watchdogcontainer';
+import React from "react";
+import propTypes from 'prop-types';
+
+import DBStatesContainer from "../DBStatesContainer";
+import PgpoolContainer from "../PgpoolContainer";
+import ReplContainer from "../ReplContainer";
+import ReplicationStatsContainer from "./replicationstatscontainer";
+//import SupervisorCtlContainer from "./supervisorctlcontainer";
+import NodesChecksContainer from "./nodescheckscontainer";
+import PgpoolWatchDogContainer from "./pgpool_watchdogcontainer";
 
 const Replication = ({ withWatchDog }) => (
   <div>
