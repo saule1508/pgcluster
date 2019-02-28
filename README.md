@@ -1,6 +1,6 @@
 # pg-cluster
 
-Postgres streaming replication with pgpool and/or repmgr for the automated failover and docker swarm. When running the images in a docker swarm, the HA of pgpool can be either via the traditional pgpool watchdog mode (with a VIP) or via the swarm. The same docker images can be used outside docker swarm in which case pgpool is made HA via the traditional watchdog mode (with a VIP).
+Postgres streaming replication with pgpool and/or repmgr for the automated failover. The images can be used in docker swarm cluster or via docker run outside the swarm. When running the images in a docker swarm, the HA of pgpool can be either via the traditional pgpool watchdog mode (with a VIP) or via the swarm (but I found too many edge cases in this case). When the docker images are used outside docker swarm then pgpool is made HA via the traditional watchdog mode (with a VIP).
 
 The postgres docker image contains:
 

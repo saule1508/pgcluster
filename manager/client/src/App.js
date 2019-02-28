@@ -1,7 +1,7 @@
 import React from 'react';
 // import logo from './logo.svg';
 // import 'bootstrap/dist/css/bootstrap.css';
-import './styles/styles.css';
+import './styles/styles.scss';
 import { Switch, Route } from 'react-router-dom';
 import Header from './Header';
 import DashHome from './dash/components/Home';

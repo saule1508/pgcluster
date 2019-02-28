@@ -169,8 +169,8 @@ PGP_NODE_NAME=${PGP_NODE_NAME:-pgpool01}
 echo PGP_NODE_NAME=${PGP_NODE_NAME}
 REPMGRPWD=${REPMGRPWD:-rep123}
 echo REPMGRPWD=${REPMGRPWD}
-FAIL_OVER_ON_BACKEND_ERROR=${FAIL_OVER_ON_BACKEND_ERROR:-off}
-echo FAIL_OVER_ON_BACKEND_ERROR=${FAIL_OVER_ON_BACKEND_ERROR}
+FAILOVER_ON_BACKEND_ERROR=${FAILOVER_ON_BACKEND_ERROR:-off}
+echo FAILOVER_ON_BACKEND_ERROR=${FAILOVER_ON_BACKEND_ERROR}
 CONNECTION_CACHE=${CONNECTION_CACHE:-on}
 echo CONNECTION_CACHE=${CONNECTION_CACHE}
 
@@ -555,7 +555,7 @@ EOF
 fi
 
 cat <<EOF >> $CONFIG_FILE
-fail_over_on_backend_error = ${FAIL_OVER_ON_BACKEND_ERROR}
+failover_on_backend_error = ${FAILOVER_ON_BACKEND_ERROR}
                                    # Initiates failover when reading/writing to the
                                    # backend communication socket fails
                                    # If set to off, pgpool will report an
