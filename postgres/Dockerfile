@@ -3,7 +3,9 @@ MAINTAINER p.timmermans@evs.com
 ENV MAJORVER=10
 ENV MINORVER=5
 ENV PGVER=10
-ENV REPMGRVER=4.1.1
+ENV REPMGRVER=4.2.0
+ENV PGPOOLMAJOR=4.0
+ENV PGPOOLVER=4.0.3
 ENV docker=yes
 RUN yum update -y ; yum clean all && rm -rf /var/yum/cache
 RUN yum install -y epel-release libxslt sudo openssh-server openssh-clients jq passwd rsync && \
@@ -15,9 +17,9 @@ RUN ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N ''
 RUN useradd -u 50010 postgres
 RUN yum install -y https://download.postgresql.org/pub/repos/yum/10/redhat/rhel-7-x86_64/pgdg-centos10-10-2.noarch.rpm
 RUN yum install -y postgresql${MAJORVER} postgresql${MAJORVER}-server  postgresql${MAJORVER}-contrib ; yum clean all
-RUN yum install -y http://www.pgpool.net/yum/rpms/3.7/redhat/rhel-7-x86_64/pgpool-II-release-3.7-1.noarch.rpm
+RUN yum install -y http://www.pgpool.net/yum/rpms/{PGPOOLMAJOR}/redhat/rhel-7-x86_64/pgpool-II-release-{PGPOOLMAJOR}-1.noarch.rpm
 # pgpool extensions
-RUN yum install -y pgpool-II-pg${MAJORVER} pgpool-II-pg${MAJORVER}-extensions; yum clean all; rm -rf /var/cache/yum
+RUN yum install -y pgpool-II-pg${MAJORVER}-${PGPOOLVER} pgpool-II-pg${MAJORVER}-extensions-${PGPOOLVER}; yum clean all; rm -rf /var/cache/yum
 # repmgr: installed from 2ndquadrant repo will install repmgr4
 #RUN curl https://dl.2ndquadrant.com/default/release/get/10/rpm | bash
 #RUN yum install --enablerepo=2ndquadrant-dl-default-release-pg10 --disablerepo=pgdg10 -y repmgr10-${REPMGRVER} && yum clean all && rm -rf /var/cache/yum
