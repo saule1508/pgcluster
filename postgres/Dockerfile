@@ -17,7 +17,7 @@ RUN ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N ''
 RUN useradd -u 50010 postgres
 RUN yum install -y https://download.postgresql.org/pub/repos/yum/10/redhat/rhel-7-x86_64/pgdg-centos10-10-2.noarch.rpm
 RUN yum install -y postgresql${MAJORVER} postgresql${MAJORVER}-server  postgresql${MAJORVER}-contrib ; yum clean all
-RUN yum install -y http://www.pgpool.net/yum/rpms/{PGPOOLMAJOR}/redhat/rhel-7-x86_64/pgpool-II-release-{PGPOOLMAJOR}-1.noarch.rpm
+RUN yum install -y http://www.pgpool.net/yum/rpms/${PGPOOLMAJOR}/redhat/rhel-7-x86_64/pgpool-II-release-${PGPOOLMAJOR}-1.noarch.rpm
 # pgpool extensions
 RUN yum install -y pgpool-II-pg${MAJORVER}-${PGPOOLVER} pgpool-II-pg${MAJORVER}-extensions-${PGPOOLVER}; yum clean all; rm -rf /var/cache/yum
 # repmgr: installed from 2ndquadrant repo will install repmgr4

@@ -1,7 +1,7 @@
 FROM centos:latest
 MAINTAINER ptim007@yahoo.com
 ENV PGVER=10
-ENV PGPOOLMAJO=4.0
+ENV PGPOOLMAJOR=4.0
 ENV PGPOOLVER=4.0.3
 RUN yum update -y ; yum clean all ; rm -rf /var/cache/yum
 RUN groupadd -g 50010 postgres && useradd -u 50010 -g postgres postgres 
