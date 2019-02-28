@@ -27,9 +27,6 @@ const PgpoolNode = ( {idx, host_name,delegate_ip,status_name} ) => {
 }
 
 class PgpoolWatchDog extends Component {
-  constructor(props) {
-      super(props);
-  }
   componentDidMount() {
     this.props.fetchPgpoolWatchDog();
     this.interval = setInterval(this.props.fetchPgpoolWatchDog, 5000);

@@ -77,7 +77,7 @@ class RestoreModal extends Component {
                 </div>
                 <div className="row">
                   <div className="col-md-4" style={{marginTop: 10}}>
-                    <button className="form-control" type="submit" className="btn btn-primary" 
+                    <button type="submit" className="form-control btn btn-primary" 
                       onClick={this.onSubmit}>Submit</button>
                   </div>
                 </div>

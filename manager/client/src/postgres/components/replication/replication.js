@@ -9,9 +9,6 @@ import ReplicationStatsContainer from "./replicationstatscontainer.js";
 import NodesChecksContainer from "./nodescheckscontainer.js";
 import PgpoolWatchDogContainer from "./pgpool_watchdogcontainer.js";
 class Replication extends Component {
-  constructor(props){
-    super(props);
-  }
 
   render() {
     console.log(this.props);
@@ -57,7 +54,9 @@ class Replication extends Component {
 }
 
 Replication.propTypes = {
-  withWatchdog: propTypes.bool.isRequired
+  withWatchdog: propTypes.bool
 }
-
+Replication.defaultProps = {
+  withWatchDog: true
+}
 export default Replication;
