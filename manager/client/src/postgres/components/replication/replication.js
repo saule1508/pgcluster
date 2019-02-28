@@ -1,6 +1,6 @@
 /* eslint-disable linebreak-style */
 import React from "react";
-import propTypes from 'prop-types';
+import PropTypes from 'prop-types';
 
 import DBStatesContainer from "../DBStatesContainer";
 import PgpoolContainer from "../PgpoolContainer";
