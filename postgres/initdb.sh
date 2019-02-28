@@ -225,7 +225,8 @@ EOF
     psql --command "create database repmgr with owner=repmgr ENCODING='UTF8' LC_COLLATE='en_US.UTF8';"
     if [ -f /usr/pgsql-10/share/extension/pgpool-recovery.sql ] ; then
       log_info "pgpool extensions"
-      psql -f /usr/pgsql-10/share/extension/pgpool-recovery.sql -d template1
+      # psql -f /usr/pgsql-10/share/extension/pgpool-recovery.sql -d template1
+      psql -c "create extension pgpool_recovery;" -d template1
       psql -c "create extension pgpool_adm;"
     else
       log_info "pgpool-recovery.sql extension not found"

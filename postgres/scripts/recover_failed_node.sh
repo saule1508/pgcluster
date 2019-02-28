@@ -289,7 +289,7 @@ if [ $? -ne 0 ] ; then
   exit 1
 fi
 
-read node port status weight status_name role <<< $str
+read node port status weight status_name role status_date status_time <<< $str
 if [ $status -ne $PGP_STATUS_DOWN ] ; then
   log_info "pgpool status for node $node is $status_name and role $role, nothing to do"
   rm -f $PIDFILE
