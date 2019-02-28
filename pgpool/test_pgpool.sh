@@ -163,10 +163,8 @@ check_repmgr_nodes t,t,t primary,standby,standby
 if [ $? -ne 0 ] ; then
  exit 1
 fi
-echo "Stop pg01"
-CONT=$( docker ps -q --filter="status=running" --filter="name=pg01" )
-docker exec $CONT supervisorctl stop postgres
-echo Sleep 60 to let failover happen
+echo "Restart service pg01"
+docker service update --force pgcluster_pg01
 sleep 60
 check_pool_nodes down,up,up standby,primary,standby
 if [ $? -ne 0 ] ; then
@@ -187,9 +185,8 @@ check_repmgr_nodes t,t,t standby,primary,standby
 if [ $? -ne 0 ] ; then
  exit 1
 fi
-echo "Stop pg02"
-CONT=$( docker ps -q --filter="status=running" --filter="name=pg02" )
-docker exec $CONT supervisorctl stop postgres
+echo "Restart service pg02"
+docker service update --force pgcluster_pg02
 echo Sleep 60 to let failover happen
 sleep 60
 check_pool_nodes up,down,up primary,standby,standby
