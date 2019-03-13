@@ -14,9 +14,10 @@ if [ ! -d /var/log/pg ] ; then
  sudo chown postgres:postgres /var/log/pg
 fi
 LOGFILE=/var/log/pg/pgpool_remote_start.log
+PGVER=${PGVER:-11}
 
 echo "Exec pgpool_remote_start.sh at `date`" | tee -a $LOGFILE
-PATH=$PATH:/usr/pgsql-10/bin/pg_ctl
+PATH=$PATH:/usr/pgsql-${PGVER}/bin/pg_ctl
 
 if [ $# -lt 2 ]; then
     echo "Start a remote PostgreSQL server within pgpool."

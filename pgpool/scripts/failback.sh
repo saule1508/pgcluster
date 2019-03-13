@@ -9,7 +9,7 @@ then
     echo "Expecting 4 parameters: failback falling_node oldprimary_node new_primary"
     exit 1
 fi
-
+PGVER=${PGVER:-11}
 FALLING_NODE=$1         # %d
 FALLING_HOST=$2         # %h
 OLDPRIMARY_NODE=$3      # %P
@@ -22,11 +22,11 @@ echo "failback.sh FALLING_NODE: ${FALLING_NODE}; FALLING_HOST: ${FALLING_HOST}; 
 if [ $FALLING_NODE = $OLDPRIMARY_NODE ]; then
     if [ $UID -eq 0 ]
     then
-#        ssh -T -p 222 postgres@$NEW_PRIMARY /etc/postgresql/10/main/replication/scripts/promote.sh -f -p $REPL_PASS -d $FALLING_HOST
+#        ssh -T -p 222 postgres@$NEW_PRIMARY /etc/postgresql/${PGVER}/main/replication/scripts/promote.sh -f -p $REPL_PASS -d $FALLING_HOST
       echo "DEBUG: UID != 0"
     else
       echo "DEBUG: UID = 0"
-#        ssh -T -p 222 postgres@$NEW_PRIMARY /etc/postgresql/10/main/replication/scripts/promote.sh -f -p $REPL_PASS -d $FALLING_HOST
+#        ssh -T -p 222 postgres@$NEW_PRIMARY /etc/postgresql/${PGVER}/main/replication/scripts/promote.sh -f -p $REPL_PASS -d $FALLING_HOST
 # -d was previously $OLDPRIMARY_NODE
     fi
     exit 0;

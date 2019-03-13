@@ -4,9 +4,9 @@
 
 source /scripts/lib/pg_utils.sh
 
-PGDATA=${PGDATA:-/u01/pg10/data}
+PGDATA=${PGDATA:-/data}
 if [ -z $EVSPGLOG ] ; then
- EVSPGLOG=${PGDATA}/pg_log
+ EVSPGLOG=${PGDATA}/log
 fi
 if [ ! -d ${EVSPGLOG} ] ; then
  log_error clean_log "Cannot find directory $EVSPGLOG"

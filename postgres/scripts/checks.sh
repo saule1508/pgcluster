@@ -14,6 +14,6 @@ do
   echo repmgr,$ck,$res
 done
 df -k ${PGDATA} | grep -v "^Filesystem" | awk '{print "disk,"$NF","$5","$2","$3}'
-df -k /u02/backup | grep -v "^Filesystem" | awk '{print "disk,"$NF","$5","$2","$3}'
-df -k /u02/archive | grep -v "^Filesystem" | awk '{print "disk,"$NF","$5","$2","$3}'
+df -k /backup | grep -v "^Filesystem" | awk '{print "disk,"$NF","$5","$2","$3}'
+df -k /archive | grep -v "^Filesystem" | awk '{print "disk,"$NF","$5","$2","$3}'
 
