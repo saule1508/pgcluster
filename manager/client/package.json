@@ -33,8 +33,9 @@
   },
   "scripts": {
     "prestart": "shx cp -R node_modules/bootstrap-sass/assets/fonts src/styles/",
+    "prebuild": "shx cp -R node_modules/bootstrap-sass/assets/fonts src/styles/",
     "start": "react-scripts start",
-    "build": "prestart && react-scripts build",
+    "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
     "lint": "eslint src/**/*.js"
@@ -44,7 +45,7 @@
       "enzyme-to-json/serializer"
     ]
   },
-  "proxy": "http://172.19.11.221:8080",
+  "proxy": "http://192.168.1.39:8080",
   "browserslist": [
     ">0.2%",
     "not dead",

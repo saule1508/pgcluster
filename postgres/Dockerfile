@@ -46,8 +46,8 @@ RUN echo "*:*:postgres:postgres" > /home/postgres/.pcppass && chown postgres:pos
 ADD scripts /scripts
 ADD pgconfig /opt/pgconfig
 RUN chown -R postgres:postgres /scripts 
-ADD ./bin/entrypoint.supervisor /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+#ADD ./bin/entrypoint.supervisor /entrypoint.sh
+#RUN chmod +x /entrypoint.sh
 ADD get_master.sh /home/postgres/get_master.sh
 RUN chown postgres:postgres /home/postgres/get_master.sh && chmod 750 /home/postgres/get_master.sh
 ADD supervisord.conf /etc/supervisor/supervisord.conf

@@ -14,7 +14,7 @@ source /scripts/lib/pg_utils.sh
 help(){
  cat <<EOF
   Usage is restore.sh -n <name>
-  -n: name of the backup (i.e. the directory in /u02/backup)
+  -n: name of the backup (i.e. the directory in /backup)
   -t: type of backup, either backup or dump (only backup is supported now)
   -f: force
   -h: this screen
