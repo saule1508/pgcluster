@@ -6,13 +6,13 @@ import Backup from './backup/backupscontainer'
 
 
 const NavItem = ({children, to, exact}) => {
-    return (
-        <Route path={to} exact={exact} children={({match}) => (
-            <li className={match ? 'nav-item active' : 'nav-item' }>
-                <Link to={to}>{children}</Link>
-            </li>
-        )}/>
-    )
+  return (
+    <Route path={to} exact={exact} children={({match}) => (
+      <li className={match ? 'nav-item active' : 'nav-item' }>
+        <Link to={to}>{children}</Link>
+      </li>
+    )}/>
+  )
 }
 
 const Header = () => {
@@ -32,7 +32,7 @@ class PostgresHome extends Component{
       <div>
         <h2>Postgres</h2>
         <Header />
-        <Redirect from="/" to="/postgres/replication" />
+        <Route exact={true} path="/" component={ReplicationContainer} />
         <Route exact path="/postgres" component={ReplicationContainer} />
         <Route path='/postgres/stat_activity' component={StatActivityContainer} /> 
         <Route path='/postgres/backup' exact={false} component={Backup} />
