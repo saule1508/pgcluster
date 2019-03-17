@@ -15,8 +15,8 @@ services:
     ports:
       - 15432:5432 # postgres port
     volumes:
-      - pg01db:/u01/pg10/data
-      - pg01arc:/u02/archive
+      - pg01db:/data
+      - pg01arc:/archive
   pg02:
     image: pg:${pg_version}
     environment:
@@ -35,8 +35,8 @@ services:
     ports:
       - 25432:5432 # postgres port
     volumes:
-      - pg02db:/u01/pg10/data
-      - pg02arc:/u02/archive
+      - pg02db:/data
+      - pg02arc:/archive
     depends_on:
       - pg01
 volumes:

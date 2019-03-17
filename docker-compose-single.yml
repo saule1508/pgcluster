@@ -1,7 +1,7 @@
-version: '3.2'
+version: '3.4'
 services:
   pg01:
-    image: pg:${pg_version:-0.7.4}
+    image: pg:${pg_version}
     environment:
       NODE_ID: 1
       NODE_NAME: pg01
@@ -16,19 +16,20 @@ services:
     networks:
       - pgcluster_network
     volumes:
-      - pg01db:/u01/pg10/data
-      - pg01arc:/u02/archive
-      - pg01backup:/u02/backup
+      - pg01db:/data
+      - pg01arc:/archive
+      - pg01backup:/backup
   pgpool:
-    image: pgpool:${pg_version:-0.7.4}
-    command: tail -f /etc/hosts
+    image: pgpool:${pg_version}
     environment:
-      PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER
+      PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/data:ALLOW_TO_FAILOVER
                 # csv list of backend postgres databases, each backend db contains (separated by :)
-                # number (start with 0):host name:pgpool port (default 9999):data dir (default /u01/pg96/data):flag ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
+                # number (start with 0):host name:pgpool port (default 9999):data dir (default /data):flag ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
       REPMGRPWD: rep123
-      PGPOOL_FAIL_OVER_ON_BACKEND_ERROR: "no"
+      PGPOOL_FAILOVER_ON_BACKEND_ERROR: "no"
       PGPOOL_LOAD_BALANCE_MODE: "no"
+      PGPOOL_NUM_INIT_CHILDREN: 3
+      PGPOOL_MAX_POOL: 1
       #DELEGATE_IP: 172.18.0.100
       #TRUSTED_SERVERS: 172.23.1.250
       #PGP_HEARTBEATS: "0:pgpool01:9694,1:pgpool02:9694"
@@ -42,20 +43,6 @@ services:
       - pgcluster_network
     depends_on:
       - pg01
-  manager:
-    image: manager:${pg_version:-0.7.4}
-    ports:
-      - 8080:8080
-    # to test the nodejs app, uncomment next line. Then once the container is running, exec into it and start node manually.
-    #command: tail -f /etc/passwd
-    environment:
-      PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER
-      REPMGRPWD: rep123
-      DBHOST: pgpool
-    networks:
-      - pgcluster_network
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:
   pg01db:
@@ -65,4 +52,3 @@ volumes:
 networks:
   pgcluster_network:
     external: true
-
