@@ -97,7 +97,7 @@ else
 fi
 check_pool_nodes up,down primary,standby
 start_pg pg02
-check_state pg02
+recover_failed_node pg02
 check_pool_nodes up,up primary,standby
 
 exit 0
