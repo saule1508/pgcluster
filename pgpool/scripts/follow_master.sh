@@ -22,7 +22,6 @@ OLD_PRIMARY_ID=$7
 PGDATA=${PGDATA:-/data}
 PGVER=${PGVER:-11}
 
-(
 echo NODEID=${NODEID} 
 echo HOSTNAME=${HOSTNAME}
 echo NEW_MASTER_ID=${NEW_MASTER_ID}
@@ -38,7 +37,7 @@ else
   ssh_options="ssh -p 222 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
   #set -x
   in_reco=$( $ssh_options postgres@${HOSTNAME} 'psql -t -c "select pg_is_in_recovery();"' | head -1 | awk '{print $1}' )
-  if [ "a${in_reco}" != "a" ] ; then
+  if [ "a${in_reco}" != "at" ] ; then
     echo "Node $HOSTNAME is not in recovery, probably a degenerated master, skip it" | tee -a $LOGFILE
     exit 0
   fi
@@ -48,5 +47,4 @@ else
   echo "Attach node ${NODEID}"
   pcp_attach_node -h localhost -p 9898 -w ${NODEID}
 fi
-) 2>&1 | tee -a $LOGFILE
 echo "Done follow_master.sh at `date`"  | tee -a $LOGFILE
