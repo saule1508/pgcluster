@@ -102,7 +102,7 @@ log_info "MSUSERPWDLIST: ${MSUSERPWDLIST}"
 log_info "PGDATA: ${PGDATA}" 
 INITIAL_NODE_TYPE=${INITIAL_NODE_TYPE:-single} 
 log_info "INITIAL_NODE_TYPE: ${INITIAL_NODE_TYPE}" 
-export PATH=$PATH:/usr/pgsql-10/bin
+export PATH=$PATH:/usr/pgsql-${PGVER}/bin
 MSLIST=${MSLIST-"keycloak,apiman,asset,ingest,playout"}
 NODE_ID=${NODE_ID:-1}
 NODE_NAME=${NODE_NAME:-"pg0${NODE_ID}"}
@@ -161,7 +161,7 @@ cat <<EOF > /etc/repmgr/${PGVER}/repmgr.conf
 node_id=${NODE_ID}
 node_name=${NODE_NAME}
 conninfo='host=${NODE_NAME} dbname=repmgr user=repmgr password=${REPMGRPWD} connect_timeout=2'
-data_directory='/u01/pg${PGVER}/data'
+data_directory='/data'
 use_replication_slots=1
 restore_command = 'cp /u02/archive/%f %p'
 
@@ -223,9 +223,8 @@ EOF
     log_info "set password for postgres"
     psql --command "alter user postgres with login password '${REPMGRPWD}';"
     psql --command "create database repmgr with owner=repmgr ENCODING='UTF8' LC_COLLATE='en_US.UTF8';"
-    if [ -f /usr/pgsql-10/share/extension/pgpool-recovery.sql ] ; then
+    if [ -f /usr/pgsql-${PGVER}/share/extension/pgpool-recovery.sql ] ; then
       log_info "pgpool extensions"
-      # psql -f /usr/pgsql-10/share/extension/pgpool-recovery.sql -d template1
       psql -c "create extension pgpool_recovery;" -d template1
       psql -c "create extension pgpool_adm;"
     else
@@ -240,7 +239,7 @@ EOF
     pg_ctl stop
     pg_ctl start -w
     log_info "Register master in repmgr"
-    repmgr -f /etc/repmgr/10/repmgr.conf -v master register
+    repmgr -f /etc/repmgr/${PGVER}/repmgr.conf -v master register
     pg_ctl stop
   else
     log_info "This is a slave. Wait that master is up and running"
@@ -249,9 +248,9 @@ EOF
      log_info "Master ready, sleep 10 seconds before cloning slave"
      sleep 10
      sudo rm -rf ${PGDATA}/*
-     repmgr -h ${PG_MASTER_NODE_NAME} -U repmgr -d repmgr -D ${PGDATA} -f /etc/repmgr/10/repmgr.conf standby clone
+     repmgr -h ${PG_MASTER_NODE_NAME} -U repmgr -d repmgr -D ${PGDATA} -f /etc/repmgr/${PGVER}/repmgr.conf standby clone
      pg_ctl -D ${PGDATA} start -w
-     repmgr -f /etc/repmgr/10/repmgr.conf standby register
+     repmgr -f /etc/repmgr/${PGVER}/repmgr.conf standby register
      pg_ctl stop
     else
      log_info "Master is not ready, standby will not be initialized"

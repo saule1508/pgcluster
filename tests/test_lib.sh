@@ -163,11 +163,12 @@ attach_node(){
 
 # this will re-attach a failed standby
 # i.e a standby that was detached from the pool and later comes back
-check_state() {
+recover_failed_node() {
   HOST=$1
   CONT=$( docker ps -q --filter="status=running" --filter="name=$HOST" )
-  echo doing check_state in $HOST
-  docker exec --user postgres $CONT /scripts/check_state.sh
+  echo doing recover_failed_node in $HOST
+
+  docker exec --user postgres $CONT /scripts/recover_failed_node.sh
 }
 
 # test if we can write

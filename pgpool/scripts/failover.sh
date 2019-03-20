@@ -10,7 +10,7 @@ LOGFILE=/var/log/pg/failover.log
 if [ ! -f $LOGFILE ] ; then
  > $LOGFILE
 fi
-
+PGVER=${PGVER:-11}
 echo $@
 
 # Special values:
@@ -54,7 +54,7 @@ ssh_options="ssh -p 222 -n -T -o UserKnownHostsFile=/dev/null -o StrictHostKeyCh
 set -x
  
 if [ $FALLING_NODE = $OLD_PRIMARY_ID ] ; then
-  $ssh_options postgres@${NEW_HOST} "/usr/pgsql-10/bin/repmgr --log-to-file -f /etc/repmgr/10/repmgr.conf standby promote -v "
+  $ssh_options postgres@${NEW_HOST} "/usr/pgsql-${PGVER}/bin/repmgr --log-to-file -f /etc/repmgr/${PGVER}/repmgr.conf standby promote -v "
 else
   echo old primary id is $OLD_PRIMARY_ID and falling node is $FALLING_NODE
 fi

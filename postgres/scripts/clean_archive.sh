@@ -18,7 +18,7 @@ fi
 LOGFILE=/var/log/pg-utils/clean_archive.log
 PROJECT="clean_archive"
 
-PGARCHIVE=${PGARCHIVE:-/u02/archive}
+PGARCHIVE=${PGARCHIVE:-/archive}
 if [ ! -d ${PGARCHIVE} ] ; then
  log_error $PROJECT "Directory ${PGARCHIVE} does not exist"
  exit 1

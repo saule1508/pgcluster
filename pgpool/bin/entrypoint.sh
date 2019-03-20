@@ -292,7 +292,7 @@ do
     HOST=""
     PORT="9999"
     WEIGHT=1
-    DIR="/u01/pg10/data"
+    DIR="/data"
     FLAG="ALLOW_TO_FAILOVER"
 
     [[ "${INFO[0]}" != "" ]] && NUM="${INFO[0]}"

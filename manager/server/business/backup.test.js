@@ -15,7 +15,7 @@ it('backupExists() should return true when stubbed',async () =>{
   const expectedResponse = {result: ['20180604_backup','20180605_backup','test'], error: null};
   utils.getFilesForHost = jest.fn().mockReturnValueOnce(expectedResponse);
   const found = await backupExists('pg01','20180604_backup');
-  expect(utils.getFilesForHost).toHaveBeenCalledWith('pg01','/u02/backup');
+  expect(utils.getFilesForHost).toHaveBeenCalledWith('pg01','/backup');
   expect(found).toBe(true);
 });
 

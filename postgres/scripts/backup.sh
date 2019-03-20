@@ -34,15 +34,15 @@ TIME=`date "+%Y%m%d%H%M"`
 BUNAME=${BUNAME:-$TIME}
 BUTYPE=${BUTYPE:-backup}
 DIR=${BUNAME}_${BUTYPE}
-rm -rf /u02/backup/${DIR}
+rm -rf /backup/${DIR}
 if [ ${BUTYPE} == 'backup' ] ; then
-  echo Doing base backup in /u02/backup/${DIR}
-  pg_basebackup -D /u02/backup/${DIR} --username=repmgr --checkpoint=fast --format=tar --write-recovery-conf --wal-method=stream --gzip --label ${BUNAME} --verbose
+  echo Doing base backup in /backup/${DIR}
+  pg_basebackup -D /backup/${DIR} --username=repmgr --checkpoint=fast --format=tar --write-recovery-conf --wal-method=stream --gzip --label ${BUNAME} --verbose
   exit $?
 elif [ ${BUTYPE} == 'dump' ] ; then
-  echo Doing pg_dump in /u02/backup/${DIR}
-  mkdir /u02/backup/${DIR}
-  pg_dump --format=c phoenix | gzip > /u02/backup/${DIR}/phoenix.dump.gz
+  echo Doing pg_dump in /backup/${DIR}
+  mkdir /backup/${DIR}
+  pg_dump --format=c phoenix | gzip > /backup/${DIR}/phoenix.dump.gz
   exit $?
 else
   echo Invalid backup type ${BUTYPE}

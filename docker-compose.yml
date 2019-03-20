@@ -14,9 +14,9 @@ services:
       PGMASTER: pg01
       REPMGRD_FAILOVER_MODE: manual
     volumes:
-      - /u01/pg10/data:/u01/pg10/data
-      - /u02/archive:/u02/archive
-      - /u02/backup:/u02/backup
+      - /u01/pg10/data:/data
+      - /u02/archive:/archive
+      - /u02/backup:/backup
       - /etc/localtime:/etc/localtime
     deploy:
       placement:
@@ -42,9 +42,9 @@ services:
       PGMASTER: pg01
       REPMGRD_FAILOVER_MODE: manual
     volumes:
-      - /u01/pg10/data:/u01/pg10/data
-      - /u02/archive:/u02/archive
-      - /u02/backup:/u02/backup
+      - /u01/pg10/data:/data
+      - /u02/archive:/archive
+      - /u02/backup:/backup
       - /etc/localtime:/etc/localtime
     deploy:
       placement:
@@ -64,9 +64,9 @@ services:
       - 9999:9999
     environment:
       PGMASTER_NODE_NAME: pg01
-      PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER,1:pg02:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER
+      PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/data:ALLOW_TO_FAILOVER,1:pg02:5432:1:/data:ALLOW_TO_FAILOVER
                 # csv list of backend postgres databases, each backend db contains (separated by :)
-                # number (start with 0):host name:pgpool port (default 9999):data dir (default /u01/pg10/data):flag ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
+                # number (start with 0):host name:pgpool port (default 9999):data dir (default /data):flag ALLOW_TO_FAILOVER or DISALLOW_TO_FAILOVER
                 # not needed when there is a single postgres DB
       PGP_NODE_NAME: pgpool
       REPMGRPWD: rep123
@@ -89,7 +89,7 @@ services:
     ports:
       - 8080:8080
     environment:
-      PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER,1:pg02:5432:1:/u01/pg10/data:ALLOW_TO_FAILOVER
+      PG_BACKEND_NODE_LIST: 0:pg01:5432:1:/data:ALLOW_TO_FAILOVER,1:pg02:5432:1:/data:ALLOW_TO_FAILOVER
       REPMGRPWD: rep123
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock

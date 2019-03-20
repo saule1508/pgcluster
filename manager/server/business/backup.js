@@ -1,4 +1,4 @@
-const directory = '/u02/backup';
+const directory = '/backup';
 
 const getBackups = () => {
 

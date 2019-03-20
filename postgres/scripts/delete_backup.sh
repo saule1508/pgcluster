@@ -31,9 +31,9 @@ if [ -z $BUNAME ] ; then
  echo "backup name is mandatory"
  exit 1
 fi
-if [ ! -d /u02/backup/${BUNAME} ] ; then
- echo /u02/backup/${BUNAME} does not exist
+if [ ! -d /backup/${BUNAME} ] ; then
+ echo /backup/${BUNAME} does not exist
  exit 1
 fi
-rm -rf /u02/backup/${BUNAME}
+rm -rf /backup/${BUNAME}
 exit $?

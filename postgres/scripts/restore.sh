@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Desc: Restore script for psx platform
+# Desc: Restore script
 # Date: 13-Sep-17
 # Author: PTI
 #########################################
@@ -14,7 +14,7 @@ source /scripts/lib/pg_utils.sh
 help(){
  cat <<EOF
   Usage is restore.sh -n <name>
-  -n: name of the backup (i.e. the directory in /u02/backup)
+  -n: name of the backup (i.e. the directory in /backup)
   -t: type of backup, either backup or dump (only backup is supported now)
   -f: force
   -h: this screen
@@ -47,7 +47,7 @@ if [ $BUTYPE != "backup" ] ; then
  exit 1
 fi
 
-BUDIR=/u02/backup
+BUDIR=/backup
 
 if [ ! -d ${BUDIR}/${BUNAME} ] ; then
  echo directory ${BUDIR}/${BUNAME} does not exist
@@ -75,8 +75,8 @@ if [ $? -eq 1 ] ; then
    exit 1
  fi
 fi
-rm -rf /u01/pg10/data/*
-tar -xf ${BUDIR}/${BUNAME}/base.tar.gz --directory=/u01/pg10/data
-tar -xf ${BUDIR}/${BUNAME}/pg_wal.tar.gz --directory=/u01/pg10/data/pg_wal
+rm -rf /data/*
+tar -xf ${BUDIR}/${BUNAME}/base.tar.gz --directory=/data
+tar -xf ${BUDIR}/${BUNAME}/pg_wal.tar.gz --directory=/data/pg_wal
 echo You may restart postgres now. Edit the recovery file if you want to roll forward
 exit $?
