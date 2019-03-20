@@ -53,7 +53,7 @@ const getFromSSH = (dbhost, args) => new Promise((resolve, reject) => {
   let response = '';
   const cmdArgs = [
     '-p',
-    '222',
+    `${process.env.SSHPORT||222}`,
     '-o',
     'StrictHostKeyChecking=no',
     '-o',
@@ -114,7 +114,7 @@ const getPgpoolWDStatusFromDB = (dbhost) => {
     let response = '';
     const cmdArgs = [
       '-p',
-      '222',
+      `${process.env.SSHPORT||222}`,
       '-o',
       'StrictHostKeyChecking=no',
       '-o',
@@ -123,7 +123,7 @@ const getPgpoolWDStatusFromDB = (dbhost) => {
       '-C',
       'pcp_watchdog_info',
       '-h',
-      'pgpool',
+      `${process.env.DBHOST||pgpool}`,
       '-p',
       '9898',
       '-w',
@@ -176,7 +176,7 @@ const getChecks = async () => {
       error: null,
     };
     try {
-      const result = await getFromSSH(dblist[i].host, ['/scripts/checks.sh']);
+      const result = await getFromSSH(dblist[i].host, [`{process.env.SCRIPTSDIR||/scripts}/checks.sh`]);
       result.rows.forEach((el, idx) => {
         const cols = el.split(',');
         if (cols[0] === 'supervisor') {
