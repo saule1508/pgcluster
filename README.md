@@ -2,7 +2,7 @@
 
 Postgres streaming replication with pgpool and/or repmgr for the automated failover. The images can be used in docker swarm cluster or via docker run outside the swarm. When running the images in a docker swarm, the HA of pgpool can be either via the traditional pgpool watchdog mode (with a VIP) or via the swarm (but I found too many edge cases in this case). When the docker images are used outside docker swarm then pgpool is made HA via the traditional watchdog mode (with a VIP).
 
-In this post I describe the complete set-up step by step, but without using docker: http://saule1508.github.io/pgpool/. Using docker makes sense especially when experimenting. Essentially the post referenced above does step by step what is in the Dockerfile of postgres and pgpool.
+In the post http://saule1508.github.io/pgpool/ I describe a 3 nodes cluster step by step, but without using docker. So essentially the blog post does step by step what is in the Dockerfile of postgres and pgpool.
 
 The postgres docker image contains:
 
