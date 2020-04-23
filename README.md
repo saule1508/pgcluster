@@ -59,7 +59,16 @@ docker swarm init --advertise-addr=<ip machine>
 docker network create --driver=overlay --attachable=true pgcluster_network
 docker stack deploy -c docker-compose-test.yml pgcluster
 ```
-you can then go on <ipaddress>:8080 to see the manager GUI. (NB: using localhost or 127.0.0.1 might not work, in this case type the IP of the PC).
+you can then go on <ipaddress>:8080 to see the manager GUI. (NB: using localhost or 127.0.0.1 might not work, in this case type the IP of the PC). The first time you have to wait a little before all boxes turn green, as the postgres databases are being created and replication is put in place.
+
+to restart from scratch you can remove the stack, then remove the volumes, then redeploy
+
+```bash
+docker stack rm pgcluster
+docker volume rm pgcluster_pg01b
+... other
+docker stack deploy -c docker-compose-test.yml pgcluster
+```
 
 To run on a real cluster one can use the scripts in the ansible directory.
 
