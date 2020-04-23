@@ -1,5 +1,5 @@
 // when using docker images for postgre, backup dir will be /backup but on native it will be /u02/backup or whatever is given by env
-const directory = `process.env.BACKUPDIR||/backup`;
+const directory = process.env.BACKUPDIR ? process.env.BACKUPDIR : '/backup';
 
 const getBackups = () => {
 

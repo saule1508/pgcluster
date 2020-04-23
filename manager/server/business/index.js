@@ -176,7 +176,7 @@ const getChecks = async () => {
       error: null,
     };
     try {
-      const result = await getFromSSH(dblist[i].host, [`{process.env.SCRIPTSDIR||/scripts}/checks.sh`]);
+      const result = await getFromSSH(dblist[i].host, [`${process.env.SCRIPTSDIR||'/scripts'}/checks.sh`]);
       result.rows.forEach((el, idx) => {
         const cols = el.split(',');
         if (cols[0] === 'supervisor') {
