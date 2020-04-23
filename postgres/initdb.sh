@@ -163,7 +163,7 @@ node_name=${NODE_NAME}
 conninfo='host=${NODE_NAME} dbname=repmgr user=repmgr password=${REPMGRPWD} connect_timeout=2'
 data_directory='/data'
 use_replication_slots=1
-restore_command = 'cp /u02/archive/%f %p'
+restore_command = 'cp /archive/%f %p'
 
 #log_file='/var/log/repmgr/repmgr.log'
 log_facility=STDERR
