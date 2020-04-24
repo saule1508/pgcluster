@@ -168,7 +168,7 @@ recover_failed_node() {
   CONT=$( docker ps -q --filter="status=running" --filter="name=$HOST" )
   echo doing recover_failed_node in $HOST
 
-  docker exec --user postgres $CONT /scripts/recover_failed_node.sh
+  docker exec --user postgres $CONT /scripts/recover_failed_node.sh --auto-recover-primary
 }
 
 # test if we can write
