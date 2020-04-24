@@ -39,7 +39,7 @@ replica_path=$3
 (
 echo "primary_host: ${primary_host}" 
 echo "replica_host: ${replica_host}" 
-echo "replicat_path: ${replica_path}" 
+echo "replica_path: ${replica_path}" 
 
 ssh_copy="ssh -p 222 postgres@$replica_host -T -n -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 echo "Stopping postgres on ${replica_host}"
@@ -49,7 +49,7 @@ sleep 20
 echo "delete database and archive directories on ${replica_host}"
 $ssh_copy "rm -Rf $replica_path/* ${ARCHIVE_DIR}/*"
 echo let us use repmgr on the replica host to force it to sync again
-$ssh_copy "/usr/pgsql-${PGVER}/bin/repmgr -h ${primary_host} --username=repmgr -d repmgr -D ${replica_path} -f /etc/repmgr/${PGVER}/repmgr.conf standby clone -v"
+$ssh_copy "/usr/pgsql-${PGVER}/bin/repmgr -h ${primary_host} --username=repmgr -d repmgr -f /etc/repmgr/${PGVER}/repmgr.conf standby clone -v"
 echo "Start database on ${replica_host} "
 # -s -l /dev/null is needed otherwise ssh hangs
 $ssh_copy "/scripts/pg_start.sh"

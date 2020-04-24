@@ -1,11 +1,11 @@
 FROM centos:7
 MAINTAINER p.timmermans@evs.com
 ENV MAJORVER=11
-ENV MINORVER=2
+ENV MINORVER=7
 ENV PGVER=11
-ENV REPMGRVER=4.2
-ENV PGPOOLMAJOR=4.0
-ENV PGPOOLVER=4.0.3
+ENV REPMGRVER=5.1.0
+ENV PGPOOLMAJOR=4.1
+ENV PGPOOLVER=4.1.1
 ENV docker=yes
 RUN yum update -y ; yum clean all && rm -rf /var/yum/cache
 RUN yum install -y epel-release libxslt sudo openssh-server openssh-clients jq passwd rsync && \
@@ -15,7 +15,7 @@ RUN easy_install supervisor
 RUN mkdir /var/run/sshd
 RUN ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N ''
 RUN useradd -u 50010 postgres
-RUN yum install -y https://download.postgresql.org/pub/repos/yum/${MAJORVER}/redhat/rhel-7-x86_64/pgdg-centos${MAJORVER}-${MAJORVER}-${MINORVER}.noarch.rpm
+RUN yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 RUN yum install -y postgresql${MAJORVER}.${MINORVER} postgresql${MAJORVER}-server-${MAJORVER}.${MINORVER}  postgresql${MAJORVER}-contrib-${MAJORVER}.${MINORVER} ; yum clean all
 RUN yum install -y http://www.pgpool.net/yum/rpms/${PGPOOLMAJOR}/redhat/rhel-7-x86_64/pgpool-II-release-${PGPOOLMAJOR}-1.noarch.rpm
 # pgpool extensions

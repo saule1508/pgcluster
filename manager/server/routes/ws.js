@@ -10,7 +10,9 @@ wsrouter.ws('/dbstates', (ws, req) => {
     pg.dbStates()
       .then((data) => {
         const response = { result: data, timestamp: new Date() };
-        ws.send(JSON.stringify(response));
+        if (ws.readyState !== 3){
+          ws.send(JSON.stringify(response));
+        }
       })
       .catch((err) => {
         console.log('got error');
@@ -21,7 +23,9 @@ wsrouter.ws('/dbstates', (ws, req) => {
             ${err.code ? err.code : ''} - 
             ${err.errno ? err.errno : ''}`;
         }
-        ws.send(JSON.stringify({ message: msg, error: err }));
+        if (ws.readyState !== 3){
+          ws.send(JSON.stringify({ message: msg, error: err }));
+        }
       });
   };
 
@@ -53,14 +57,18 @@ wsrouter.ws('/repl_nodes', (ws, req) => {
     pg.getReplNodes()
       .then((data) => {
         const response = { result: data.rows, timestamp: new Date() };
-        ws.send(JSON.stringify(response));
+        if (ws.readyState !== 3){
+          ws.send(JSON.stringify(response));
+        }
       })
       .catch((err) => {
         let msg = err.detail ? err.detail : null;
         if (!msg) {
           msg = `server error ${err.code ? `${err.code} - ` : ' - '}${err.errno ? err.errno : ''}`;
         }
-        ws.send(JSON.stringify({ message: msg, error: err }));
+        if (ws.readyState !== 3){
+          ws.send(JSON.stringify({ message: msg, error: err }));
+        }
       });
   };
 
@@ -96,7 +104,9 @@ wsrouter.ws('/pool_nodes', (ws, req) => {
     pg.getPoolNodes()
       .then((data) => {
         const response = { result: data.rows, timestamp: new Date() };
-        ws.send(JSON.stringify(response));
+        if (ws.readyState !== 3){
+          ws.send(JSON.stringify(response));
+        }
       })
       .catch((err) => {
         console.log('catched from from getPoolNodes');
@@ -104,7 +114,9 @@ wsrouter.ws('/pool_nodes', (ws, req) => {
         if (!msg) {
           msg = `server error${err.code ? `${err.code} - ` : ' - '}${err.errno ? err.errno : ''}`;
         }
-        ws.send(JSON.stringify({ message: msg, error: err }));
+        if (ws.readyState !== 3){
+          ws.send(JSON.stringify({ message: msg, error: err }));
+        }
       });
   };
 
@@ -201,20 +213,28 @@ wsrouter.ws('/shell', (ws, req) => {
     const bu = spawn('ssh', cmdArgs);
 
     bu.stdout.on('data', (data) => {
-      ws.send(data.toString());
+      if (ws.readyState !== 3){
+        ws.send(data.toString());
+      }
     });
     bu.stderr.on('data', (data) => {
-      ws.send(data.toString());
+      if (ws.readyState !== 3){
+        ws.send(data.toString());
+      }
     });
     bu.on('close', (code) => {
       console.log(`shell exited with code ${code}`);
-      ws.send(`shell exited with code ${code}`);
-      ws.close();
+      if (ws.readyState !== 3){
+        ws.send(`shell exited with code ${code}`);
+        ws.close();
+      }
     });
     bu.on('error', (error) => {
       console.log(`spawn error ${error}`);
-      ws.send(`shell error: ${error}`);
-      ws.close();
+      if (ws.readyState !== 3){
+        ws.send(`shell error: ${error}`);
+        ws.close();
+      }
     });
   });
 

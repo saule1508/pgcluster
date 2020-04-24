@@ -1,16 +1,21 @@
-FROM centos:latest
+FROM centos:8
 MAINTAINER ptim007@yahoo.com
 ENV PGVER=11
-ENV PGPOOLMAJOR=4.0
-ENV PGPOOLVER=4.0.3
-RUN yum update -y ; yum clean all ; rm -rf /var/cache/yum
+ENV PGPOOLMAJOR=4.1
+ENV PGPOOLVER=4.1.1
+RUN dnf update -y ; dnf install -y passwd sudo ; dnf clean all ; rm -rf /var/cache/dnf 
 RUN groupadd -g 50010 postgres && useradd -u 50010 -g postgres postgres 
 RUN usermod -G wheel -a postgres && echo "postgres" | passwd --stdin postgres
-RUN yum install -y http://www.pgpool.net/yum/rpms/${PGPOOLMAJOR}/redhat/rhel-7-x86_64/pgpool-II-release-${PGPOOLMAJOR}-1.noarch.rpm
-RUN yum install -y https://download.postgresql.org/pub/repos/yum/${PGVER}/redhat/rhel-7-x86_64/pgdg-centos${PGVER}-${PGVER}-2.noarch.rpm
-RUN yum install -y postgresql${PGVER} pgpool-II-pg${PGVER}-${PGPOOLVER} pgpool-II-pg${PGVER}-extensions-${PGPOOLVER} \
+#RUN yum install -y http://www.pgpool.net/yum/rpms/${PGPOOLMAJOR}/redhat/rhel-8-x86_64/pgpool-II-pg11-${PGPOOLVER}-1pgdg.rhel8.x86_64.rpm
+RUN dnf install -y https://www.pgpool.net/yum/rpms/4.1/redhat/rhel-8-x86_64/pgpool-II-release-4.1-1.noarch.rpm
+#RUN yum install -y https://download.postgresql.org/pub/repos/yum/${PGVER}/redhat/rhel-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+# Postgres repository
+RUN dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm epel-release
+# Disable module postgresql, needed on Centos 8
+RUN dnf module disable -y postgresql
+RUN dnf install -y postgresql${PGVER} pgpool-II-pg${PGVER}-${PGPOOLVER} pgpool-II-pg${PGVER}-extensions-${PGPOOLVER} \
     pgpool-II-pg${PGVER}-debuginfo-${PGPOOLVER} epel-release sudo vi openssh openssh-clients iproute ; \
-     yum clean all ; rm -rf /var/cache/yum
+     dnf clean all ; rm -rf /var/cache/dnf
 # postgres can do sudo
 RUN echo "Defaults:postgres !requiretty" > /etc/sudoers.d/postgres && \
     echo "postgres ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/postgres
