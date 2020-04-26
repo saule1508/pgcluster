@@ -1,3 +1,3 @@
 #!/bin/bash
 
-sudo supervisorctl stop postgres
+sudo /usr/local/bin/supervisorctl stop postgres

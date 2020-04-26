@@ -20,7 +20,7 @@ NEW_MASTER_HOST=$5
 OLD_MASTER_ID=$6
 OLD_PRIMARY_ID=$7
 PGDATA=${PGDATA:-/data}
-PGVER=${PGVER:-11}
+PGVER=${PGVER:-12}
 
 echo NODEID=${NODEID} 
 echo HOSTNAME=${HOSTNAME}
@@ -41,7 +41,7 @@ else
     echo "Node $HOSTNAME is not in recovery, probably a degenerated master, skip it" | tee -a $LOGFILE
     exit 0
   fi
-  $ssh_options postgres@${HOSTNAME} "/usr/pgsql-${PGVER}/bin/repmgr --log-to-file -f /etc/repmgr/${PGVER}/repmgr.conf -h ${NEW_MASTER_HOST} -D ${PGDATA} -U repmgr -d repmgr standby follow -v"
+  $ssh_options postgres@${HOSTNAME} "/usr/pgsql-${PGVER}/bin/repmgr --log-to-file -f /etc/repmgr/${PGVER}/repmgr.conf -h ${NEW_MASTER_HOST} -U repmgr -d repmgr standby follow -v"
   echo "Sleep 10"
   sleep 10
   echo "Attach node ${NODEID}"

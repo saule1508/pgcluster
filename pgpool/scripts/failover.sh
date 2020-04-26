@@ -10,7 +10,7 @@ LOGFILE=/var/log/pg/failover.log
 if [ ! -f $LOGFILE ] ; then
  > $LOGFILE
 fi
-PGVER=${PGVER:-11}
+PGVER=${PGVER:-12}
 echo $@
 
 # Special values:

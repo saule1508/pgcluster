@@ -9,7 +9,7 @@
 #
 # Be sure to set up public SSH keys and authorized_keys files.
 # this script must be in PGDATA
-PGVER=${PGVER:-11}
+PGVER=${PGVER:-12}
 PATH=$PATH:/usr/pgsql-${PGVER}/bin
 ARCHIVE_DIR=/archive
 
