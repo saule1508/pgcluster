@@ -175,9 +175,9 @@ monitor_interval_secs=5
 
 pg_bindir='/usr/pgsql-${PGVER}/bin'
 
-service_start_command = 'sudo supervisorctl start postgres'
-service_stop_command = 'sudo supervisorctl stop postgres'
-service_restart_command = 'sudo supervisorctl restart postgres'
+service_start_command = 'sudo /usr/local/bin/supervisorctl start postgres'
+service_stop_command = 'sudo /usr/local/bin/supervisorctl stop postgres'
+service_restart_command = 'sudo /usr/local/bin/supervisorctl restart postgres'
 service_reload_command = 'pg_ctl reload'
 
 promote_command='repmgr -f /etc/repmgr/${PGVER}/repmgr.conf standby promote'

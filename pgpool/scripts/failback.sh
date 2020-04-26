@@ -9,7 +9,7 @@ then
     echo "Expecting 4 parameters: failback falling_node oldprimary_node new_primary"
     exit 1
 fi
-PGVER=${PGVER:-11}
+PGVER=${PGVER:-12}
 FALLING_NODE=$1         # %d
 FALLING_HOST=$2         # %h
 OLDPRIMARY_NODE=$3      # %P

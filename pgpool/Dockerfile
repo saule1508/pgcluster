@@ -1,6 +1,6 @@
 FROM centos:8
 MAINTAINER ptim007@yahoo.com
-ENV PGVER=11
+ENV PGVER=12
 ENV PGPOOLMAJOR=4.1
 ENV PGPOOLVER=4.1.1
 RUN dnf update -y ; dnf install -y passwd sudo ; dnf clean all ; rm -rf /var/cache/dnf 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sudo supervisorctl status all | while read line
+sudo /usr/local/bin/supervisorctl status all | while read line
 do
   proc=$( echo $line | cut -f1 -d" " )
   state=$( echo $line | cut -f2 -d" ")
